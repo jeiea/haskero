@@ -12,6 +12,8 @@ import {
 	CompletionItem, CompletionItemKind
 } from 'vscode-languageserver';
 
+import { execSync } from 'child_process'
+
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
 
@@ -23,7 +25,7 @@ let documents: TextDocuments = new TextDocuments();
 documents.listen(connection);
 
 // After the server has started the client sends an initilize request. The server receives
-// in the passed params the rootPath of the workspace plus the client capabilites. 
+// in the passed params the rootPath of the workspace plus the client capabilites.
 let workspaceRoot: string;
 connection.onInitialize((params): InitializeResult => {
 	workspaceRoot = params.rootPath;
@@ -98,20 +100,29 @@ connection.onDidChangeWatchedFiles((change) => {
 
 
 // This handler provides the initial list of the completion items.
-connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-	// The pass parameter contains the position of the text document in 
+connection.onCompletion( (textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+	// The pass parameter contains the position of the text document in
 	// which code complete got requested. For the example we ignore this
 	// info and always provide the same completion items.
+
+	const file = textDocumentPosition.textDocument.uri;
+
+	const test = execSync('ls', ['-al']);
+
+
+
+
+
 	return [
 		{
-			label: 'TypeScript',
+			label: 'Ls',
 			kind: CompletionItemKind.Text,
-			data: 1
+			data: {id:1, text:test.toString()}
 		},
 		{
 			label: 'JavaScript',
 			kind: CompletionItemKind.Text,
-			data: 2
+			data: {id:2, text:'details'}
 		}
 	]
 });
@@ -119,12 +130,12 @@ connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Comp
 // This handler resolve additional information for the item selected in
 // the completion list.
 connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-	if (item.data === 1) {
-		item.detail = 'TypeScript details',
-		item.documentation = 'TypeScript documentation'
-	} else if (item.data === 2) {
-		item.detail = 'JavaScript details',
-		item.documentation = 'JavaScript documentation'
+	if (item.data.id === 1) {
+		item.detail = 'Ls details';
+		item.documentation = item.data.text;
+	} else if (item.data.id=== 2) {
+		item.detail = 'JavaScript details';
+		item.documentation = item.data.text;
 	}
 	return item;
 });
