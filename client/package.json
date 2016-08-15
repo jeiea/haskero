@@ -6,13 +6,13 @@
 	"version": "0.0.1",
 	"publisher": "vscode",
 	"engines": {
-		"vscode": "^0.10.10"
+		"vscode": "^1.4.0"
 	},
 	"categories": [
 		"Other"
 	],
 	"activationEvents": [
-		"onLanguage:plaintext"
+		"onLanguage:haskell"
 	],
 	"main": "./out/src/extension",
 	"contributes": {
@@ -27,7 +27,7 @@
 				}
 			}
 		}
-	},	
+	},
 	"scripts": {
 		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",
 		"compile": "node ./node_modules/vscode/bin/compile -watch -p ./",
@@ -39,6 +39,6 @@
 		"vscode": "^0.11.0"
 	},
 	"dependencies": {
-		"vscode-languageclient": "^2.2.1"
+		"vscode-languageclient": "^2.4.2"
 	}
 }
