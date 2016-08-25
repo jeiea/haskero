@@ -2,7 +2,7 @@
     "files.exclude": {
         "**/.git": true,
         "**/out": true,
-        "**/.gitignore": true,
+        "**/.gitignore": false,
         "**/.travis.yml": true,
         "**/.stack-work": true
     }

@@ -18,14 +18,14 @@ class InteroProxy {
     }
 
     public init() : void {
-        this.interoProcess.stdin.write(':set prompt "\\4"\n');
+        this.interoProcess.stdin.write(':set prompt "\\4"\r\n');
     }
 
     public sendRawRequest(rawRequest : string, onRawResponse : (string) => void) : void {
+        this.onRawResponse = onRawResponse;
         let req = rawRequest + '\r\n';
         intero.stdin.write(req);
         console.log(req);
-        this.onRawResponse = onRawResponse;
     }
 
     private static endsWith(str : string, suffix : string) : boolean {
@@ -104,5 +104,6 @@ enum InteroState {
 let interoProxy = new InteroProxy(intero);
 interoProxy.init();
 
-let req = new LocAtRequest('/home/vans/development/haskell/VSCode-haskell-intero/test/sample/app/Main.hs', 8, 31, 8, 36, 'ourAdd');
+// let req = new LocAtRequest('/home/vans/development/haskell/VSCode-haskell-intero/test/sample/app/Main.hs', 8, 31, 8, 36, 'ourAdd');
+let req = new LocAtRequest('E:\\haskell\\VSCode-haskell-intero\\test\\sample\\app\\Main.hs', 8, 31, 8, 36, 'ourAdd');
 let response = req.send(interoProxy, (resp : LocAtResponse) => console.log(response));
