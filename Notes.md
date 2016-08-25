@@ -18,4 +18,4 @@
 
 ## File path
 
-File path white spaces aren't supported: cmd like `stack ghci` are broken. See issue : [stack #2266]: https://github.com/commercialhaskell/stack/issues/2266
+File path white spaces aren't supported: cmd like `stack ghci` are broken. See issue [stack #2266](https://github.com/commercialhaskell/stack/issues/2266)
