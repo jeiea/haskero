@@ -11,13 +11,12 @@ class InteroProxy {
     private interoProcess : child_process.ChildProcess;
     private rawResponse : string;
     private onRawResponseQueue : Array<(string) => void>;
-    private test : string;
 
     public constructor(interoProcess : child_process.ChildProcess) {
         this.interoProcess = interoProcess;
         this.rawResponse = '';
         this.onRawResponseQueue = [];
-        this.interoProcess.stdout.on('data', InteroProxy.onData(this));
+        this.interoProcess.stdout.on('data', this.onData);
     }
 
     public init() : void {
@@ -35,18 +34,17 @@ class InteroProxy {
         return str.indexOf(suffix, str.length - suffix.length) != -1;
     }
 
-    private static onData(that : InteroProxy) : (Buffer) => void {
-        return (data : Buffer) => {
-            let chunk = data.toString();
-            that.rawResponse += chunk;
-            if (InteroProxy.endsWith(chunk, '\u0004')) {
-                if (that.onRawResponseQueue.length > 0) {
-                    let callback = that.onRawResponseQueue.shift();
-                    callback(that.rawResponse);
-                }
-                console.log('Reponse: ' + that.rawResponse);
-                that.rawResponse = '';
+    // create an instance function to force the 'this' capture
+    private onData = (data : Buffer) => {
+        let chunk = data.toString();
+        this.rawResponse += chunk;
+        if (InteroProxy.endsWith(chunk, '\u0004')) {
+            if (this.onRawResponseQueue.length > 0) {
+                let callback = this.onRawResponseQueue.shift();
+                callback(this.rawResponse);
             }
+            console.log('Reponse: ' + this.rawResponse);
+            this.rawResponse = '';
         }
     }
 }
