@@ -10,42 +10,46 @@ const intero = child_process.spawn('stack', ['ghci', '--with-ghc', 'intero']);
 class InteroProxy {
     private interoProcess : child_process.ChildProcess;
     private rawResponse : string;
-    private onRawResponse : (string) => void;
+    private onRawResponseQueue : Array<(string) => void>;
+    private test : string;
 
     public constructor(interoProcess : child_process.ChildProcess) {
         this.interoProcess = interoProcess;
-        interoProcess.stdout.on('data', this.onData);
+        this.rawResponse = '';
+        this.onRawResponseQueue = [];
+        this.interoProcess.stdout.on('data', InteroProxy.onData(this));
     }
 
     public init() : void {
-        this.interoProcess.stdin.write(':set prompt "\\4"\r\n');
+        this.sendRawRequest(':set prompt "\\4"\r\n', (s : string) => {} );
     }
 
     public sendRawRequest(rawRequest : string, onRawResponse : (string) => void) : void {
-        this.onRawResponse = onRawResponse;
+        this.onRawResponseQueue.push(onRawResponse);
         let req = rawRequest + '\r\n';
-        intero.stdin.write(req);
-        console.log(req);
+        this.interoProcess.stdin.write(req);
+        console.log('Request: ' + req);
     }
 
     private static endsWith(str : string, suffix : string) : boolean {
         return str.indexOf(suffix, str.length - suffix.length) != -1;
     }
 
-    private onData(data : Buffer) {
-        let chunk = data.toString();
-        console.log(chunk);
-        this.rawResponse += chunk;
-        if (InteroProxy.endsWith(chunk, '\u0004')) {
-            if (this.onRawResponse != undefined) {
-                this.onRawResponse(this.rawResponse);
+    private static onData(that : InteroProxy) : (Buffer) => void {
+        return (data : Buffer) => {
+            let chunk = data.toString();
+            that.rawResponse += chunk;
+            if (InteroProxy.endsWith(chunk, '\u0004')) {
+                if (that.onRawResponseQueue.length > 0) {
+                    let callback = that.onRawResponseQueue.shift();
+                    callback(that.rawResponse);
+                }
+                console.log('Reponse: ' + that.rawResponse);
+                that.rawResponse = '';
             }
-            console.log('End of response : ' + this.rawResponse);
-            this.rawResponse = '';
         }
     }
 }
-
 
 interface InteroRequest {
     send(interoProxy : InteroProxy, onInteroResponse : (InteroResponse) => void) : void;
@@ -58,12 +62,59 @@ interface InteroResponse {
 
 class LocAtResponse implements InteroResponse {
 
-    public isOk : boolean;
-    public rawResponse : string;
+    private static get pattern() : RegExp { return new RegExp('(.*):\\((\\d+),(\\d+)\\)-\\((\\d+),(\\d+)\\)'); }
+
+    private _filePath : string;
+    private _start_l : number;
+    private _start_c : number;
+    private _end_l : number;
+    private _end_c : number;
+
+    private _isOk : boolean;
+    private _rawResponse : string;
+
+    public get filePath() : string {
+        return this._filePath;
+    }
+
+    public get start_l() : number {
+        return this._start_l;
+    }
+
+    public get start_c() : number {
+        return this._start_c;
+    }
+
+    public get end_l() : number {
+        return this._end_l;
+    }
+
+    public get end_c() : number {
+        return this._end_c;
+    }
+
+    public get isOk() : boolean {
+        return this._isOk;
+    }
+
+    public get rawResponse() : string {
+        return this._rawResponse;
+    }
 
     public constructor(rawResponse : string) {
-        this.rawResponse = rawResponse;
-        this.isOk = true;
+        this._rawResponse = rawResponse;
+        let match = LocAtResponse.pattern.exec(rawResponse)
+        if (match != null) {
+            this._filePath = match[1];
+            this._start_l = +match[2];
+            this._start_c = +match[3];
+            this._end_l = +match[4];
+            this._end_c = +match[5];
+            this._isOk = true;
+        }
+        else {
+            this._isOk = false;
+        }
     }
 }
 
@@ -87,13 +138,13 @@ class LocAtRequest implements InteroRequest {
     public send(interoProxy : InteroProxy, onInteroResponse : (LocAtResponse) => void) : void {
         const req = `:loc-at ${this.filePath} ${this.start_l} ${this.start_c} ${this.end_l} ${this.end_c} ${this.identifier}`;
         interoProxy.sendRawRequest(req, this.onRawResponse(onInteroResponse));
-
     }
 
     private onRawResponse(onInteroResponse : (LocAtResponse) => void) : (rawResponse : string) => void {
-        return (rawResponse : string) => onInteroResponse(new LocAtResponse(rawResponse));
+        return (rawResponse : string) => {
+            return onInteroResponse(new LocAtResponse(rawResponse));
+        };
     }
-
 }
 
 enum InteroState {
@@ -106,4 +157,4 @@ interoProxy.init();
 
 // let req = new LocAtRequest('/home/vans/development/haskell/VSCode-haskell-intero/test/sample/app/Main.hs', 8, 31, 8, 36, 'ourAdd');
 let req = new LocAtRequest('E:\\haskell\\VSCode-haskell-intero\\test\\sample\\app\\Main.hs', 8, 31, 8, 36, 'ourAdd');
-let response = req.send(interoProxy, (resp : LocAtResponse) => console.log(response));
+let response = req.send(interoProxy, (resp : LocAtResponse) => console.dir(resp));
