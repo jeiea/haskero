@@ -145,6 +145,82 @@ class LocAtRequest implements InteroRequest {
     }
 }
 
+class DiagnosticsResponse implements InteroResponse {
+
+    private static get pattern() : RegExp { return new RegExp('(.*):(\\d+):(\\d+): Warning:((?:\\n\\s{4,}.*)+)', 'g'); }
+
+    private _filePath : string;
+    private _start_l : number;
+    private _start_c : number;
+    private _end_l : number;
+    private _end_c : number;
+
+    private _isOk : boolean;
+    private _rawResponse : string;
+
+    public get filePath() : string {
+        return this._filePath;
+    }
+
+    public get start_l() : number {
+        return this._start_l;
+    }
+
+    public get start_c() : number {
+        return this._start_c;
+    }
+
+    public get end_l() : number {
+        return this._end_l;
+    }
+
+    public get end_c() : number {
+        return this._end_c;
+    }
+
+    public get isOk() : boolean {
+        return this._isOk;
+    }
+
+    public get rawResponse() : string {
+        return this._rawResponse;
+    }
+
+    public constructor(rawResponse : string) {
+        this._rawResponse = rawResponse;
+        let match = LocAtResponse.pattern.exec(rawResponse)
+        if (match != null) {
+            this._filePath = match[1];
+            this._start_l = +match[2];
+            this._start_c = +match[3];
+            this._end_l = +match[4];
+            this._end_c = +match[5];
+            this._isOk = true;
+        }
+        else {
+            this._isOk = false;
+        }
+    }
+}
+
+class DiagnosticsRequest implements InteroRequest {
+
+    public constructor() {
+
+    }
+
+    public send(interoProxy : InteroProxy, onInteroResponse : (LocAtResponse) => void) : void {
+        const req = ':r';
+        interoProxy.sendRawRequest(req, this.onRawResponse(onInteroResponse));
+    }
+
+    private onRawResponse(onInteroResponse : (LocAtResponse) => void) : (rawResponse : string) => void {
+        return (rawResponse : string) => {
+            return onInteroResponse(new LocAtResponse(rawResponse));
+        };
+    }
+}
+
 enum InteroState {
     WaitingForRequest,
     WaitingForResponse
