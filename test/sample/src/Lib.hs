@@ -19,6 +19,7 @@ bounds2 _ [] = []
 bounds2 _ (x:[]) = [x]
 bounds2 l ((level,rate):xs) = ((level - l),rate) : bounds2 level xs
 
+--huhu = inconnu 5
 
 taxe m =
   foldl calculate (0,m) (bounds2 0 bounds)
