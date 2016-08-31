@@ -7,11 +7,13 @@
 		"sourceMap": true
 
 	},
-	"files": [
-		"ts/interoProxy.ts",
-		"typings/node.d.ts"
-	],
+	// "files": [
+
+	// 	"ts/intero/interoProxy.ts",
+	// 	"typings/node.d.ts"
+	// ],
 	"exclude": [
-		"node_modules"
+		"node_modules",
+		"out"
 	]
 }
