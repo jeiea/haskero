@@ -9,25 +9,25 @@ const intero = child_process.spawn('stack', ['ghci', '--with-ghc', 'intero']);
  */
 class InteroProxy {
     private interoProcess : child_process.ChildProcess;
-    private rawResponse : string;
-    private onRawResponseQueue : Array<(string) => void>;
+    private rawout : string;
+    private rawoutErr : string;
+    private onRawResponseQueue : Array<(rawout : string, rawerr : string) => void>;
+
+
 
     public constructor(interoProcess : child_process.ChildProcess) {
         this.interoProcess = interoProcess;
-        this.rawResponse = '';
+        this.rawout = '';
+        this.rawoutErr = '';
         this.onRawResponseQueue = [];
         this.interoProcess.stdout.on('data', this.onData);
+        this.interoProcess.stderr.on('data', this.onDataErr);
     }
 
-    public init() : void {
-        this.sendRawRequest(':set prompt "\\4"\r\n', (s : string) => {} );
-    }
-
-    public sendRawRequest(rawRequest : string, onRawResponse : (string) => void) : void {
+    public sendRawRequest(rawRequest : string, onRawResponse : (rawout : string, rawerr : string) => void) : void {
         this.onRawResponseQueue.push(onRawResponse);
-        let req = rawRequest + '\r\n';
+        let req = rawRequest + '\n';
         this.interoProcess.stdin.write(req);
-        console.log('Request: ' + req);
     }
 
     private static endsWith(str : string, suffix : string) : boolean {
@@ -37,15 +37,21 @@ class InteroProxy {
     // create an instance function to force the 'this' capture
     private onData = (data : Buffer) => {
         let chunk = data.toString();
-        this.rawResponse += chunk;
+        this.rawout += chunk;
         if (InteroProxy.endsWith(chunk, '\u0004')) {
             if (this.onRawResponseQueue.length > 0) {
                 let callback = this.onRawResponseQueue.shift();
-                callback(this.rawResponse);
+                callback(this.rawout, this.rawoutErr);
             }
-            console.log('Reponse: ' + this.rawResponse);
-            this.rawResponse = '';
+            this.rawout = '';
+            this.rawoutErr = '';
         }
+    }
+
+    private onDataErr = (data : Buffer) => {
+        let chunk = data.toString();
+        //console.log("\r\n    >>>>" + chunk + "<<<<");
+        this.rawoutErr += chunk;
     }
 }
 
@@ -55,7 +61,8 @@ interface InteroRequest {
 
 interface InteroResponse {
     isOk : boolean;
-    rawResponse: string;
+    rawerr: string;
+    rawout: string;
 }
 
 class LocAtResponse implements InteroResponse {
@@ -69,7 +76,8 @@ class LocAtResponse implements InteroResponse {
     private _end_c : number;
 
     private _isOk : boolean;
-    private _rawResponse : string;
+    private _rawout : string;
+    private _rawerr : string;
 
     public get filePath() : string {
         return this._filePath;
@@ -95,13 +103,18 @@ class LocAtResponse implements InteroResponse {
         return this._isOk;
     }
 
-    public get rawResponse() : string {
-        return this._rawResponse;
+    public get rawout() : string {
+        return this._rawout;
     }
 
-    public constructor(rawResponse : string) {
-        this._rawResponse = rawResponse;
-        let match = LocAtResponse.pattern.exec(rawResponse)
+    public get rawerr() : string {
+        return this._rawerr;
+    }
+
+    public constructor(rawout : string, rawerr : string) {
+        this._rawout = rawout;
+        this._rawerr = rawerr;
+        let match = LocAtResponse.pattern.exec(rawout)
         if (match != null) {
             this._filePath = match[1];
             this._start_l = +match[2];
@@ -138,85 +151,126 @@ class LocAtRequest implements InteroRequest {
         interoProxy.sendRawRequest(req, this.onRawResponse(onInteroResponse));
     }
 
-    private onRawResponse(onInteroResponse : (LocAtResponse) => void) : (rawResponse : string) => void {
-        return (rawResponse : string) => {
-            return onInteroResponse(new LocAtResponse(rawResponse));
+    private onRawResponse(onInteroResponse : (LocAtResponse) => void) : (rawout : string, rawerr : string) => void {
+        return (rawout : string, rawerr : string) => {
+            return onInteroResponse(new LocAtResponse(rawout, rawerr));
         };
     }
 }
 
-class DiagnosticsResponse implements InteroResponse {
+enum InteroDiagnosticKind {
+    warning,
+    error
+}
 
-    private static get pattern() : RegExp { return new RegExp('(.*):(\\d+):(\\d+): Warning:((?:\\n\\s{4,}.*)+)', 'g'); }
+class InteroDiagnostic {
 
     private _filePath : string;
-    private _start_l : number;
-    private _start_c : number;
-    private _end_l : number;
-    private _end_c : number;
-
-    private _isOk : boolean;
-    private _rawResponse : string;
-
     public get filePath() : string {
         return this._filePath;
     }
-
-    public get start_l() : number {
-        return this._start_l;
+    public set filePath(v : string) {
+        this._filePath = v;
     }
 
-    public get start_c() : number {
-        return this._start_c;
+
+    private _line : number;
+    public get line() : number {
+        return this._line;
     }
 
-    public get end_l() : number {
-        return this._end_l;
+    private _col : number;
+    public get col() : number {
+        return this._col;
     }
 
-    public get end_c() : number {
-        return this._end_c;
+    private _message : string;
+    public get message() : string {
+        return this._message;
     }
+
+    private _kind : InteroDiagnosticKind;
+    public get kind() : InteroDiagnosticKind {
+        return this._kind;
+    }
+
+    public constructor(filePath : string, line : number, col : number, message : string, kind : InteroDiagnosticKind) {
+        this._filePath = filePath;
+        this._line = line;
+        this._col = col;
+        this._message = message;
+        this._kind = kind;
+    }
+}
+
+class InitResponse implements InteroResponse {
+
+    //private static get warningsPattern() : RegExp { return /([^:]+):(\d+):(\d+): Warning:\n?([\s\S]+?)(?:\n\n|\n[\S]+)/g;  }
+    private static get errorsPattern() : RegExp { return new RegExp('(.*):(\\d+):(\\d+):((?:\\n\\s{4,}.*)+)', 'g'); }
+
+    private _filePath : string;
+    private _isOk : boolean;
+    private _rawout : string;
+    private _rawerr : string;
 
     public get isOk() : boolean {
         return this._isOk;
     }
 
-    public get rawResponse() : string {
-        return this._rawResponse;
+    public get rawout() : string {
+        return this._rawout;
     }
 
-    public constructor(rawResponse : string) {
-        this._rawResponse = rawResponse;
-        let match = LocAtResponse.pattern.exec(rawResponse)
-        if (match != null) {
-            this._filePath = match[1];
-            this._start_l = +match[2];
-            this._start_c = +match[3];
-            this._end_l = +match[4];
-            this._end_c = +match[5];
-            this._isOk = true;
+     public get rawerr() : string {
+        return this._rawerr;
+    }
+
+
+    private _diagnostics : InteroDiagnostic[];
+    public get diagnostics() : InteroDiagnostic[] {
+        return this._diagnostics;
+    }
+
+
+    public constructor(rawout : string, rawerr : string) {
+        this._rawout = rawout;
+        this._rawerr = rawerr;
+        console.log(">>>" + rawerr + "<<<");
+        //let matchErrors = this.allMatchs(rawout, InitResponse.errorsPattern);
+        let matchWarnings = this.allMatchs(rawerr);
+        this._diagnostics = matchWarnings.map(this.matchToWarning);
+    }
+
+    private matchToWarning(match : RegExpExecArray) : InteroDiagnostic {
+        return new InteroDiagnostic(match[1], +match[2], +match[3], match[4], InteroDiagnosticKind.warning);
+    }
+
+    private allMatchs(text : string) : RegExpExecArray[] {
+        const matches : RegExpExecArray[] = [];
+        let match : RegExpExecArray;
+        const reg = /([^:]+):(\d+):(\d+): Warning:\r?\n?([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/g;
+        while ((match = reg.exec(text)) != null) {
+            matches.push(match);
         }
-        else {
-            this._isOk = false;
-        }
+        return matches;
     }
 }
 
-class DiagnosticsRequest implements InteroRequest {
+class InitRequest implements InteroRequest {
 
     public constructor() {
-
     }
 
-    public send(interoProxy : InteroProxy, onInteroResponse : (LocAtResponse) => void) : void {
-        const req = ':r';
-        interoProxy.sendRawRequest(req, this.onRawResponse(onInteroResponse));
+    public send(interoProxy : InteroProxy, onInteroResponse : (r : InitResponse) => void) : void {
+        const changePromptRequest = ':set prompt "\\4"';
+        const reloadRequest = ':r';
+        interoProxy.sendRawRequest(changePromptRequest, (s) => {}); //{console.log("change prompt response >>" + s + "<<");});
+        interoProxy.sendRawRequest(reloadRequest, this.onRawResponse(onInteroResponse));
     }
 
-    private onRawResponse(onInteroResponse : (LocAtResponse) => void) : (rawResponse : string) => void {
-        return (rawResponse : string) => {
-            return onInteroResponse(new LocAtResponse(rawResponse));
+    private onRawResponse(onInteroResponse : (r : InitResponse) => void) : (rawout : string, rawerr : string) => void {
+        return (rawout : string, rawerr : string) => {
+            return onInteroResponse(new InitResponse(rawout, rawerr));
         };
     }
 }
@@ -227,8 +281,11 @@ enum InteroState {
 }
 
 let interoProxy = new InteroProxy(intero);
-interoProxy.init();
 
+let initRequest = new InitRequest();
+initRequest.send(interoProxy, (resp : InitResponse) => console.dir(resp));
+
+//interoProxy.init((resp : LocAtResponse) => console.dir("init : " + resp));
 // let req = new LocAtRequest('/home/vans/development/haskell/VSCode-haskell-intero/test/sample/app/Main.hs', 8, 31, 8, 36, 'ourAdd');
-let req = new LocAtRequest('E:\\haskell\\VSCode-haskell-intero\\test\\sample\\app\\Main.hs', 8, 31, 8, 36, 'ourAdd');
-let response = req.send(interoProxy, (resp : LocAtResponse) => console.dir(resp));
+//let req = new LocAtRequest('E:\\haskell\\VSCode-haskell-intero\\test\\sample\\app\\Main.hs', 8, 31, 8, 36, 'ourAdd');
+//let response = req.send(interoProxy, (resp : LocAtResponse) => console.dir(resp));
