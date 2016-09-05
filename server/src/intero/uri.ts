@@ -1,0 +1,18 @@
+import {
+	Files
+} from 'vscode-languageserver';
+
+export class Uri {
+    private _uri : string;
+    public get uri() : string {
+        return this._uri;
+    }
+
+    public constructor(uri : string) {
+        this._uri = uri;
+    }
+
+    public toFilePath() : string {
+        return Files.uriToFilePath(this._uri);
+    }
+}

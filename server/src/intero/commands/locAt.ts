@@ -13,7 +13,8 @@ export class LocAtResponse implements InteroResponse {
     private _end_c : number;
 
     private _isOk : boolean;
-    private _rawResponse : string;
+    private _rawout : string;
+    private _rawerr : string;
 
     public get filePath() : string {
         return this._filePath;
@@ -39,13 +40,18 @@ export class LocAtResponse implements InteroResponse {
         return this._isOk;
     }
 
-    public get rawResponse() : string {
-        return this._rawResponse;
+    public get rawout() : string {
+        return this._rawout;
     }
 
-    public constructor(rawResponse : string) {
-        this._rawResponse = rawResponse;
-        let match = LocAtResponse.pattern.exec(rawResponse)
+    public get rawerr() : string {
+        return this._rawerr;
+    }
+
+    public constructor(rawout : string, rawerr : string) {
+        this._rawout = rawout;
+        this._rawerr = rawerr;
+        let match = LocAtResponse.pattern.exec(rawout)
         if (match != null) {
             this._filePath = match[1];
             this._start_l = +match[2];
@@ -80,10 +86,11 @@ export class LocAtRequest implements InteroRequest {
     public send(interoProxy : InteroProxy, onInteroResponse : (LocAtResponse) => void) : void {
         const req = `:loc-at ${this.filePath} ${this.start_l} ${this.start_c} ${this.end_l} ${this.end_c} ${this.identifier}`;
         interoProxy.sendRawRequest(req, this.onRawResponse(onInteroResponse));
-
     }
 
-    private onRawResponse(onInteroResponse : (LocAtResponse) => void) : (rawResponse : string) => void {
-        return (rawResponse : string) => onInteroResponse(new LocAtResponse(rawResponse));
+    private onRawResponse(onInteroResponse : (LocAtResponse) => void) : (rawout : string, rawerr : string) => void {
+        return (rawout : string, rawerr : string) => {
+            return onInteroResponse(new LocAtResponse(rawout, rawerr));
+        };
     }
 }

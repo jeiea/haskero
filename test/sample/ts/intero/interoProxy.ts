@@ -7,7 +7,6 @@ import {InitRequest, InitResponse} from './commands/init'
 import child_process = require('child_process');
 
 
-
 const intero = child_process.spawn('stack', ['ghci', '--with-ghc', 'intero']);
 
 /**
@@ -18,8 +17,6 @@ export class InteroProxy {
     private rawout : string;
     private rawoutErr : string;
     private onRawResponseQueue : Array<(rawout : string, rawerr : string) => void>;
-
-
 
     public constructor(interoProcess : child_process.ChildProcess) {
         this.interoProcess = interoProcess;

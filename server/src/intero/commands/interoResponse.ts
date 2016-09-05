@@ -1,4 +1,5 @@
 export interface InteroResponse {
     isOk : boolean;
-    rawResponse: string;
+    rawerr: string;
+    rawout: string;
 }

@@ -9,10 +9,16 @@ import {
 	createConnection, IConnection, TextDocumentSyncKind,
 	TextDocuments, TextDocument, Diagnostic, DiagnosticSeverity,
 	InitializeParams, InitializeResult, TextDocumentPositionParams,
-	CompletionItem, CompletionItemKind
+	CompletionItem, CompletionItemKind, Files
 } from 'vscode-languageserver';
 
-import { execSync } from 'child_process'
+import child_process = require('child_process');
+import {InteroProxy} from './intero/interoProxy';
+import {InitRequest, InitResponse} from './intero/commands/init';
+import {ReloadRequest, ReloadResponse} from './intero/commands/reload';
+import {InteroDiagnostic} from './intero/commands/interoDiagnostic'
+
+import {Uri} from './intero/uri';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -24,13 +30,22 @@ let documents: TextDocuments = new TextDocuments();
 // for open, change and close text document events
 documents.listen(connection);
 
+const intero = child_process.spawn('stack', ['ghci', '--with-ghc', 'intero']);
+const interoProxy = new InteroProxy(intero);
+
 // After the server has started the client sends an initilize request. The server receives
 // in the passed params the rootPath of the workspace plus the client capabilites.
 let workspaceRoot: string;
 connection.onInitialize((params): InitializeResult => {
 	workspaceRoot = params.rootPath;
+	connection.console.log("onInitialize");
+
+	const initRequest = new InitRequest();
+	initRequest.send(interoProxy, (resp: InitResponse) => { connection.console.log("intero init done"); });
+
 	return {
 		capabilities: {
+
 			// Tell the client that the server works in FULL text document sync mode
 			textDocumentSync: documents.syncKind,
 			// Tell the client that the server support code complete
@@ -44,6 +59,7 @@ connection.onInitialize((params): InitializeResult => {
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
 documents.onDidChangeContent((change) => {
+	connection.console.log(change.document.uri);
 	validateTextDocument(change.document);
 });
 
@@ -70,27 +86,43 @@ connection.onDidChangeConfiguration((change) => {
 });
 
 function validateTextDocument(textDocument: TextDocument): void {
-	let diagnostics: Diagnostic[] = [];
-	let lines = textDocument.getText().split(/\r?\n/g);
+
 	let problems = 0;
-	for (var i = 0; i < lines.length && problems < maxNumberOfProblems; i++) {
-		let line = lines[i];
-		let index = line.indexOf('typescript');
-		if (index >= 0) {
-			problems++;
-			diagnostics.push({
+	connection.console.log(textDocument.uri);
+	var ur = new Uri(textDocument.uri);
+	const reloadRequest = new ReloadRequest(new Uri(textDocument.uri));
+	connection.console.log(reloadRequest.filePath);
+
+	reloadRequest.send(interoProxy, (response : ReloadResponse) => {
+		let diagnostics: Diagnostic[] = [];
+		diagnostics = response.diagnostics.
+		filter(d => d.filePath.toLowerCase() == ur.toFilePath().toLowerCase()).map((interoDiag : InteroDiagnostic) : Diagnostic => {
+			return {
 				severity: DiagnosticSeverity.Warning,
 				range: {
-					start: { line: i, character: index},
-					end: { line: i, character: index + 10 }
+					start: { line: interoDiag.line, character: interoDiag.col},
+					end: { line: interoDiag.line, character: interoDiag.col }
 				},
-				message: `${line.substr(index, 10)} should be spelled TypeScript`,
-				source: 'ex'
-			});
-		}
-	}
+				message: interoDiag.message,
+				source: 'intero'
+			}
+		});
+		connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+	});
+
+	// diagnostics.push({
+	// 			severity: DiagnosticSeverity.Warning,
+	// 			range: {
+	// 				start: { line: i, character: index},
+	// 				end: { line: i, character: index + 10 }
+	// 			},
+	// 			message: `${line.substr(index, 10)} should be spelled TypeScript`,
+	// 			source: 'ex'
+	// 		});
+
+
 	// Send the computed diagnostics to VSCode.
-	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+
 }
 
 connection.onDidChangeWatchedFiles((change) => {
@@ -100,14 +132,14 @@ connection.onDidChangeWatchedFiles((change) => {
 
 
 // This handler provides the initial list of the completion items.
-connection.onCompletion( (textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
 	// The pass parameter contains the position of the text document in
 	// which code complete got requested. For the example we ignore this
 	// info and always provide the same completion items.
 
 	const file = textDocumentPosition.textDocument.uri;
 
-	const test = execSync('ls', ['-al']);
+
 
 
 
@@ -117,12 +149,12 @@ connection.onCompletion( (textDocumentPosition: TextDocumentPositionParams): Com
 		{
 			label: 'Ls',
 			kind: CompletionItemKind.Text,
-			data: {id:1, text:test.toString()}
+			data: { id: 1, text: 'test.toString()' }
 		},
 		{
 			label: 'JavaScript',
 			kind: CompletionItemKind.Text,
-			data: {id:2, text:'details'}
+			data: { id: 2, text: 'details' }
 		}
 	]
 });
@@ -133,7 +165,7 @@ connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
 	if (item.data.id === 1) {
 		item.detail = 'Ls details';
 		item.documentation = item.data.text;
-	} else if (item.data.id=== 2) {
+	} else if (item.data.id === 2) {
 		item.detail = 'JavaScript details';
 		item.documentation = item.data.text;
 	}
