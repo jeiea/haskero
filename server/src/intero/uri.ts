@@ -15,4 +15,8 @@ export class Uri {
     public toFilePath() : string {
         return Files.uriToFilePath(this._uri);
     }
+
+    public isFileProtocol() : boolean {
+        return this.toFilePath() != null;
+    }
 }

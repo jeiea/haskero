@@ -34,20 +34,36 @@ export class ReloadResponse implements InteroResponse {
     public constructor(rawout : string, rawerr : string) {
         this._rawout = rawout;
         this._rawerr = rawerr;
-        console.log(">>>" + rawerr + "<<<");
-        let matchWarnings = this.allMatchs(rawerr);
-        this._diagnostics = matchWarnings.map(this.matchToWarning);
+
+        //find errors first
+        const regErrors = /([^\r\n]+):(\d+):(\d+):\r?\n([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/g;
+        let matchErrors = this.removeDuplicates(this.allMatchs(rawerr, regErrors));
+        let diagnostics = matchErrors.map(this.matchTo(InteroDiagnosticKind.error));
+
+        // if (matchErrors.length < 1) {
+            const regWarnings = /([^\r\n]+):(\d+):(\d+): Warning:\r?\n?([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/g;
+            let matchWarnings = this.removeDuplicates(this.allMatchs(rawerr, regWarnings));
+            diagnostics = diagnostics.concat(matchWarnings.map(this.matchTo(InteroDiagnosticKind.warning)));
+        // }
+        this._diagnostics = diagnostics;
     }
 
-    private matchToWarning(match : RegExpExecArray) : InteroDiagnostic {
-        return new InteroDiagnostic(match[1], +match[2], +match[3], match[4], InteroDiagnosticKind.warning);
+    private removeDuplicates(matches : RegExpExecArray[]) : RegExpExecArray[] {
+        let matchToKey = (m : RegExpExecArray) => m[0];
+        let matchesSetObject = matches.reduce((accu, m) => { accu[matchToKey(m)] = m; return accu; }, {});
+        return Object.keys(matchesSetObject).map(key => matchesSetObject[key]);
     }
 
-    private allMatchs(text : string) : RegExpExecArray[] {
+    //curried definition for partial application
+    private matchTo = (kind : InteroDiagnosticKind) => (match : RegExpExecArray) : InteroDiagnostic => {
+        return new InteroDiagnostic(match[1], +match[2], +match[3], match[4], kind);
+    }
+
+    private allMatchs(text : string, regexp : RegExp) : RegExpExecArray[] {
         const matches : RegExpExecArray[] = [];
         let match : RegExpExecArray;
-        const reg = /([^\r\n]+):(\d+):(\d+): Warning:\r?\n?([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/g;
-        while ((match = reg.exec(text)) != null) {
+
+        while ((match = regexp.exec(text)) != null) {
             matches.push(match);
         }
         return matches;
