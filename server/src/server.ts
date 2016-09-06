@@ -9,14 +9,14 @@ import {
 	createConnection, IConnection, TextDocumentSyncKind,
 	TextDocuments, TextDocument, Diagnostic, DiagnosticSeverity,
 	InitializeParams, InitializeResult, TextDocumentPositionParams,
-	CompletionItem, CompletionItemKind, Files
+	CompletionItem, CompletionItemKind, Files, TextDocumentIdentifier
 } from 'vscode-languageserver';
 
 import child_process = require('child_process');
 import {InteroProxy} from './intero/interoProxy';
 import {InitRequest, InitResponse} from './intero/commands/init';
 import {ReloadRequest, ReloadResponse} from './intero/commands/reload';
-import {InteroDiagnostic} from './intero/commands/interoDiagnostic'
+import {InteroDiagnostic, InteroDiagnosticKind} from './intero/commands/interoDiagnostic'
 
 import {Uri} from './intero/uri';
 
@@ -56,13 +56,6 @@ connection.onInitialize((params): InitializeResult => {
 	}
 });
 
-// The content of a text document has changed. This event is emitted
-// when the text document first opened or when its content has changed.
-documents.onDidChangeContent((change) => {
-	connection.console.log(change.document.uri);
-	validateTextDocument(change.document);
-});
-
 // The settings interface describe the server relevant settings part
 interface Settings {
 	languageServerExample: ExampleSettings;
@@ -85,91 +78,80 @@ connection.onDidChangeConfiguration((change) => {
 	documents.all().forEach(validateTextDocument);
 });
 
-function validateTextDocument(textDocument: TextDocument): void {
-
+function validateTextDocument(textDocument: TextDocumentIdentifier): void {
 	let problems = 0;
 	connection.console.log(textDocument.uri);
 	var ur = new Uri(textDocument.uri);
-	const reloadRequest = new ReloadRequest(new Uri(textDocument.uri));
-	connection.console.log(reloadRequest.filePath);
 
-	reloadRequest.send(interoProxy, (response : ReloadResponse) => {
-		let diagnostics: Diagnostic[] = [];
-		diagnostics = response.diagnostics.
-		filter(d => d.filePath.toLowerCase() == ur.toFilePath().toLowerCase()).map((interoDiag : InteroDiagnostic) : Diagnostic => {
-			return {
-				severity: DiagnosticSeverity.Warning,
-				range: {
-					start: { line: interoDiag.line, character: interoDiag.col},
-					end: { line: interoDiag.line, character: interoDiag.col }
-				},
-				message: interoDiag.message,
-				source: 'intero'
-			}
+	if (ur.isFileProtocol()) {
+		const reloadRequest = new ReloadRequest(new Uri(textDocument.uri));
+		connection.console.log(reloadRequest.filePath);
+
+		reloadRequest.send(interoProxy, (response : ReloadResponse) => {
+			let diagnostics: Diagnostic[] = [];
+			diagnostics = response.diagnostics.
+			filter(d => d.filePath.toLowerCase() == ur.toFilePath().toLowerCase()).map((interoDiag : InteroDiagnostic) : Diagnostic => {
+				return {
+					severity: interoDiag.kind == InteroDiagnosticKind.error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
+					range: {
+						start: { line: interoDiag.line, character: interoDiag.col},
+						end: { line: interoDiag.line, character: interoDiag.col }
+					},
+					message: interoDiag.message,
+					source: 'intero'
+				}
+			});
+			connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 		});
-		connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
-	});
-
-	// diagnostics.push({
-	// 			severity: DiagnosticSeverity.Warning,
-	// 			range: {
-	// 				start: { line: i, character: index},
-	// 				end: { line: i, character: index + 10 }
-	// 			},
-	// 			message: `${line.substr(index, 10)} should be spelled TypeScript`,
-	// 			source: 'ex'
-	// 		});
-
-
-	// Send the computed diagnostics to VSCode.
-
+	}
 }
 
-connection.onDidChangeWatchedFiles((change) => {
-	// Monitored files have change in VSCode
-	connection.console.log('We recevied an file change event');
+
+// // This handler provides the initial list of the completion items.
+// connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+// 	// The pass parameter contains the position of the text document in
+// 	// which code complete got requested. For the example we ignore this
+// 	// info and always provide the same completion items.
+
+// 	const file = textDocumentPosition.textDocument.uri;
+
+// 	return [
+// 		{
+// 			label: 'Ls',
+// 			kind: CompletionItemKind.Text,
+// 			data: { id: 1, text: 'test.toString()' }
+// 		},
+// 		{
+// 			label: 'JavaScript',
+// 			kind: CompletionItemKind.Text,
+// 			data: { id: 2, text: 'details' }
+// 		}
+// 	]
+// });
+
+// // This handler resolve additional information for the item selected in
+// // the completion list.
+// connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
+// 	if (item.data.id === 1) {
+// 		item.detail = 'Ls details';
+// 		item.documentation = item.data.text;
+// 	} else if (item.data.id === 2) {
+// 		item.detail = 'JavaScript details';
+// 		item.documentation = item.data.text;
+// 	}
+// 	return item;
+// });
+
+connection.onDidOpenTextDocument((handler) => {
+	connection.console.log(handler.textDocument.uri);
+	validateTextDocument(handler.textDocument);
 });
 
-
-// This handler provides the initial list of the completion items.
-connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-	// The pass parameter contains the position of the text document in
-	// which code complete got requested. For the example we ignore this
-	// info and always provide the same completion items.
-
-	const file = textDocumentPosition.textDocument.uri;
-
-
-
-
-
-
-
-	return [
-		{
-			label: 'Ls',
-			kind: CompletionItemKind.Text,
-			data: { id: 1, text: 'test.toString()' }
-		},
-		{
-			label: 'JavaScript',
-			kind: CompletionItemKind.Text,
-			data: { id: 2, text: 'details' }
-		}
-	]
-});
-
-// This handler resolve additional information for the item selected in
-// the completion list.
-connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-	if (item.data.id === 1) {
-		item.detail = 'Ls details';
-		item.documentation = item.data.text;
-	} else if (item.data.id === 2) {
-		item.detail = 'JavaScript details';
-		item.documentation = item.data.text;
-	}
-	return item;
+// The content of a text document has changed. This event is emitted
+// when the text document first opened or when its content has changed.
+connection.onDidSaveTextDocument((handler) => {
+	connection.console.log(handler.textDocument.uri);
+	validateTextDocument(handler.textDocument);
 });
 
 /*
