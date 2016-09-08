@@ -38,10 +38,10 @@ const interoProxy = new InteroProxy(intero);
 let workspaceRoot: string;
 connection.onInitialize((params): InitializeResult => {
 	workspaceRoot = params.rootPath;
-	connection.console.log("onInitialize");
+	connection.console.log("Initializing intero...");
 
 	const initRequest = new InitRequest();
-	initRequest.send(interoProxy, (resp: InitResponse) => { connection.console.log("intero init done"); });
+	initRequest.send(interoProxy, (resp: InitResponse) => { connection.console.log("Intero initialization done."); });
 
 	return {
 		capabilities: {

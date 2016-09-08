@@ -1,2 +1,3 @@
-# vscode-languageserver-node-example
-Sample language server implemented in Node
+# Haskell intero for VSCode
+Language server for Haskell using [Intero backend](https://github.com/commercialhaskell/intero)
+
