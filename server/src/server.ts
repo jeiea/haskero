@@ -17,6 +17,8 @@ import {InteroProxy} from './intero/interoProxy';
 import {InitRequest, InitResponse} from './intero/commands/init';
 import {ReloadRequest, ReloadResponse} from './intero/commands/reload';
 import {InteroDiagnostic, InteroDiagnosticKind} from './intero/commands/interoDiagnostic'
+import {LocAtRequest, LocAtResponse} from './intero/commands/locAt'
+import {DocumentUtils} from './DocumentHelper'
 
 import {Uri} from './intero/uri';
 
@@ -48,10 +50,11 @@ connection.onInitialize((params): InitializeResult => {
 
 			// Tell the client that the server works in FULL text document sync mode
 			textDocumentSync: documents.syncKind,
+			definitionProvider : true
 			// Tell the client that the server support code complete
-			completionProvider: {
-				resolveProvider: true
-			}
+			// completionProvider: {
+			// 	resolveProvider: true
+			// }
 		}
 	}
 });
@@ -78,13 +81,23 @@ connection.onDidChangeConfiguration((change) => {
 	documents.all().forEach(validateTextDocument);
 });
 
+connection.onDefinition( (documentInfo): any => {
+	var ur = new Uri(documentInfo.textDocument.uri);
+	let doc = documents.get(documentInfo.textDocument.uri);
+	if (ur.isFileProtocol()) {
+		let {word , range} = DocumentUtils.getWord(doc, documentInfo.position);
+		const locAtRequest = new LocAtRequest(ur.toFilePath(), range.start.line + 1, range.start.character, range.end.line + 1, range.end.character, word);
+		locAtRequest.send(interoProxy, (response : LocAtResponse) => {});
+	}
+});
+
 function validateTextDocument(textDocument: TextDocumentIdentifier): void {
 	let problems = 0;
 	connection.console.log(textDocument.uri);
 	var ur = new Uri(textDocument.uri);
 
 	if (ur.isFileProtocol()) {
-		const reloadRequest = new ReloadRequest(new Uri(textDocument.uri));
+		const reloadRequest = new ReloadRequest(ur);
 		connection.console.log(reloadRequest.filePath);
 
 		reloadRequest.send(interoProxy, (response : ReloadResponse) => {
@@ -142,10 +155,10 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): void {
 // 	return item;
 // });
 
-connection.onDidOpenTextDocument((handler) => {
-	connection.console.log(handler.textDocument.uri);
-	validateTextDocument(handler.textDocument);
-});
+// connection.onDidOpenTextDocument((handler) => {
+// 	connection.console.log(handler.textDocument.uri);i
+// 	validateTextDocument(handler.textDocument);
+// });
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.

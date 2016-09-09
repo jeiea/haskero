@@ -1,5 +1,6 @@
 import {InteroProxy} from '../interoProxy.ts'
+import {InteroResponse} from './interoResponse'
 
 export interface InteroRequest {
-    send(interoProxy : InteroProxy, onInteroResponse : (InteroResponse) => void) : void;
+    send(interoProxy : InteroProxy) : Promise<InteroResponse>;
 }
