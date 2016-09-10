@@ -6,6 +6,16 @@ import {InitRequest, InitResponse} from './commands/init'
 
 import child_process = require('child_process');
 
+export class RawResponse {
+    public rawout : string;
+    public rawerr : string;
+
+    constructor(rawout : string, rawerr : string) {
+        this.rawout = rawout;
+        this.rawerr = rawerr;
+    }
+}
+
 /**
  * Intero proxy
  */
@@ -13,7 +23,7 @@ export class InteroProxy {
     private interoProcess : child_process.ChildProcess;
     private rawout : string;
     private rawoutErr : string;
-    private onRawResponseQueue : Array<(rawout : string, rawerr : string) => void>;
+    private onRawResponseQueue : Array<{resolve:(response : RawResponse) => void, reject:any}>;
 
     public constructor(interoProcess : child_process.ChildProcess) {
         this.interoProcess = interoProcess;
@@ -24,10 +34,13 @@ export class InteroProxy {
         this.interoProcess.stderr.on('data', this.onDataErr);
     }
 
-    public sendRawRequest(rawRequest : string, onRawResponse : (rawout : string, rawerr : string) => void) : void {
-        this.onRawResponseQueue.push(onRawResponse);
-        let req = rawRequest + '\n';
-        this.interoProcess.stdin.write(req);
+    public sendRawRequest(rawRequest : string) : Promise<RawResponse> {
+        let executor = (resolve, reject) : void => {
+            this.onRawResponseQueue.push( {resolve:resolve, reject:reject} );
+            let req = rawRequest + '\n';
+            this.interoProcess.stdin.write(req);
+        };
+        return new Promise(executor);
     }
 
     private static endsWith(str : string, suffix : string) : boolean {
@@ -39,12 +52,15 @@ export class InteroProxy {
         let chunk = data.toString();
         this.rawout += chunk;
         if (InteroProxy.endsWith(chunk, '\u0004')) {
-            if (this.onRawResponseQueue.length > 0) {
-                let callback = this.onRawResponseQueue.shift();
-                callback(this.rawout, this.rawoutErr);
-            }
+            let rawout = this.rawout;
+            let rawerr = this.rawoutErr;
             this.rawout = '';
             this.rawoutErr = '';
+            if (this.onRawResponseQueue.length > 0) {
+                let resolver = this.onRawResponseQueue.shift();
+                resolver.resolve(new RawResponse(rawout, rawerr));
+            }
+
         }
     }
 

@@ -9,7 +9,7 @@ import {
 	createConnection, IConnection, TextDocumentSyncKind,
 	TextDocuments, TextDocument, Diagnostic, DiagnosticSeverity,
 	InitializeParams, InitializeResult, TextDocumentPositionParams,
-	CompletionItem, CompletionItemKind, Files, TextDocumentIdentifier
+	CompletionItem, CompletionItemKind, Files, TextDocumentIdentifier, Location, Range, Position
 } from 'vscode-languageserver';
 
 import child_process = require('child_process');
@@ -43,14 +43,15 @@ connection.onInitialize((params): InitializeResult => {
 	connection.console.log("Initializing intero...");
 
 	const initRequest = new InitRequest();
-	initRequest.send(interoProxy, (resp: InitResponse) => { connection.console.log("Intero initialization done."); });
+	initRequest.send(interoProxy)
+		.then((resp: InitResponse) => { connection.console.log("Intero initialization done."); });
 
 	return {
 		capabilities: {
 
 			// Tell the client that the server works in FULL text document sync mode
 			textDocumentSync: documents.syncKind,
-			definitionProvider : true
+			definitionProvider: true
 			// Tell the client that the server support code complete
 			// completionProvider: {
 			// 	resolveProvider: true
@@ -81,13 +82,18 @@ connection.onDidChangeConfiguration((change) => {
 	documents.all().forEach(validateTextDocument);
 });
 
-connection.onDefinition( (documentInfo): any => {
+connection.onDefinition((documentInfo): any => {
 	var ur = new Uri(documentInfo.textDocument.uri);
 	let doc = documents.get(documentInfo.textDocument.uri);
 	if (ur.isFileProtocol()) {
-		let {word , range} = DocumentUtils.getWord(doc, documentInfo.position);
+		let {word, range} = DocumentUtils.getWord(doc, documentInfo.position);
 		const locAtRequest = new LocAtRequest(ur.toFilePath(), range.start.line + 1, range.start.character, range.end.line + 1, range.end.character, word);
-		locAtRequest.send(interoProxy, (response : LocAtResponse) => {});
+
+		return locAtRequest.send(interoProxy)
+			.then((response) => {
+				let loc = Location.create(response.filePath, Range.create(Position.create(response.start_l, response.start_c), Position.create(response.end_l, response.end_c)));
+				return Promise.resolve(loc);
+			});
 	}
 });
 
@@ -100,22 +106,24 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): void {
 		const reloadRequest = new ReloadRequest(ur);
 		connection.console.log(reloadRequest.filePath);
 
-		reloadRequest.send(interoProxy, (response : ReloadResponse) => {
-			let diagnostics: Diagnostic[] = [];
-			diagnostics = response.diagnostics.
-			filter(d => d.filePath.toLowerCase() == ur.toFilePath().toLowerCase()).map((interoDiag : InteroDiagnostic) : Diagnostic => {
-				return {
-					severity: interoDiag.kind == InteroDiagnosticKind.error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
-					range: {
-						start: { line: interoDiag.line, character: interoDiag.col},
-						end: { line: interoDiag.line, character: interoDiag.col }
-					},
-					message: interoDiag.message,
-					source: 'intero'
-				}
+		reloadRequest.send(interoProxy)
+			.then((response: ReloadResponse) => {
+				let diagnostics: Diagnostic[] = [];
+				diagnostics = response.diagnostics.
+					filter(d => d.filePath.toLowerCase() == ur.toFilePath().toLowerCase()).map((interoDiag: InteroDiagnostic): Diagnostic => {
+						return {
+							severity: interoDiag.kind == InteroDiagnosticKind.error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
+							range: {
+								start: { line: interoDiag.line, character: interoDiag.col },
+								end: { line: interoDiag.line, character: interoDiag.col }
+							},
+							message: interoDiag.message,
+							source: 'intero'
+						}
+					});
+				connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+				return Promise.resolve();
 			});
-			connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
-		});
 	}
 }
 

@@ -1,10 +1,17 @@
 import {TextDocument, Position, Range} from 'vscode-languageserver'
 
+class LocalizedWord {
+    word : string;
+    range : Range;
+}
+
 export class DocumentUtils {
-    public static getWordAtPosition(text: string, position: Position): string {
-        if (text === null || position === null) {
-            return '';
-        }
+    public static getWordAtPosition(document : TextDocument, position: Position): LocalizedWord {
+        let text = document.getText();
+        let cursorOffset = document.offsetAt(position);
+
+        text.lastIndexOf(' ')
+
         let line = text.split('\n')[position.line];
         if (line) {
             let startPosition = line.lastIndexOf(' ', position.character) + 1;
@@ -15,7 +22,7 @@ export class DocumentUtils {
             let ret = line.slice(startPosition, endPosition).replace(/[(),]/, '');
             return ret;
         }
-        return '';
+        return null;
     }
 
     public static isPositionInRange(position: Position, range: Range): boolean {
