@@ -86,12 +86,13 @@ connection.onDefinition((documentInfo): any => {
 	var ur = new Uri(documentInfo.textDocument.uri);
 	let doc = documents.get(documentInfo.textDocument.uri);
 	if (ur.isFileProtocol()) {
-		let {word, range} = DocumentUtils.getWord(doc, documentInfo.position);
+		let {word, range} = DocumentUtils.getWordAtPosition(doc, documentInfo.position);
 		const locAtRequest = new LocAtRequest(ur.toFilePath(), range.start.line + 1, range.start.character, range.end.line + 1, range.end.character, word);
 
 		return locAtRequest.send(interoProxy)
 			.then((response) => {
-				let loc = Location.create(response.filePath, Range.create(Position.create(response.start_l, response.start_c), Position.create(response.end_l, response.end_c)));
+				let fileUri = 'file:' + encodeURI(response.filePath);
+				let loc = Location.create(fileUri, Range.create(Position.create(response.start_l, response.start_c), Position.create(response.end_l, response.end_c)));
 				return Promise.resolve(loc);
 			});
 	}

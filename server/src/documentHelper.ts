@@ -3,26 +3,43 @@ import {TextDocument, Position, Range} from 'vscode-languageserver'
 class LocalizedWord {
     word : string;
     range : Range;
+
+    constructor(word : string, range : Range) {
+        this.word = word;
+        this.range = range;
+    }
 }
 
 export class DocumentUtils {
+
+    private static identifierSymbols = /[0-9a-zA-Z_']/g;
+
+    private static isIdentifierSymbol(c : string) : boolean {
+        return c.search(DocumentUtils.identifierSymbols) != -1;
+    }
+
+    private static getStartingOffset(text : string, cursorOffset : number) : number {
+        let i = cursorOffset;
+        for (i; i >= 0 && DocumentUtils.isIdentifierSymbol(text.charAt(i)); i--) {
+        }
+        return i+1;
+    }
+
+    private static getEndingOffset(text : string, cursorOffset : number) : number {
+        let i = cursorOffset;
+        for (i; i < text.length && DocumentUtils.isIdentifierSymbol(text.charAt(i)); i++) {
+        }
+        return i;
+    }
+
     public static getWordAtPosition(document : TextDocument, position: Position): LocalizedWord {
         let text = document.getText();
         let cursorOffset = document.offsetAt(position);
+        let startOffset = DocumentUtils.getStartingOffset(text, cursorOffset);
+        let endOffset = DocumentUtils.getEndingOffset(text, cursorOffset);
+        let word = text.slice(startOffset, endOffset);
 
-        text.lastIndexOf(' ')
-
-        let line = text.split('\n')[position.line];
-        if (line) {
-            let startPosition = line.lastIndexOf(' ', position.character) + 1;
-            let endPosition = line.indexOf(' ', position.character);
-            if (endPosition < 0) {
-                endPosition = line.length;
-            }
-            let ret = line.slice(startPosition, endPosition).replace(/[(),]/, '');
-            return ret;
-        }
-        return null;
+        return new LocalizedWord(word, Range.create(document.positionAt(startOffset), document.positionAt(endOffset)));
     }
 
     public static isPositionInRange(position: Position, range: Range): boolean {
@@ -34,11 +51,5 @@ export class DocumentUtils {
             return false;
         }
         return true;
-    }
-
-    public static getWord(document : TextDocument, pos : Position) : {word : string, range : Range} {
-        let w = DocumentUtils.getWordAtPosition(document.getText(), pos); //text.slice(offset, text.indexOf(" ", offset));
-        let endPos = Position.create(pos.line, pos.character + w.length);
-        return {word : w, range : Range.create(pos, endPos) };
     }
 }

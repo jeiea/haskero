@@ -84,8 +84,12 @@ export class LocAtRequest implements InteroRequest {
     }
 
     public send(interoProxy: InteroProxy): Promise<LocAtResponse> {
+        const load = `:l ${this.filePath}`;
         const req = `:loc-at ${this.filePath} ${this.start_l} ${this.start_c} ${this.end_l} ${this.end_c} ${this.identifier}`;
-        return interoProxy.sendRawRequest(req)
+        return interoProxy.sendRawRequest(load)
+            .then((response) => {
+                return interoProxy.sendRawRequest(req);
+            })
             .then((response) => {
                 return Promise.resolve(new LocAtResponse(response.rawout, response.rawerr));
             });
