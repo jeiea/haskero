@@ -20,7 +20,7 @@ import {InteroDiagnostic, InteroDiagnosticKind} from './intero/commands/interoDi
 import {LocAtRequest, LocAtResponse} from './intero/commands/locAt'
 import {DocumentUtils, LocalizedWord} from './DocumentUtils'
 
-import {Uri} from './intero/uri';
+import {UriUtils} from './intero/uri';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -83,16 +83,16 @@ connection.onDidChangeConfiguration((change) => {
 });
 
 connection.onDefinition((documentInfo): any => {
-	var ur = new Uri(documentInfo.textDocument.uri);
-	let doc = documents.get(documentInfo.textDocument.uri);
-	if (ur.isFileProtocol()) {
+	if (UriUtils.isFileProtocol(documentInfo.textDocument.uri)) {
+		let doc = documents.get(documentInfo.textDocument.uri);
+		let filePath = UriUtils.toFilePath(documentInfo.textDocument.uri);
 		let wordRange = DocumentUtils.getWordAtPosition(doc, documentInfo.position);
-		const locAtRequest = new LocAtRequest(ur.toFilePath(), wordRange.range.start.line + 1, wordRange.range.start.character, wordRange.range.end.line + 1, wordRange.range.end.character, wordRange.word);
+		const locAtRequest = new LocAtRequest(filePath, wordRange.range.start.line + 1, wordRange.range.start.character, wordRange.range.end.line + 1, wordRange.range.end.character, wordRange.word);
 
 		return locAtRequest.send(interoProxy)
 			.then((response) => {
-				let fileUri = 'file:' + encodeURI(response.filePath);
-				let loc = Location.create(fileUri, Range.create(Position.create(response.startLine - 1, response.startColumn), Position.create(response.endLine - 1, response.endColumn)));
+				let fileUri = UriUtils.toUri(response.filePath);
+				let loc = Location.create(fileUri, Range.create(Position.create(response.startLine - 1, response.startColumn - 1), Position.create(response.endLine - 1, response.endColumn - 1)));
 				return Promise.resolve(loc);
 			});
 	}
@@ -101,17 +101,16 @@ connection.onDefinition((documentInfo): any => {
 function validateTextDocument(textDocument: TextDocumentIdentifier): void {
 	let problems = 0;
 	connection.console.log(textDocument.uri);
-	var ur = new Uri(textDocument.uri);
 
-	if (ur.isFileProtocol()) {
-		const reloadRequest = new ReloadRequest(ur);
+	if (UriUtils.isFileProtocol(textDocument.uri)) {
+		const reloadRequest = new ReloadRequest(textDocument.uri);
 		connection.console.log(reloadRequest.filePath);
 
 		reloadRequest.send(interoProxy)
 			.then((response: ReloadResponse) => {
 				let diagnostics: Diagnostic[] = [];
 				diagnostics = response.diagnostics.
-					filter(d => d.filePath.toLowerCase() == ur.toFilePath().toLowerCase()).map((interoDiag: InteroDiagnostic): Diagnostic => {
+					filter(d => d.filePath.toLowerCase() == UriUtils.toFilePath(textDocument.uri).toLowerCase()).map((interoDiag: InteroDiagnostic): Diagnostic => {
 						return {
 							severity: interoDiag.kind == InteroDiagnosticKind.error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
 							range: {
