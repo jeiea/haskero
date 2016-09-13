@@ -41,7 +41,7 @@ export class DocumentUtils {
         let endOffset = DocumentUtils.getEndingOffset(text, cursorOffset);
         let word = text.slice(startOffset, endOffset);
 
-        return new LocalizedWord(word, Range.create(document.positionAt(startOffset), document.positionAt(endOffset)));
+        return new LocalizedWord(word, Range.create(document.positionAt(startOffset + 1), document.positionAt(endOffset + 1)));
     }
 
     public static isPositionInRange(position: Position, range: Range): boolean {
