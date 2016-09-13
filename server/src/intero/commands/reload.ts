@@ -3,7 +3,7 @@
 import {RawResponse, InteroProxy} from '../interoProxy'
 import {InteroRequest} from './interoRequest'
 import {InteroResponse} from './interoResponse'
-import {Uri} from '../uri'
+import {MyUri} from '../uri'
 import {InteroDiagnostic, InteroDiagnosticKind} from './interoDiagnostic'
 
 export class ReloadResponse implements InteroResponse {
@@ -77,9 +77,9 @@ export class ReloadRequest implements InteroRequest {
     private _filePath: string;
     public get filePath(): string {
         return this._filePath;
-    }
+    }MyUri
 
-    public constructor(fileUri: Uri) {
+    public constructor(fileUri: MyUri) {
         this._filePath = fileUri.toFilePath();
     }
 

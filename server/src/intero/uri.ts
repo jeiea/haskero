@@ -4,7 +4,7 @@ import {
 	Files
 } from 'vscode-languageserver';
 
-export class Uri {
+export class MyUri {
     private _uri : string;
     public get uri() : string {
         return this._uri;
