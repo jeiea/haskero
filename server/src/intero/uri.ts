@@ -4,21 +4,22 @@ import {
 	Files
 } from 'vscode-languageserver';
 
-export class MyUri {
-    private _uri : string;
-    public get uri() : string {
-        return this._uri;
+
+export class UriUtils {
+
+    public static normalizeFilePath(filePath : string) : string {
+        return filePath.replace(/\\/g,'/');
     }
 
-    public constructor(uri : string) {
-        this._uri = uri;
+    public static toFilePath(uri : string) : string {
+        return Files.uriToFilePath(uri);
     }
 
-    public toFilePath() : string {
-        return Files.uriToFilePath(this._uri);
+    public static toUri(filePath : string) : string {
+        return 'file:///' + UriUtils.normalizeFilePath(filePath).split('/').map(encodeURI).join('/');
     }
 
-    public isFileProtocol() : boolean {
-        return this.toFilePath() != null;
+     public static isFileProtocol(uri : string) : boolean {
+        return UriUtils.toFilePath(uri) != null;
     }
 }
