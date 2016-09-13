@@ -18,7 +18,7 @@ import {InitRequest, InitResponse} from './intero/commands/init';
 import {ReloadRequest, ReloadResponse} from './intero/commands/reload';
 import {InteroDiagnostic, InteroDiagnosticKind} from './intero/commands/interoDiagnostic'
 import {LocAtRequest, LocAtResponse} from './intero/commands/locAt'
-import {DocumentUtils} from './DocumentHelper'
+import {DocumentUtils, LocalizedWord} from './DocumentUtils'
 
 import {Uri} from './intero/uri';
 
@@ -86,13 +86,13 @@ connection.onDefinition((documentInfo): any => {
 	var ur = new Uri(documentInfo.textDocument.uri);
 	let doc = documents.get(documentInfo.textDocument.uri);
 	if (ur.isFileProtocol()) {
-		let {word, range} = DocumentUtils.getWordAtPosition(doc, documentInfo.position);
-		const locAtRequest = new LocAtRequest(ur.toFilePath(), range.start.line + 1, range.start.character, range.end.line + 1, range.end.character, word);
+		let wordRange = DocumentUtils.getWordAtPosition(doc, documentInfo.position);
+		const locAtRequest = new LocAtRequest(ur.toFilePath(), wordRange.range.start.line + 1, wordRange.range.start.character, wordRange.range.end.line + 1, wordRange.range.end.character, wordRange.word);
 
 		return locAtRequest.send(interoProxy)
 			.then((response) => {
 				let fileUri = 'file:' + encodeURI(response.filePath);
-				let loc = Location.create(fileUri, Range.create(Position.create(response.start_l, response.start_c), Position.create(response.end_l, response.end_c)));
+				let loc = Location.create(fileUri, Range.create(Position.create(response.startLine - 1, response.startColumn), Position.create(response.endLine - 1, response.endColumn)));
 				return Promise.resolve(loc);
 			});
 	}

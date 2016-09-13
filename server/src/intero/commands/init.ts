@@ -1,3 +1,5 @@
+'use strict';
+
 import {InteroProxy, RawResponse} from '../interoProxy'
 import {InteroRequest} from './interoRequest'
 import {InteroResponse} from './interoResponse'

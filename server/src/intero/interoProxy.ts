@@ -1,3 +1,5 @@
+'use strict';
+
 /// <reference path="../../typings/node/node.d.ts"/>
 
 import {InteroRequest} from './commands/interoRequest'

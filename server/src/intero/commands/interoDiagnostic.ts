@@ -1,3 +1,5 @@
+'use strict';
+
 export enum InteroDiagnosticKind {
     warning,
     error

@@ -1,3 +1,5 @@
+'use strict';
+
 import {InteroProxy} from '../interoProxy.ts'
 import {InteroResponse} from './interoResponse'
 

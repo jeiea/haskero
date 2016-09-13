@@ -1,3 +1,5 @@
+'use strict';
+
 import {InteroProxy} from '../interoProxy.ts'
 import {InteroRequest} from './interoRequest.ts'
 import {InteroResponse} from './interoResponse.ts'
@@ -20,19 +22,19 @@ export class LocAtResponse implements InteroResponse {
         return this._filePath;
     }
 
-    public get start_l(): number {
+    public get startLine(): number {
         return this._start_l;
     }
 
-    public get start_c(): number {
+    public get startColumn(): number {
         return this._start_c;
     }
 
-    public get end_l(): number {
+    public get endLine(): number {
         return this._end_l;
     }
 
-    public get end_c(): number {
+    public get endColumn(): number {
         return this._end_c;
     }
 

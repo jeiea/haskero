@@ -1,6 +1,8 @@
+'use strict';
+
 import {TextDocument, Position, Range} from 'vscode-languageserver'
 
-class LocalizedWord {
+export class LocalizedWord {
     word : string;
     range : Range;
 
@@ -15,7 +17,7 @@ export class DocumentUtils {
     private static identifierSymbols = /[0-9a-zA-Z_']/g;
 
     private static isIdentifierSymbol(c : string) : boolean {
-        return c.search(DocumentUtils.identifierSymbols) != -1;
+        return c.search(DocumentUtils.identifierSymbols) !== -1;
     }
 
     private static getStartingOffset(text : string, cursorOffset : number) : number {
