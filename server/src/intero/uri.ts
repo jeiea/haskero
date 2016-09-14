@@ -16,7 +16,14 @@ export class UriUtils {
     }
 
     public static toUri(filePath : string) : string {
-        return 'file:///' + UriUtils.normalizeFilePath(filePath).split('/').map(encodeURI).join('/');
+        let prefix = '';
+        if (process.platform === 'win32') {
+            prefix = 'file:///';
+        }
+        else {
+            prefix = 'file://';
+        }
+        return prefix + UriUtils.normalizeFilePath(filePath).split('/').map(encodeURIComponent).join('/');
     }
 
      public static isFileProtocol(uri : string) : boolean {
