@@ -18,7 +18,7 @@ import {InitRequest, InitResponse} from './intero/commands/init';
 import {ReloadRequest, ReloadResponse} from './intero/commands/reload';
 import {InteroDiagnostic, InteroDiagnosticKind} from './intero/commands/interoDiagnostic'
 import {LocAtRequest, LocAtResponse} from './intero/commands/locAt'
-import {DocumentUtils, LocalizedWord} from './DocumentUtils'
+import {DocumentUtils, LocalizedWord} from './documentUtils'
 
 import {UriUtils} from './intero/uri';
 
@@ -110,9 +110,9 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): void {
 			.then((response: ReloadResponse) => {
 				let diagnostics: Diagnostic[] = [];
 				diagnostics = response.diagnostics.
-					filter(d => d.filePath.toLowerCase() == UriUtils.toFilePath(textDocument.uri).toLowerCase()).map((interoDiag: InteroDiagnostic): Diagnostic => {
+					/*filter(d => d.filePath.toLowerCase() == UriUtils.toFilePath(textDocument.uri).toLowerCase()).*/map((interoDiag: InteroDiagnostic): Diagnostic => {
 						return {
-							severity: interoDiag.kind == InteroDiagnosticKind.error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
+							severity: interoDiag.kind === InteroDiagnosticKind.error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
 							range: {
 								start: { line: interoDiag.line, character: interoDiag.col },
 								end: { line: interoDiag.line, character: interoDiag.col }

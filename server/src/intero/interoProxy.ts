@@ -7,6 +7,7 @@ import {InteroResponse} from './commands/interoResponse'
 import {InitRequest, InitResponse} from './commands/init'
 
 import child_process = require('child_process');
+import stream = require('stream');
 
 export class RawResponse {
     public rawout : string;
@@ -41,6 +42,7 @@ export class InteroProxy {
             this.onRawResponseQueue.push( {resolve:resolve, reject:reject} );
             let req = rawRequest + '\n';
             this.interoProcess.stdin.write(req);
+            console.log('>' + req);
         };
         return new Promise(executor);
     }
@@ -53,7 +55,9 @@ export class InteroProxy {
     private onData = (data : Buffer) => {
         let chunk = data.toString();
         this.rawout += chunk;
-        if (InteroProxy.endsWith(chunk, '\u0004')) {
+        console.log(chunk);
+        if (InteroProxy.endsWith(chunk, '@')) {//'\u0004')) {
+            console.log('>>><<<');
             let rawout = this.rawout;
             let rawerr = this.rawoutErr;
             this.rawout = '';
@@ -62,7 +66,6 @@ export class InteroProxy {
                 let resolver = this.onRawResponseQueue.shift();
                 resolver.resolve(new RawResponse(rawout, rawerr));
             }
-
         }
     }
 
@@ -70,6 +73,7 @@ export class InteroProxy {
         let chunk = data.toString();
         //console.log("\r\n    >>>>" + chunk + "<<<<");
         this.rawoutErr += chunk;
+        console.log(chunk);
     }
 }
 
