@@ -57,15 +57,9 @@ export class InteroProxy {
         this.rawout += chunk;
         console.log(chunk);
         if (InteroProxy.endsWith(chunk, '@')) {//'\u0004')) {
-            console.log('>>><<<');
-            let rawout = this.rawout;
-            let rawerr = this.rawoutErr;
-            this.rawout = '';
-            this.rawoutErr = '';
-            if (this.onRawResponseQueue.length > 0) {
-                let resolver = this.onRawResponseQueue.shift();
-                resolver.resolve(new RawResponse(rawout, rawerr));
-            }
+            //On linux, issue with synchronisation between stdout and stderr :
+            // - use a set time out to wait 50ms for stderr to finish to write data
+            setTimeout(this.onResponse, 50);
         }
     }
 
@@ -75,6 +69,19 @@ export class InteroProxy {
         this.rawoutErr += chunk;
         console.log(chunk);
     }
+
+    private onResponse = () => {
+        console.log('>>><<<');
+        let rawout = this.rawout;
+        let rawerr = this.rawoutErr;
+        this.rawout = '';
+        this.rawoutErr = '';
+        if (this.onRawResponseQueue.length > 0) {
+            let resolver = this.onRawResponseQueue.shift();
+            resolver.resolve(new RawResponse(rawout, rawerr));
+        }
+    }
+
 }
 
 // let interoProxy = new InteroProxy(intero);
