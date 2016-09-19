@@ -110,7 +110,7 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): void {
 			.then((response: ReloadResponse) => {
 				let diagnostics: Diagnostic[] = [];
 				diagnostics = response.diagnostics.
-					/*filter(d => d.filePath.toLowerCase() == UriUtils.toFilePath(textDocument.uri).toLowerCase()).*/map((interoDiag: InteroDiagnostic): Diagnostic => {
+					filter(d => d.filePath.toLowerCase() == UriUtils.toFilePath(textDocument.uri).toLowerCase()).map((interoDiag: InteroDiagnostic): Diagnostic => {
 						return {
 							severity: interoDiag.kind === InteroDiagnosticKind.error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
 							range: {
