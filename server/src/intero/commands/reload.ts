@@ -51,7 +51,7 @@ export class ReloadResponse implements InteroResponse {
     }
 
     private removeDuplicates(matches: RegExpExecArray[]): RegExpExecArray[] {
-        let matchToKey = (m: RegExpExecArray) => m[0];
+        let matchToKey = (m: RegExpExecArray) => m[0].trim();
         let matchesSetObject = matches.reduce((accu, m) => { accu[matchToKey(m)] = m; return accu; }, {});
         return Object.keys(matchesSetObject).map(key => matchesSetObject[key]);
     }
