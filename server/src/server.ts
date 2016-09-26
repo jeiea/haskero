@@ -100,7 +100,7 @@ connection.onDefinition((documentInfo): any => {
 
 function validateTextDocument(textDocument: TextDocumentIdentifier): void {
 	let problems = 0;
-	connection.console.log(textDocument.uri);
+	connection.console.log("validate : " + textDocument.uri);
 
 	if (UriUtils.isFileProtocol(textDocument.uri)) {
 		const reloadRequest = new ReloadRequest(textDocument.uri);
@@ -109,8 +109,13 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): void {
 		reloadRequest.send(interoProxy)
 			.then((response: ReloadResponse) => {
 				let diagnostics: Diagnostic[] = [];
+				console.log("err/war number before filter : " + response.diagnostics.length);
 				diagnostics = response.diagnostics.
-					filter(d => d.filePath.toLowerCase() == UriUtils.toFilePath(textDocument.uri).toLowerCase()).map((interoDiag: InteroDiagnostic): Diagnostic => {
+					filter(d => {
+						// console.log("file path doc : [" + d.filePath.toLowerCase() + "]");
+						// console.log("file path diag : [" + UriUtils.toFilePath(textDocument.uri).toLowerCase() + "]");
+						return d.filePath.toLowerCase() === UriUtils.toFilePath(textDocument.uri).toLowerCase();
+					}).map((interoDiag: InteroDiagnostic): Diagnostic => {
 						return {
 							severity: interoDiag.kind === InteroDiagnosticKind.error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
 							range: {
@@ -121,6 +126,7 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): void {
 							source: 'intero'
 						}
 					});
+				console.log("err/war number after filter : " + diagnostics.length);
 				connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 				return Promise.resolve();
 			});
