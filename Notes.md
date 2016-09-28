@@ -1,5 +1,15 @@
 # Notes on intero behavior
 
+## indexes
+
+intero indexes are 1 based.
+ex: the first char of a source code is at (line 1 - column 1)
+
+a range starts at the first char and ends at the last char + 1: [line/col first char, line+1/col+1 last char]
+ex:
+ - range of text foo in `hi foo is great` is [line 1 - col 4, line 1 col 7]
+ - range of text foo in `hi foo` is [line 1 - col 4, line 2 col 1]
+
 ## Errors/Warnings
 
 ### parse error
