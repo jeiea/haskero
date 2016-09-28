@@ -77,7 +77,7 @@ export class ReloadRequest implements InteroRequest {
     private _filePath: string;
     public get filePath(): string {
         return this._filePath;
-    }MyUri
+    }
 
     public constructor(uri: string) {
         this._filePath = UriUtils.toFilePath(uri);
