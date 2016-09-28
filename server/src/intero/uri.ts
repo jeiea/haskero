@@ -12,7 +12,11 @@ export class UriUtils {
     }
 
     public static toFilePath(uri : string) : string {
-        return Files.uriToFilePath(uri);
+        let filePath = Files.uriToFilePath(uri);
+        if (process.platform === 'win32') {
+            filePath = filePath.charAt(0).toUpperCase() + filePath.substr(1);
+        }
+        return filePath;
     }
 
     public static toUri(filePath : string) : string {
