@@ -28,6 +28,7 @@ executable teststack
   main-is:             Main.hs
   build-depends:       base
                      , teststack
+                     , containers
 
 test-suite spec
   default-language:    Haskell2010

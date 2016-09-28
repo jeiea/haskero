@@ -87,7 +87,7 @@ connection.onDefinition((documentInfo): Promise<Location> => {
 	if (UriUtils.isFileProtocol(documentInfo.textDocument.uri)) {
 		let doc = documents.get(documentInfo.textDocument.uri);
 		let filePath = UriUtils.toFilePath(documentInfo.textDocument.uri);
-		let wordRange = DocumentUtils.getWordAtPosition(doc, documentInfo.position);
+		let wordRange = DocumentUtils.getIdentifierAtPosition(doc, documentInfo.position);
 		const locAtRequest = new LocAtRequest(filePath, wordRange.range.start.line + 1, wordRange.range.start.character, wordRange.range.end.line + 1, wordRange.range.end.character, wordRange.word);
 
 		return locAtRequest.send(interoProxy)
@@ -143,9 +143,10 @@ connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Prom
 
 	let doc = documents.get(textDocumentPosition.textDocument.uri);
 	let filePath = UriUtils.toFilePath(textDocumentPosition.textDocument.uri);
-	let {word, range} = DocumentUtils.getWordAtPosition(doc, textDocumentPosition.position);
+	let {word, range} = DocumentUtils.getTextAtPosition(doc, textDocumentPosition.position);
 
-	const completeAtRequest = new CompleteAtRequest(filePath, range.start.line + 1, range.start.character, range.end.line + 1, range.end.character, word);
+	const completeAtRequest = new CompleteAtRequest(filePath, range.start.line + 1, range.start.character,
+													range.end.line + 1, range.end.character, word);
 
 	return completeAtRequest.send(interoProxy)
 	.then((response : CompleteAtResponse) => {

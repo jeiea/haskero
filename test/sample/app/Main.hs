@@ -1,5 +1,9 @@
 module Main where
 
+import System.IO
+import Control.Monad
+import qualified Data.IntMap.Strict as M
+
 import Lib (ourAdd)
 
 import Text.Printf (printf)
@@ -14,7 +18,11 @@ xxx = 3
     where
         innerfunc a = a
 
-f xxx = xxx + aaa
+f xxx = xxx
+
+g x = x
+
+h x = x
 -- test = 3 + "e"
 
 -- test2 = 3 + "e"
