@@ -18,6 +18,7 @@ import {InitRequest, InitResponse} from './intero/commands/init';
 import {ReloadRequest, ReloadResponse} from './intero/commands/reload';
 import {InteroDiagnostic, InteroDiagnosticKind} from './intero/commands/interoDiagnostic'
 import {LocAtRequest, LocAtResponse} from './intero/commands/locAt'
+import {CompleteAtRequest, CompleteAtResponse} from './intero/commands/completeAt'
 import {DocumentUtils, LocalizedWord} from './documentUtils'
 
 import {UriUtils} from './intero/uri';
@@ -51,11 +52,11 @@ connection.onInitialize((params): InitializeResult => {
 
 			// Tell the client that the server works in FULL text document sync mode
 			textDocumentSync: documents.syncKind,
-			definitionProvider: true
+			definitionProvider: true,
 			// Tell the client that the server support code complete
-			// completionProvider: {
-			// 	resolveProvider: true
-			// }
+			completionProvider: {
+				resolveProvider: true
+			}
 		}
 	}
 });
@@ -82,7 +83,7 @@ connection.onDidChangeConfiguration((change) => {
 	documents.all().forEach(validateTextDocument);
 });
 
-connection.onDefinition((documentInfo): any => {
+connection.onDefinition((documentInfo): Promise<Location> => {
 	if (UriUtils.isFileProtocol(documentInfo.textDocument.uri)) {
 		let doc = documents.get(documentInfo.textDocument.uri);
 		let filePath = UriUtils.toFilePath(documentInfo.textDocument.uri);
@@ -134,40 +135,49 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): void {
 }
 
 
-// // This handler provides the initial list of the completion items.
-// connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-// 	// The pass parameter contains the position of the text document in
-// 	// which code complete got requested. For the example we ignore this
-// 	// info and always provide the same completion items.
+// This handler provides the initial list of the completion items.
+connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Promise<CompletionItem[]> => {
+	// The pass parameter contains the position of the text document in
+	// which code complete got requested. For the example we ignore this
+	// info and always provide the same completion items.
 
-// 	const file = textDocumentPosition.textDocument.uri;
+	let doc = documents.get(textDocumentPosition.textDocument.uri);
+	let filePath = UriUtils.toFilePath(textDocumentPosition.textDocument.uri);
+	let {word, range} = DocumentUtils.getWordAtPosition(doc, textDocumentPosition.position);
 
-// 	return [
-// 		{
-// 			label: 'Ls',
-// 			kind: CompletionItemKind.Text,
-// 			data: { id: 1, text: 'test.toString()' }
-// 		},
-// 		{
-// 			label: 'JavaScript',
-// 			kind: CompletionItemKind.Text,
-// 			data: { id: 2, text: 'details' }
-// 		}
-// 	]
-// });
+	const completeAtRequest = new CompleteAtRequest(filePath, range.start.line + 1, range.start.character, range.end.line + 1, range.end.character, word);
 
-// // This handler resolve additional information for the item selected in
-// // the completion list.
-// connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-// 	if (item.data.id === 1) {
-// 		item.detail = 'Ls details';
-// 		item.documentation = item.data.text;
-// 	} else if (item.data.id === 2) {
-// 		item.detail = 'JavaScript details';
-// 		item.documentation = item.data.text;
-// 	}
-// 	return item;
-// });
+	return completeAtRequest.send(interoProxy)
+	.then((response : CompleteAtResponse) => {
+
+		return response.completions.map(c => { return {label: c, kind: CompletionItemKind.Variable}; });
+		// return [
+		// 		{
+		// 			label: 'Ls',
+		// 			kind: CompletionItemKind.Text,
+		// 			data: { id: 1, text: 'test.toString()' }
+		// 		},
+		// 		{
+		// 			label: 'JavaScript',
+		// 			kind: CompletionItemKind.Text,
+		// 			data: { id: 2, text: 'details' }
+		// 		}
+		// 	]
+	});
+});
+
+// This handler resolve additional information for the item selected in
+// the completion list.
+connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
+	// if (item.data.id === 1) {
+	// 	item.detail = 'Ls details';
+	// 	item.documentation = item.data.text;
+	// } else if (item.data.id === 2) {
+	// 	item.detail = 'JavaScript details';
+	// 	item.documentation = item.data.text;
+	// }
+	return item;
+});
 
 // connection.onDidOpenTextDocument((handler) => {
 // 	connection.console.log(handler.textDocument.uri);i
