@@ -44,6 +44,13 @@ ex:
          In the second argument of \`printf', namely \`(ourAdd 2 "r")'
          In the expression: printf "2 + 3 = %d\n" (ourAdd 2 "r") `
 
+### Variable not in scope
+
+E:\haskell\codinggame\hypersonic\src\Lib.hs:11:5: error:
+
+    * Variable not in scope:
+ replicateM :: Int -> IO () -> IO a0
+    * Perhaps you meant `replicate' (imported from Prelude)
 
 ### Warnings
 
