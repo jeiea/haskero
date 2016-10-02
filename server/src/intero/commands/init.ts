@@ -60,7 +60,7 @@ export class InitRequest implements InteroRequest {
     }
 
     public send(interoProxy: InteroProxy): Promise<InitResponse> {
-        const changePromptRequest = ':set prompt "@"';//"\\4"';
+        const changePromptRequest = ':set prompt '+ InteroProxy.EOTInteroCmd;//"\\4"';
         return interoProxy.sendRawRequest(changePromptRequest)
             .then((response: RawResponse) => {
                 return Promise.resolve(new InitResponse(response.rawout, response.rawerr));

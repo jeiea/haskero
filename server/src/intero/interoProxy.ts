@@ -28,6 +28,15 @@ export class InteroProxy {
     private rawoutErr : string;
     private onRawResponseQueue : Array<{resolve:(response : RawResponse) => void, reject:any}>;
 
+
+    public static get EOTUtf8() : string {
+        return '@';
+    }
+
+    public static get EOTInteroCmd() : string {
+        return '@';
+    }
+
     public constructor(interoProcess : child_process.ChildProcess) {
         this.interoProcess = interoProcess;
         this.rawout = '';
@@ -56,7 +65,7 @@ export class InteroProxy {
         let chunk = data.toString();
         this.rawout += chunk;
         console.log(chunk);
-        if (InteroProxy.endsWith(chunk, '@')) {//'\u0004')) {
+        if (InteroProxy.endsWith(chunk, InteroProxy.EOTUtf8)) {//'\u0004')) {
             //On linux, issue with synchronisation between stdout and stderr :
             // - use a set time out to wait 50ms for stderr to finish to write data
             setTimeout(this.onResponse, 50);
