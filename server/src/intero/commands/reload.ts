@@ -8,9 +8,6 @@ import {UriUtils} from '../uri'
 
 export class ReloadResponse implements InteroResponse {
 
-    //private static get warningsPattern() : RegExp { return /([^:]+):(\d+):(\d+): Warning:\n?([\s\S]+?)(?:\n\n|\n[\S]+)/g;  }
-    private static get errorsPattern(): RegExp { return new RegExp('(.*):(\\d+):(\\d+):((?:\\n\\s{4,}.*)+)', 'g'); }
-
     private _filePath: string;
     private _isOk: boolean;
     private _rawout: string;
@@ -38,12 +35,12 @@ export class ReloadResponse implements InteroResponse {
         this._rawerr = rawerr;
 
         //find errors first
-        const regErrors = /([^\r\n]+):(\d+):(\d+):\r?\n([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/g;
+        const regErrors = /([^\r\n]+):(\d+):(\d+):(?: error:)?\r?\n([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
         let matchErrors = this.removeDuplicates(this.allMatchs(rawerr, regErrors));
         let diagnostics = matchErrors.map(this.matchTo(InteroDiagnosticKind.error));
 
         // if (matchErrors.length < 1) {
-        const regWarnings = /([^\r\n]+):(\d+):(\d+): Warning:\r?\n?([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/g;
+        const regWarnings = /([^\r\n]+):(\d+):(\d+): Warning:(?: \[.*\])?\r?\n?([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
         let matchWarnings = this.removeDuplicates(this.allMatchs(rawerr, regWarnings));
         diagnostics = diagnostics.concat(matchWarnings.map(this.matchTo(InteroDiagnosticKind.warning)));
         // }
