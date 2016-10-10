@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-	IPCMessageReader, IPCMessageWriter,
+	IPCMessageReader, IPCMessageWriter, Hover,
 	createConnection, IConnection, TextDocumentSyncKind,
 	TextDocuments, TextDocument, Diagnostic, DiagnosticSeverity,
 	InitializeParams, InitializeResult, TextDocumentPositionParams,
@@ -18,8 +18,10 @@ import {InitRequest, InitResponse} from './intero/commands/init';
 import {ReloadRequest, ReloadResponse} from './intero/commands/reload';
 import {InteroDiagnostic, InteroDiagnosticKind} from './intero/commands/interoDiagnostic'
 import {LocAtRequest, LocAtResponse} from './intero/commands/locAt'
+import {TypeAtRequest, TypeAtResponse} from './intero/commands/typeAt'
 import {CompleteAtRequest, CompleteAtResponse} from './intero/commands/completeAt'
 import {DocumentUtils, LocalizedWord} from './documentUtils'
+
 
 import {UriUtils} from './intero/uri';
 
@@ -52,6 +54,7 @@ connection.onInitialize((params): InitializeResult => {
 
 			// Tell the client that the server works in FULL text document sync mode
 			textDocumentSync: documents.syncKind,
+			hoverProvider : true,
 			definitionProvider: true,
 			// Tell the client that the server support code complete
 			completionProvider: {
@@ -96,6 +99,22 @@ connection.onDefinition((documentInfo): Promise<Location> => {
 				let loc = Location.create(fileUri, Range.create(Position.create(response.startLine - 1, response.startColumn - 1), Position.create(response.endLine - 1, response.endColumn - 1)));
 				return Promise.resolve(loc);
 			});
+	}
+});
+
+connection.onHover((documentInfo): Promise<Hover> => {
+	if (UriUtils.isFileProtocol(documentInfo.textDocument.uri)) {
+		let doc = documents.get(documentInfo.textDocument.uri);
+		let filePath = UriUtils.toFilePath(documentInfo.textDocument.uri);
+		let wordRange = DocumentUtils.getIdentifierAtPosition(doc, documentInfo.position);
+
+		const typeAtRequest = new TypeAtRequest(filePath, wordRange.range.start.line + 1, wordRange.range.start.character, wordRange.range.end.line + 1, wordRange.range.end.character, wordRange.word);
+
+		return typeAtRequest.send(interoProxy).then((response) => {
+			let typeInfo = {language : 'haskell', value : response.type};
+			let hover = {contents : typeInfo};
+			return Promise.resolve(hover);
+		});
 	}
 });
 
