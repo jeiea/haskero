@@ -20,7 +20,7 @@ import {InteroDiagnostic, InteroDiagnosticKind} from './intero/commands/interoDi
 import {LocAtRequest, LocAtResponse} from './intero/commands/locAt'
 import {TypeAtRequest, TypeAtResponse} from './intero/commands/typeAt'
 import {CompleteAtRequest, CompleteAtResponse} from './intero/commands/completeAt'
-import {DocumentUtils, LocalizedWord} from './documentUtils'
+import {DocumentUtils, WordSpot, NoMatchAtCursorBehaviour} from './documentUtils'
 
 
 import {UriUtils} from './intero/uri';
@@ -54,7 +54,7 @@ connection.onInitialize((params): InitializeResult => {
 
 			// Tell the client that the server works in FULL text document sync mode
 			textDocumentSync: documents.syncKind,
-			hoverProvider : true,
+			hoverProvider: true,
 			definitionProvider: true,
 			// Tell the client that the server support code complete
 			completionProvider: {
@@ -90,7 +90,7 @@ connection.onDefinition((documentInfo): Promise<Location> => {
 	if (UriUtils.isFileProtocol(documentInfo.textDocument.uri)) {
 		let doc = documents.get(documentInfo.textDocument.uri);
 		let filePath = UriUtils.toFilePath(documentInfo.textDocument.uri);
-		let wordRange = DocumentUtils.getIdentifierAtPosition(doc, documentInfo.position);
+		let wordRange = DocumentUtils.getIdentifierAtPosition(doc, documentInfo.position, NoMatchAtCursorBehaviour.Stop);
 		const locAtRequest = new LocAtRequest(filePath, wordRange.range.start.line + 1, wordRange.range.start.character, wordRange.range.end.line + 1, wordRange.range.end.character, wordRange.word);
 
 		return locAtRequest.send(interoProxy)
@@ -106,15 +106,24 @@ connection.onHover((documentInfo): Promise<Hover> => {
 	if (UriUtils.isFileProtocol(documentInfo.textDocument.uri)) {
 		let doc = documents.get(documentInfo.textDocument.uri);
 		let filePath = UriUtils.toFilePath(documentInfo.textDocument.uri);
-		let wordRange = DocumentUtils.getIdentifierAtPosition(doc, documentInfo.position);
+		let wordRange = DocumentUtils.getTextAtPosition(doc, documentInfo.position, NoMatchAtCursorBehaviour.Stop);
 
-		const typeAtRequest = new TypeAtRequest(filePath, wordRange.range.start.line + 1, wordRange.range.start.character, wordRange.range.end.line + 1, wordRange.range.end.character, wordRange.word);
-
-		return typeAtRequest.send(interoProxy).then((response) => {
-			let typeInfo = {language : 'haskell', value : response.type};
-			let hover = {contents : typeInfo};
-			return Promise.resolve(hover);
-		});
+		if (!wordRange.isEmpty) {
+			const typeAtRequest = new TypeAtRequest(filePath, wordRange.range.start.line + 1, wordRange.range.start.character, wordRange.range.end.line + 1, wordRange.range.end.character, wordRange.word);
+			return typeAtRequest.send(interoProxy).then((response) => {
+				let typeInfo = { language: 'haskell', value: response.type };
+				let hover = { contents: typeInfo };
+				if (typeInfo.value !== null) {
+					return Promise.resolve(hover);
+				}
+				else {
+					return Promise.resolve(null);
+				}
+			});
+		}
+		else {
+			return Promise.resolve(null);
+		}
 	}
 });
 
@@ -162,28 +171,28 @@ connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Prom
 
 	let doc = documents.get(textDocumentPosition.textDocument.uri);
 	let filePath = UriUtils.toFilePath(textDocumentPosition.textDocument.uri);
-	let {word, range} = DocumentUtils.getTextAtPosition(doc, textDocumentPosition.position);
+	let {word, range} = DocumentUtils.getTextAtPosition(doc, textDocumentPosition.position, NoMatchAtCursorBehaviour.LookLeft);
 
 	const completeAtRequest = new CompleteAtRequest(filePath, range.start.line + 1, range.start.character,
-													range.end.line + 1, range.end.character, word);
+		range.end.line + 1, range.end.character, word);
 
 	return completeAtRequest.send(interoProxy)
-	.then((response : CompleteAtResponse) => {
+		.then((response: CompleteAtResponse) => {
 
-		return response.completions.map(c => { return {label: c, kind: CompletionItemKind.Variable}; });
-		// return [
-		// 		{
-		// 			label: 'Ls',
-		// 			kind: CompletionItemKind.Text,
-		// 			data: { id: 1, text: 'test.toString()' }
-		// 		},
-		// 		{
-		// 			label: 'JavaScript',
-		// 			kind: CompletionItemKind.Text,
-		// 			data: { id: 2, text: 'details' }
-		// 		}
-		// 	]
-	});
+			return response.completions.map(c => { return { label: c, kind: CompletionItemKind.Variable }; });
+			// return [
+			// 		{
+			// 			label: 'Ls',
+			// 			kind: CompletionItemKind.Text,
+			// 			data: { id: 1, text: 'test.toString()' }
+			// 		},
+			// 		{
+			// 			label: 'JavaScript',
+			// 			kind: CompletionItemKind.Text,
+			// 			data: { id: 2, text: 'details' }
+			// 		}
+			// 	]
+		});
 });
 
 // This handler resolve additional information for the item selected in
