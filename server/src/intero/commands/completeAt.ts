@@ -1,8 +1,8 @@
 'use strict';
 
-import {InteroProxy} from '../interoProxy.ts'
-import {InteroRequest} from './interoRequest.ts'
-import {InteroResponse} from './interoResponse.ts'
+import {InteroProxy} from '../interoProxy'
+import {InteroRequest} from './interoRequest'
+import {InteroResponse} from './interoResponse'
 
 export class CompleteAtResponse implements InteroResponse {
     private _isOk: boolean;
