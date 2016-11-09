@@ -127,7 +127,7 @@ connection.onHover((documentInfo): Promise<Hover> => {
 	}
 });
 
-function validateTextDocument(textDocument: TextDocumentIdentifier): void {
+function validateTextDocument(textDocument: TextDocumentIdentifier): Promise<void> {
 	let problems = 0;
 	connection.console.log("validate : " + textDocument.uri);
 
@@ -135,7 +135,7 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): void {
 		const reloadRequest = new ReloadRequest(textDocument.uri);
 		connection.console.log(reloadRequest.filePath);
 
-		reloadRequest.send(interoProxy)
+		return reloadRequest.send(interoProxy)
 			.then((response: ReloadResponse) => {
 				let diagnostics: Diagnostic[] = [];
 				console.log("err/war number before filter : " + response.diagnostics.length);
@@ -159,6 +159,9 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): void {
 				connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 				return Promise.resolve();
 			});
+	}
+	else {
+		return Promise.resolve();
 	}
 }
 
@@ -208,39 +211,15 @@ connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
 	return item;
 });
 
-// connection.onDidOpenTextDocument((handler) => {
-// 	connection.console.log(handler.textDocument.uri);i
-// 	validateTextDocument(handler.textDocument);
+documents.onDidSave( e => {
+	connection.console.log(e.document.uri);
+	return validateTextDocument(e.document);
+});
+
+// documents.onDidOpen( e => {
+// 	connection.console.log(e.document.uri);
+// 	return validateTextDocument(e.document);
 // });
-
-// The content of a text document has changed. This event is emitted
-// when the text document first opened or when its content has changed.
-connection.onDidSaveTextDocument((handler) => {
-	connection.console.log(handler.textDocument.uri);
-	validateTextDocument(handler.textDocument);
-});
-
-/*
-connection.onDidOpenTextDocument((params) => {
-	// A text document got opened in VSCode.
-	// params.uri uniquely identifies the document. For documents store on disk this is a file URI.
-	// params.text the initial full content of the document.
-	connection.console.log(`${params.uri} opened.`);
-});
-
-connection.onDidChangeTextDocument((params) => {
-	// The content of a text document did change in VSCode.
-	// params.uri uniquely identifies the document.
-	// params.contentChanges describe the content changes to the document.
-	connection.console.log(`${params.uri} changed: ${JSON.stringify(params.contentChanges)}`);
-});
-
-connection.onDidCloseTextDocument((params) => {
-	// A text document got closed in VSCode.
-	// params.uri uniquely identifies the document.
-	connection.console.log(`${params.uri} closed.`);
-});
-*/
 
 // Listen on the connection
 connection.listen();
