@@ -106,14 +106,14 @@ connection.onHover((documentInfo): Promise<Hover> => {
 	if (UriUtils.isFileProtocol(documentInfo.textDocument.uri)) {
 		let doc = documents.get(documentInfo.textDocument.uri);
 		let filePath = UriUtils.toFilePath(documentInfo.textDocument.uri);
-		let wordRange = DocumentUtils.getTextAtPosition(doc, documentInfo.position, NoMatchAtCursorBehaviour.Stop);
+		let wordRange = DocumentUtils.getIdentifierAtPosition(doc, documentInfo.position, NoMatchAtCursorBehaviour.Stop);
 
 		if (!wordRange.isEmpty) {
 			const typeAtRequest = new TypeAtRequest(filePath, wordRange.range.start.line + 1, wordRange.range.start.character, wordRange.range.end.line + 1, wordRange.range.end.character, wordRange.word);
 			return typeAtRequest.send(interoProxy).then((response) => {
 				let typeInfo = { language: 'haskell', value: response.type };
 				let hover = { contents: typeInfo };
-				if (typeInfo.value !== null) {
+				if (typeInfo.value !== null && typeInfo.value !== "") {
 					return Promise.resolve(hover);
 				}
 				else {
