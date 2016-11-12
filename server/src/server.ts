@@ -32,34 +32,45 @@ let documents: TextDocuments = new TextDocuments();
 // for open, change and close text document events
 documents.listen(connection);
 
-//launch the intero process
-const intero = child_process.spawn('stack', ['ghci', '--with-ghc', 'intero']);
-const interoProxy = new InteroProxy(intero);
+let interoProxy : InteroProxy;
 
 // After the server has started the client sends an initilize request. The server receives
 // in the passed params the rootPath of the workspace plus the client capabilites.
 let workspaceRoot: string;
-connection.onInitialize((params): InitializeResult => {
+connection.onInitialize((params): Promise<InitializeResult> => {
 	workspaceRoot = params.rootPath;
 	connection.console.log("Initializing intero...");
 
+	//launch the intero process
+	const intero = child_process.spawn('stack', ['ghci', '--with-ghc', 'intero']);
+	interoProxy = new InteroProxy(intero);
+
 	const initRequest = new InitRequest();
-	initRequest.send(interoProxy)
-		.then((resp: InitResponse) => { connection.console.log("Intero initialization done."); });
-
-	return {
-		capabilities: {
-
-			// Tell the client that the server works in FULL text document sync mode
-			textDocumentSync: documents.syncKind,
-			hoverProvider: true,
-			definitionProvider: true,
-			// Tell the client that the server support code complete
-			completionProvider: {
-				resolveProvider: true
+	return initRequest.send(interoProxy)
+		.then((resp: InitResponse) => {
+			connection.console.log("sdfdsf ");
+			if (resp.isInteroInstalled) {
+				connection.console.log("Intero initialization done.");
+				return {
+					capabilities: {
+						// Tell the client that the server works in FULL text document sync mode
+						textDocumentSync: documents.syncKind,
+						hoverProvider: true,
+						definitionProvider: true,
+						// Tell the client that the server support code complete
+						completionProvider: {
+							resolveProvider: true
+						}
+					}
+				}
 			}
-		}
-	}
+			else {
+				connection.console.log("Error: Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing");
+				return {
+					capabilities: {}
+				}
+			}
+		});
 });
 
 // The settings interface describe the server relevant settings part

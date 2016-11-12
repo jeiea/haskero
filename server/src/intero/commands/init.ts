@@ -14,6 +14,13 @@ export class InitResponse implements InteroResponse {
     private _isOk: boolean;
     private _rawout: string;
     private _rawerr: string;
+    private _isInteroInstalled: boolean;
+
+    private interoNotFOunt = "Executable named intero not found";
+
+    public get isInteroInstalled(): boolean {
+        return this._isInteroInstalled;
+    }
 
     public get isOk(): boolean {
         return this._isOk;
@@ -36,16 +43,26 @@ export class InitResponse implements InteroResponse {
         this._rawout = rawout;
         this._rawerr = rawerr;
 
-        //find errors first
-        const regErrors = /([^\r\n]+):(\d+):(\d+):(?: error:)?\r?\n([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
-        let matchErrors = this.removeDuplicates(this.allMatchs(rawerr, regErrors));
-        let diagnostics = matchErrors.map(this.matchTo(InteroDiagnosticKind.error));
+        //try if intero is installed
+        if (rawerr.indexOf(this.interoNotFOunt, 0) > -1) {
+            this._isInteroInstalled = false;
+            this._isOk = false;
+        }
+        else {
+            this._isInteroInstalled = true;
+            this._isOk = true;
 
-        const regWarnings = /([^\r\n]+):(\d+):(\d+): Warning:(?: \[.*\])?\r?\n?([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
-        let matchWarnings = this.removeDuplicates(this.allMatchs(rawerr, regWarnings));
-        diagnostics = diagnostics.concat(matchWarnings.map(this.matchTo(InteroDiagnosticKind.warning)));
+             //find errors first
+            const regErrors = /([^\r\n]+):(\d+):(\d+):(?: error:)?\r?\n([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
+            let matchErrors = this.removeDuplicates(this.allMatchs(rawerr, regErrors));
+            let diagnostics = matchErrors.map(this.matchTo(InteroDiagnosticKind.error));
 
-        this._diagnostics = diagnostics;
+            const regWarnings = /([^\r\n]+):(\d+):(\d+): Warning:(?: \[.*\])?\r?\n?([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
+            let matchWarnings = this.removeDuplicates(this.allMatchs(rawerr, regWarnings));
+            diagnostics = diagnostics.concat(matchWarnings.map(this.matchTo(InteroDiagnosticKind.warning)));
+
+            this._diagnostics = diagnostics;
+        }
     }
 
     private removeDuplicates(matches: RegExpExecArray[]): RegExpExecArray[] {
