@@ -61,6 +61,7 @@ export class InteroProxy {
         this.onRawResponseQueue = [];
         this.interoProcess.stdout.on('data', this.onData);
         this.interoProcess.stderr.on('data', this.onDataErr);
+        this.interoProcess.on('exit', this.onExit);
     }
 
     /**
@@ -99,6 +100,11 @@ export class InteroProxy {
         DebugUtils.instance.log(chunk);
     }
 
+    private onExit = (code : number) => {
+        DebugUtils.instance.log("process intero exited : code " + code);
+        this.onResponse();
+    }
+
     private onResponse = () => {
         DebugUtils.instance.log('>>><<<');
         let rawout = this.rawout;
@@ -110,4 +116,5 @@ export class InteroProxy {
             resolver.resolve(new RawResponse(rawout, rawerr));
         }
     }
+
 }
