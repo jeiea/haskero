@@ -2,7 +2,9 @@
 
 import {TextDocument, Position, Range} from 'vscode-languageserver'
 
-//
+/**
+ * Word at a known position (Range) in the document
+ */
 export class WordSpot {
     word: string;
     range: Range;
@@ -15,7 +17,9 @@ export class WordSpot {
     public get isEmpty() : boolean { return this.range.start.character === this.range.end.character && this.range.start.line === this.range.end.line }
 }
 
-//Behaviour from cursor position when there is no matching char
+/**
+ * Behaviour from cursor position when there is no matching char
+ */
 export enum NoMatchAtCursorBehaviour {
     //if char at cursor is not a match, stop
     Stop,
@@ -27,21 +31,17 @@ export enum NoMatchAtCursorBehaviour {
     LookBoth
 }
 
+/**
+ * Tools for document manipulations
+ */
 export class DocumentUtils {
-
     private static identifierSymbols = /[0-9a-zA-Z_']/g;
-    private static nonSeparatorsSymbols = /[^\r\n\t\s]/g;
 
     private static isIdentifierSymbol(c: string): boolean {
         return c.search(DocumentUtils.identifierSymbols) !== -1;
     }
 
-    private static isNonSeparatorSymbol(c: string): boolean {
-        return c.search(DocumentUtils.nonSeparatorsSymbols) !== -1;
-    }
-
     private static getStartingOffset(text: string, cursorOffset: number, isValidSymbol: (string) => boolean, sticky: NoMatchAtCursorBehaviour): number {
-
         if (isValidSymbol(text.charAt(cursorOffset)) || sticky === NoMatchAtCursorBehaviour.LookLeft || sticky === NoMatchAtCursorBehaviour.LookBoth) {
             let i = cursorOffset - 1;
             for (i; i >= 0 && isValidSymbol(text.charAt(i)); i--) {
@@ -51,8 +51,6 @@ export class DocumentUtils {
         else {
             return cursorOffset;
         }
-
-
     }
 
     private static getEndingOffset(text: string, cursorOffset: number, isValidSymbol: (string) => boolean, sticky: NoMatchAtCursorBehaviour): number {
@@ -67,7 +65,9 @@ export class DocumentUtils {
         }
     }
 
-    //return text at position, where text is composed of identifier characters
+    /**
+     * return text at position, where text is composed of identifier characters
+     */
     public static getIdentifierAtPosition(document: TextDocument, position: Position, sticky: NoMatchAtCursorBehaviour): WordSpot {
         let text = document.getText();
         let cursorOffset = document.offsetAt(position);
@@ -78,17 +78,9 @@ export class DocumentUtils {
         return new WordSpot(word, Range.create(document.positionAt(startOffset + 1), document.positionAt(endOffset + 1)));
     }
 
-    //return text at position, where text is composed of non separator characters
-    public static getTextAtPosition(document: TextDocument, position: Position, sticky: NoMatchAtCursorBehaviour): WordSpot {
-        let text = document.getText();
-        let cursorOffset = document.offsetAt(position);
-        let startOffset = DocumentUtils.getStartingOffset(text, cursorOffset, DocumentUtils.isNonSeparatorSymbol, sticky);
-        let endOffset = DocumentUtils.getEndingOffset(text, cursorOffset, DocumentUtils.isNonSeparatorSymbol, sticky);
-        let word = text.slice(startOffset, endOffset);
-
-        return new WordSpot(word, Range.create(document.positionAt(startOffset + 1), document.positionAt(endOffset + 1)));
-    }
-
+    /**
+     * Returns True if the given position is included in the range
+     */
     public static isPositionInRange(position: Position, range: Range): boolean {
         if (position === null || range === null) {
             return false;

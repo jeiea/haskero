@@ -1,7 +1,3 @@
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
 'use strict';
 
 import {
@@ -21,12 +17,13 @@ import {LocAtRequest, LocAtResponse} from './intero/commands/locAt'
 import {TypeAtRequest, TypeAtResponse} from './intero/commands/typeAt'
 import {CompleteAtRequest, CompleteAtResponse} from './intero/commands/completeAt'
 import {DocumentUtils, WordSpot, NoMatchAtCursorBehaviour} from './documentUtils'
-
+import {DebugUtils} from './debug/DebugUtils'
 
 import {UriUtils} from './intero/uri';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
+DebugUtils.init(true, connection);
 
 // Create a simple text document manager. The text document manager
 // supports full document sync only
@@ -35,6 +32,7 @@ let documents: TextDocuments = new TextDocuments();
 // for open, change and close text document events
 documents.listen(connection);
 
+//launch the intero process
 const intero = child_process.spawn('stack', ['ghci', '--with-ghc', 'intero']);
 const interoProxy = new InteroProxy(intero);
 
@@ -165,7 +163,6 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): Promise<voi
 	}
 }
 
-
 // This handler provides the initial list of the completion items.
 connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Promise<CompletionItem[]> => {
 	// The pass parameter contains the position of the text document in
@@ -174,40 +171,20 @@ connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Prom
 
 	let doc = documents.get(textDocumentPosition.textDocument.uri);
 	let filePath = UriUtils.toFilePath(textDocumentPosition.textDocument.uri);
-	let {word, range} = DocumentUtils.getTextAtPosition(doc, textDocumentPosition.position, NoMatchAtCursorBehaviour.LookLeft);
+	let {word, range} = DocumentUtils.getIdentifierAtPosition(doc, textDocumentPosition.position, NoMatchAtCursorBehaviour.LookLeft);
 
 	const completeAtRequest = new CompleteAtRequest(filePath, range.start.line + 1, range.start.character,
 		range.end.line + 1, range.end.character, word);
 
 	return completeAtRequest.send(interoProxy)
 		.then((response: CompleteAtResponse) => {
-
 			return response.completions.map(c => { return { label: c, kind: CompletionItemKind.Variable }; });
-			// return [
-			// 		{
-			// 			label: 'Ls',
-			// 			kind: CompletionItemKind.Text,
-			// 			data: { id: 1, text: 'test.toString()' }
-			// 		},
-			// 		{
-			// 			label: 'JavaScript',
-			// 			kind: CompletionItemKind.Text,
-			// 			data: { id: 2, text: 'details' }
-			// 		}
-			// 	]
 		});
 });
 
 // This handler resolve additional information for the item selected in
 // the completion list.
 connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-	// if (item.data.id === 1) {
-	// 	item.detail = 'Ls details';
-	// 	item.documentation = item.data.text;
-	// } else if (item.data.id === 2) {
-	// 	item.detail = 'JavaScript details';
-	// 	item.documentation = item.data.text;
-	// }
 	return item;
 });
 
@@ -215,11 +192,6 @@ documents.onDidSave( e => {
 	connection.console.log(e.document.uri);
 	return validateTextDocument(e.document);
 });
-
-// documents.onDidOpen( e => {
-// 	connection.console.log(e.document.uri);
-// 	return validateTextDocument(e.document);
-// });
 
 // Listen on the connection
 connection.listen();
