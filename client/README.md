@@ -1,13 +1,15 @@
-# README
-## This is the README for your extension "vscode" 
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
+# Haskell intero for VSCode
+This is a language server for the haskell language based on intero backend
 
-* Split the editor (`Cmd+\` on OSX or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on OSX or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (OSX) to see a list of Markdown snippets
+## Key features
 
-### For more information
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+* Compilation errors and warnings
+* Goto definition
+* Identifiers types on hover
+* Find usage
+* Code completion
 
-** Enjoy!**
+## Dependencies
+
+* It works on `stack` projects only
+* It needs intero to be installed (see : [Installing intero](https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing))
