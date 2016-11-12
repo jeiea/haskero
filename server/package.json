@@ -1,8 +1,8 @@
 {
-	"name": "language-server-example",
-	"description": "Example implementation of a language server in node.",
-	"version": "0.0.1",
-	"author": "Microsoft Corporation",
+	"name": "haskell-language-server",
+	"description": "Language server for haskell using intero as a backend",
+	"version": "0.1.0",
+	"author": "Julien Vannesson",
 	"license": "MIT",
 	"engines": {
 		"node": "*"
@@ -11,7 +11,7 @@
 		"vscode-languageserver": "^2.5.1"
 	},
 	"devDependencies": {
-		"typescript": "^1.8.9"
+		"typescript": "^2.0.0"
 	},
 	"scripts": {
 		"compile": "installServerIntoExtension ../client ./package.json ./tsconfig.json && tsc -p .",

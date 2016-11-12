@@ -1,9 +1,9 @@
 {
-	"name": "Haskell interro",
-	"description": "VSCode part of a language server",
-	"author": "Microsoft Corporation",
+	"name": "haskell-interro",
+	"description": "VSCode part of haskell intero language server",
+	"author": "Julien Vannesson",
 	"license": "MIT",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"publisher": "vscode",
 	"engines": {
 		"vscode": "^1.4.0"
@@ -35,7 +35,7 @@
 
 	},
 	"devDependencies": {
-		"typescript": "^1.8.9",
+		"typescript": "^2.0.0",
 		"vscode": "^0.11.0"
 	},
 	"dependencies": {
