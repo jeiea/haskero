@@ -6,6 +6,9 @@ import {InteroResponse} from './interoResponse'
 import {InteroDiagnostic, InteroDiagnosticKind} from './interoDiagnostic'
 import {UriUtils} from '../uri'
 
+/**
+ * Reload response, returns diagnostics (errors and warnings)
+ */
 export class ReloadResponse implements InteroResponse {
 
     private _filePath: string;
@@ -39,17 +42,18 @@ export class ReloadResponse implements InteroResponse {
         let matchErrors = this.removeDuplicates(this.allMatchs(rawerr, regErrors));
         let diagnostics = matchErrors.map(this.matchTo(InteroDiagnosticKind.error));
 
-        // if (matchErrors.length < 1) {
         const regWarnings = /([^\r\n]+):(\d+):(\d+): Warning:(?: \[.*\])?\r?\n?([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
         let matchWarnings = this.removeDuplicates(this.allMatchs(rawerr, regWarnings));
         diagnostics = diagnostics.concat(matchWarnings.map(this.matchTo(InteroDiagnosticKind.warning)));
-        // }
+
         this._diagnostics = diagnostics;
     }
 
     private removeDuplicates(matches: RegExpExecArray[]): RegExpExecArray[] {
         let matchToKey = (m: RegExpExecArray) => m[0].trim();
+        //List all matches and accumulate them in one object (hash key : match)
         let matchesSetObject = matches.reduce((accu, m) => { accu[matchToKey(m)] = m; return accu; }, {});
+        //Get all values
         return Object.keys(matchesSetObject).map(key => matchesSetObject[key]);
     }
 
@@ -69,6 +73,9 @@ export class ReloadResponse implements InteroResponse {
     }
 }
 
+/**
+ * Reload request
+ */
 export class ReloadRequest implements InteroRequest {
 
     private _filePath: string;
@@ -81,17 +88,10 @@ export class ReloadRequest implements InteroRequest {
     }
 
     public send(interoProxy: InteroProxy): Promise<ReloadResponse> {
-        // const reloadRequest = ':l ' + this._filePath;
         const reloadRequest = ':r';
         return interoProxy.sendRawRequest(reloadRequest)
             .then((response: RawResponse) => {
                 return Promise.resolve(new ReloadResponse(response.rawout, response.rawerr));
             });
     }
-
-    // private onRawResponse(onInteroResponse: (r: ReloadResponse) => void): (rawout: string, rawerr: string) => void {
-    //     return (rawout: string, rawerr: string) => {
-    //         return onInteroResponse(new ReloadResponse(rawout, rawerr));
-    //     };
-    // }
 }

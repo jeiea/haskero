@@ -5,6 +5,9 @@ export enum InteroDiagnosticKind {
     error
 }
 
+/**
+ * An intero diagnostic : warning or error
+ */
 export class InteroDiagnostic {
 
     private _filePath : string;
@@ -14,7 +17,6 @@ export class InteroDiagnostic {
     public set filePath(v : string) {
         this._filePath = v;
     }
-
 
     private _line : number;
     public get line() : number {

@@ -3,7 +3,11 @@
 import {InteroProxy} from '../interoProxy'
 import {InteroRequest} from './interoRequest'
 import {InteroResponse} from './interoResponse'
+import {InteroUtils} from '../interoUtils'
 
+/**
+ * 'complete-at' intero response
+ */
 export class CompleteAtResponse implements InteroResponse {
     private _isOk: boolean;
     private _rawout: string;
@@ -29,10 +33,13 @@ export class CompleteAtResponse implements InteroResponse {
     public constructor(rawout: string, rawerr: string) {
         this._rawout = rawout;
         this._rawerr = rawerr;
-        this._completions = rawout.split(/\r?\n/);
+        this._completions = InteroUtils.normalizeRawResponse(rawout).split(/\r?\n/);
     }
 }
 
+/**
+ * 'complete-at' intero request
+ */
 export class CompleteAtRequest implements InteroRequest {
     private filePath: string;
     private start_l: number;

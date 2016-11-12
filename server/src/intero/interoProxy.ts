@@ -5,10 +5,15 @@
 import {InteroRequest} from './commands/interoRequest'
 import {InteroResponse} from './commands/interoResponse'
 import {InitRequest, InitResponse} from './commands/init'
+import {DebugUtils} from '../debug/DebugUtils'
 
 import child_process = require('child_process');
 import stream = require('stream');
 
+/**
+ * A raw response from intero.
+ * As intero can respond on stdout and stderr at the same time, it contains both responses
+ */
 export class RawResponse {
     public rawout : string;
     public rawerr : string;
@@ -20,19 +25,31 @@ export class RawResponse {
 }
 
 /**
- * Intero proxy
+ * Handle communication with intero
+ * Intero responds on stderr and stdout without any synchronisation
+ * InteroProxy hides the complexity behind a simple interface: you send a request and you get a response. All the synchronisation is done by the proxy
  */
 export class InteroProxy {
     private interoProcess : child_process.ChildProcess;
     private rawout : string;
     private rawoutErr : string;
+
+    /**
+     * Manage a request <-> response queue.
+     * Each request is paired with a response.
+     */
     private onRawResponseQueue : Array<{resolve:(response : RawResponse) => void, reject:any}>;
 
-
+    /**
+     * End of communication utf8 char
+     */
     public static get EOTUtf8() : string {
         return '@';
     }
 
+    /**
+     * End of communication char in CMD
+     */
     public static get EOTInteroCmd() : string {
         return '@';
     }
@@ -46,12 +63,15 @@ export class InteroProxy {
         this.interoProcess.stderr.on('data', this.onDataErr);
     }
 
+    /**
+     * Send a request to intero
+     */
     public sendRawRequest(rawRequest : string) : Promise<RawResponse> {
         let executor = (resolve, reject) : void => {
             this.onRawResponseQueue.push( {resolve:resolve, reject:reject} );
             let req = rawRequest + '\n';
             this.interoProcess.stdin.write(req);
-            console.log('>' + req);
+            DebugUtils.instance.log('>' + req);
         };
         return new Promise(executor);
     }
@@ -64,23 +84,23 @@ export class InteroProxy {
     private onData = (data : Buffer) => {
         let chunk = data.toString();
         this.rawout += chunk;
-        console.log(chunk);
+        DebugUtils.instance.log(chunk);
         if (InteroProxy.endsWith(chunk, InteroProxy.EOTUtf8)) {//'\u0004')) {
             //On linux, issue with synchronisation between stdout and stderr :
-            // - use a set time out to wait 50ms for stderr to finish to write data
+            // - use a set time out to wait 50ms for stderr to finish to write data after we recieve the EOC char from stdin
             setTimeout(this.onResponse, 50);
         }
     }
 
+    // create an instance function to force the 'this' capture
     private onDataErr = (data : Buffer) => {
         let chunk = data.toString();
-        //console.log("\r\n    >>>>" + chunk + "<<<<");
         this.rawoutErr += chunk;
-        console.log(chunk);
+        DebugUtils.instance.log(chunk);
     }
 
     private onResponse = () => {
-        console.log('>>><<<');
+        DebugUtils.instance.log('>>><<<');
         let rawout = this.rawout;
         let rawerr = this.rawoutErr;
         this.rawout = '';
@@ -90,15 +110,4 @@ export class InteroProxy {
             resolver.resolve(new RawResponse(rawout, rawerr));
         }
     }
-
 }
-
-// let interoProxy = new InteroProxy(intero);
-
-// let initRequest = new InitRequest();
-// initRequest.send(interoProxy, (resp : InitResponse) => {console.dir(resp); process.exit();});
-
-//interoProxy.init((resp : LocAtResponse) => console.dir("init : " + resp));
-// let req = new LocAtRequest('/home/vans/development/haskell/VSCode-haskell-intero/test/sample/app/Main.hs', 8, 31, 8, 36, 'ourAdd');
-//let req = new LocAtRequest('E:\\haskell\\VSCode-haskell-intero\\test\\sample\\app\\Main.hs', 8, 31, 8, 36, 'ourAdd');
-//let response = req.send(interoProxy, (resp : LocAtResponse) => console.dir(resp));

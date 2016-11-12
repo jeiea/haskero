@@ -7,6 +7,9 @@ import {InteroResponse} from './interoResponse'
 import {InteroDiagnostic, InteroDiagnosticKind} from './interoDiagnostic'
 import {UriUtils} from '../uri'
 
+/**
+ * type-at intero response
+ */
 export class TypeAtResponse implements InteroResponse {
 
     private _filePath: string;
@@ -39,6 +42,9 @@ export class TypeAtResponse implements InteroResponse {
     }
 }
 
+/**
+ * type-at intero request
+ */
 export class TypeAtRequest implements InteroRequest {
     private filePath: string;
     private start_l: number;
@@ -57,6 +63,7 @@ export class TypeAtRequest implements InteroRequest {
     }
 
     public send(interoProxy: InteroProxy): Promise<TypeAtResponse> {
+        //loads the file first otherwise it won't match the last version on disk
         const load = `:l ${this.filePath}`;
         const req = `:type-at ${this.filePath} ${this.start_l} ${this.start_c} ${this.end_l} ${this.end_c} ${this.identifier}`;
         return interoProxy.sendRawRequest(load)

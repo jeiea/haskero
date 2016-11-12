@@ -4,6 +4,9 @@ import {InteroProxy} from '../interoProxy'
 import {InteroRequest} from './interoRequest'
 import {InteroResponse} from './interoResponse'
 
+/**
+ * loc-at intero response
+ */
 export class LocAtResponse implements InteroResponse {
 
     private static get pattern(): RegExp { return new RegExp('(.*):\\((\\d+),(\\d+)\\)-\\((\\d+),(\\d+)\\)'); }
@@ -68,6 +71,9 @@ export class LocAtResponse implements InteroResponse {
     }
 }
 
+/**
+ * loc-at intero request
+ */
 export class LocAtRequest implements InteroRequest {
     private filePath: string;
     private start_l: number;
@@ -86,6 +92,7 @@ export class LocAtRequest implements InteroRequest {
     }
 
     public send(interoProxy: InteroProxy): Promise<LocAtResponse> {
+        //load the file first, otherwise it won't match the last version on disk
         const load = `:l ${this.filePath}`;
         const req = `:loc-at ${this.filePath} ${this.start_l} ${this.start_c} ${this.end_l} ${this.end_c} ${this.identifier}`;
         return interoProxy.sendRawRequest(load)
