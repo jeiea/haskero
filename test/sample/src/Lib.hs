@@ -1,7 +1,8 @@
 -- | A library to do stuff.
 module Lib
     (
-      ourAdd
+      ourAdd,
+      bounds
     ) where
 
 -- | Add two 'Int' values.
