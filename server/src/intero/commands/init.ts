@@ -5,10 +5,10 @@ import {InteroRequest} from './interoRequest'
 import {InteroResponse} from './interoResponse'
 import {InteroDiagnostic, InteroDiagnosticKind} from './interoDiagnostic'
 
+/**
+ * Response from interoInit request
+ */
 export class InitResponse implements InteroResponse {
-
-    //private static get warningsPattern() : RegExp { return /([^:]+):(\d+):(\d+): Warning:\n?([\s\S]+?)(?:\n\n|\n[\S]+)/g;  }
-    private static get errorsPattern(): RegExp { return new RegExp('(.*):(\\d+):(\\d+):((?:\\n\\s{4,}.*)+)', 'g'); }
 
     private _filePath: string;
     private _isOk: boolean;
@@ -35,25 +35,47 @@ export class InitResponse implements InteroResponse {
     public constructor(rawout: string, rawerr: string) {
         this._rawout = rawout;
         this._rawerr = rawerr;
-        let matchWarnings = this.allMatchs(rawerr);
-        this._diagnostics = matchWarnings.map(this.matchToWarning);
+
+        //find errors first
+        const regErrors = /([^\r\n]+):(\d+):(\d+):(?: error:)?\r?\n([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
+        let matchErrors = this.removeDuplicates(this.allMatchs(rawerr, regErrors));
+        let diagnostics = matchErrors.map(this.matchTo(InteroDiagnosticKind.error));
+
+        const regWarnings = /([^\r\n]+):(\d+):(\d+): Warning:(?: \[.*\])?\r?\n?([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
+        let matchWarnings = this.removeDuplicates(this.allMatchs(rawerr, regWarnings));
+        diagnostics = diagnostics.concat(matchWarnings.map(this.matchTo(InteroDiagnosticKind.warning)));
+
+        this._diagnostics = diagnostics;
     }
 
-    private matchToWarning(match: RegExpExecArray): InteroDiagnostic {
-        return new InteroDiagnostic(match[1], +match[2], +match[3], match[4], InteroDiagnosticKind.warning);
+    private removeDuplicates(matches: RegExpExecArray[]): RegExpExecArray[] {
+        let matchToKey = (m: RegExpExecArray) => m[0].trim();
+        //list all matches and accumulate them in one object (hash key : match)
+        let matchesSetObject = matches.reduce((accu, m) => { accu[matchToKey(m)] = m; return accu; }, {});
+        //Get all values
+        return Object.keys(matchesSetObject).map(key => matchesSetObject[key]);
     }
 
-    private allMatchs(text: string): RegExpExecArray[] {
+    //curried definition for partial application
+    private matchTo = (kind: InteroDiagnosticKind) => (match: RegExpExecArray): InteroDiagnostic => {
+        return new InteroDiagnostic(match[1], +match[2], +match[3], match[4], kind);
+    }
+
+    private allMatchs(text: string, regexp: RegExp): RegExpExecArray[] {
         const matches: RegExpExecArray[] = [];
         let match: RegExpExecArray;
-        const reg = /([^:]+):(\d+):(\d+): Warning:\r?\n?([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/g;
-        while ((match = reg.exec(text)) != null) {
+
+        while ((match = regexp.exec(text)) != null) {
             matches.push(match);
         }
         return matches;
     }
 }
 
+/**
+ * Initialises intero.
+ * Changes the EOC char used by intero proxy to slice stdin in several responses
+ */
 export class InitRequest implements InteroRequest {
 
     public constructor() {
@@ -65,12 +87,5 @@ export class InitRequest implements InteroRequest {
             .then((response: RawResponse) => {
                 return Promise.resolve(new InitResponse(response.rawout, response.rawerr));
             });
-            //{console.log("change prompt response >>" + s + "<<");});
     }
-
-    // private onRawResponse(onInteroResponse: (r: InitResponse) => void): (rawout: string, rawerr: string) => void {
-    //     return (rawout: string, rawerr: string) => {
-    //         return onInteroResponse(new InitResponse(rawout, rawerr));
-    //     };
-    // }
 }
