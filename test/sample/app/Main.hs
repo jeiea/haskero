@@ -14,17 +14,28 @@ aaa x = 3
 main :: IO ()
 main = printf "2 + 3 = %d\n" (ourAdd 2 5)
 
-xxx = 3
+
+xxx = 3 + abc
     where
         innerfunc a = a
-        bbb = 1
+        abc = 1
 
 f xxx = (xxx)
 
-h x = x
 
 
-y''' = 5
+g x = x
+
+t = g.f
+
+
+--adju = M.
+
+he x = x
+
+y''' = "e" ++ abc
+    where
+        abc = "salut"
 -- test = 3 + "e"
 
 -- test2 = 3 + "e"

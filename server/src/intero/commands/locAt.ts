@@ -3,6 +3,7 @@
 import {InteroProxy} from '../interoProxy'
 import {InteroRequest} from './interoRequest'
 import {InteroResponse} from './interoResponse'
+import {InteroRange} from '../interoRange'
 
 /**
  * loc-at intero response
@@ -12,10 +13,7 @@ export class LocAtResponse implements InteroResponse {
     private static get pattern(): RegExp { return new RegExp('(.*):\\((\\d+),(\\d+)\\)-\\((\\d+),(\\d+)\\)'); }
 
     private _filePath: string;
-    private _start_l: number;
-    private _start_c: number;
-    private _end_l: number;
-    private _end_c: number;
+    private _range: InteroRange;
 
     private _isOk: boolean;
     private _rawout: string;
@@ -25,20 +23,8 @@ export class LocAtResponse implements InteroResponse {
         return this._filePath;
     }
 
-    public get startLine(): number {
-        return this._start_l;
-    }
-
-    public get startColumn(): number {
-        return this._start_c;
-    }
-
-    public get endLine(): number {
-        return this._end_l;
-    }
-
-    public get endColumn(): number {
-        return this._end_c;
+    public get range(): InteroRange {
+        return this._range;
     }
 
     public get isOk(): boolean {
@@ -59,10 +45,7 @@ export class LocAtResponse implements InteroResponse {
         let match = LocAtResponse.pattern.exec(rawout)
         if (match != null) {
             this._filePath = match[1];
-            this._start_l = +match[2];
-            this._start_c = +match[3];
-            this._end_l = +match[4];
-            this._end_c = +match[5];
+            this._range = new InteroRange(+match[2], +match[3], +match[4], +match[5]);
             this._isOk = true;
         }
         else {
@@ -75,26 +58,14 @@ export class LocAtResponse implements InteroResponse {
  * loc-at intero request
  */
 export class LocAtRequest implements InteroRequest {
-    private filePath: string;
-    private start_l: number;
-    private start_c: number;
-    private end_l: number;
-    private end_c: number;
-    private identifier: string;
 
-    public constructor(filePath: string, start_l: number, start_c: number, end_l: number, end_c: number, identifier: string) {
-        this.filePath = filePath;
-        this.start_l = start_l;
-        this.start_c = start_c;
-        this.end_l = end_l;
-        this.end_c = end_c;
-        this.identifier = identifier;
+    public constructor(private filePath: string, private range : InteroRange, private identifier: string) {
     }
 
     public send(interoProxy: InteroProxy): Promise<LocAtResponse> {
         //load the file first, otherwise it won't match the last version on disk
         const load = `:l ${this.filePath}`;
-        const req = `:loc-at ${this.filePath} ${this.start_l} ${this.start_c} ${this.end_l} ${this.end_c} ${this.identifier}`;
+        const req = `:loc-at ${this.filePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
         return interoProxy.sendRawRequest(load)
             .then((response) => {
                 return interoProxy.sendRawRequest(req);

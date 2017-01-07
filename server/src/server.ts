@@ -51,6 +51,7 @@ connection.onInitialize((params): Promise<InitializeResult> => {
 			connection.console.log("sdfdsf ");
 			if (resp.isInteroInstalled) {
 				connection.console.log("Intero initialization done.");
+                //sendAllDocumentsDiagnostics(resp.diagnostics);
 				return {
 					capabilities: {
 						// Tell the client that the server works in FULL text document sync mode
@@ -71,6 +72,10 @@ connection.onInitialize((params): Promise<InitializeResult> => {
 				}
 			}
 		});
+});
+
+documents.onDidOpen((event) : Promise<void> => {
+    return validateTextDocument(event.document);
 });
 
 // The settings interface describe the server relevant settings part
@@ -100,13 +105,18 @@ connection.onDefinition((documentInfo): Promise<Location> => {
 		let doc = documents.get(documentInfo.textDocument.uri);
 		let filePath = UriUtils.toFilePath(documentInfo.textDocument.uri);
 		let wordRange = DocumentUtils.getIdentifierAtPosition(doc, documentInfo.position, NoMatchAtCursorBehaviour.Stop);
-		const locAtRequest = new LocAtRequest(filePath, wordRange.range.start.line + 1, wordRange.range.start.character, wordRange.range.end.line + 1, wordRange.range.end.character, wordRange.word);
+        const locAtRequest = new LocAtRequest(filePath, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
 
 		return locAtRequest.send(interoProxy)
 			.then((response) => {
-				let fileUri = UriUtils.toUri(response.filePath);
-				let loc = Location.create(fileUri, Range.create(Position.create(response.startLine - 1, response.startColumn - 1), Position.create(response.endLine - 1, response.endColumn - 1)));
-				return Promise.resolve(loc);
+                if (response.isOk) {
+                    let fileUri = UriUtils.toUri(response.filePath);
+                    let loc = Location.create(fileUri, DocumentUtils.toVSCodeRange(response.range));
+                    return Promise.resolve(loc);
+                }
+                else {
+                    return Promise.resolve(null);
+                }
 			});
 	}
 });
@@ -117,8 +127,8 @@ connection.onHover((documentInfo): Promise<Hover> => {
 		let filePath = UriUtils.toFilePath(documentInfo.textDocument.uri);
 		let wordRange = DocumentUtils.getIdentifierAtPosition(doc, documentInfo.position, NoMatchAtCursorBehaviour.Stop);
 
-		if (!wordRange.isEmpty) {
-			const typeAtRequest = new TypeAtRequest(filePath, wordRange.range.start.line + 1, wordRange.range.start.character, wordRange.range.end.line + 1, wordRange.range.end.character, wordRange.word);
+		//if (!wordRange.isEmpty) {
+			const typeAtRequest = new TypeAtRequest(filePath, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
 			return typeAtRequest.send(interoProxy).then((response) => {
 				let typeInfo = { language: 'haskell', value: response.type };
 				let hover = { contents: typeInfo };
@@ -129,12 +139,56 @@ connection.onHover((documentInfo): Promise<Hover> => {
 					return Promise.resolve(null);
 				}
 			});
-		}
-		else {
-			return Promise.resolve(null);
-		}
+		// }
+		// else {
+		// 	return Promise.resolve(null);
+		// }
 	}
 });
+
+function sendAllDocumentsDiagnostics(interoDiags : InteroDiagnostic[]) {
+    //map the interoDiag to a vsCodeDiag and add it to the map of grouped diagnostics
+    let addToMap = (accu : Map<string, Diagnostic[]>, interoDiag : InteroDiagnostic) : Map<string, Diagnostic[]> => {
+        let uri = UriUtils.toUri(interoDiag.filePath);
+        let vsCodeDiag = interoDiagToVScodeDiag(interoDiag);
+        if (accu.has(uri)) {
+            accu.get(uri).push(vsCodeDiag);
+        }
+        else {
+            let vsCodeDiags = new Array<Diagnostic>();
+            vsCodeDiags.push(vsCodeDiag);
+            accu.set(uri, vsCodeDiags);
+        }
+        return accu;
+    };
+
+    //group diag by uri
+    let groupedDiagnostics = interoDiags.reduce<Map<string, Diagnostic[]>>(addToMap, new Map<string, Diagnostic[]>());
+
+    groupedDiagnostics.forEach((diags, documentUri) => {
+        connection.sendDiagnostics({uri : documentUri, diagnostics: diags});
+    });
+}
+
+function interoDiagToVScodeDiag(interoDiag : InteroDiagnostic) : Diagnostic {
+    return {
+        severity: interoDiag.kind === InteroDiagnosticKind.error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
+        range: {
+            start: { line: interoDiag.line, character: interoDiag.col },
+            end: { line: interoDiag.line, character: interoDiag.col }
+        },
+        message: interoDiag.message,
+        source: 'hs'
+    };
+}
+
+function sendDocumentDiagnostics(interoDiags : InteroDiagnostic[], documentUri : string) {
+	let diagnostics: Diagnostic[] = [];
+	//console.log("err/war number before filter : " + response.diagnostics.length);
+	diagnostics = interoDiags.map(interoDiagToVScodeDiag);
+	console.log("err/war number after filter : " + diagnostics.length);
+	connection.sendDiagnostics({ uri: documentUri, diagnostics });
+}
 
 function validateTextDocument(textDocument: TextDocumentIdentifier): Promise<void> {
 	let problems = 0;
@@ -146,26 +200,11 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): Promise<voi
 
 		return reloadRequest.send(interoProxy)
 			.then((response: ReloadResponse) => {
-				let diagnostics: Diagnostic[] = [];
-				console.log("err/war number before filter : " + response.diagnostics.length);
-				diagnostics = response.diagnostics.
-					filter(d => {
-						// console.log("file path doc : [" + d.filePath.toLowerCase() + "]");
-						// console.log("file path diag : [" + UriUtils.toFilePath(textDocument.uri).toLowerCase() + "]");
-						return d.filePath.toLowerCase() === UriUtils.toFilePath(textDocument.uri).toLowerCase();
-					}).map((interoDiag: InteroDiagnostic): Diagnostic => {
-						return {
-							severity: interoDiag.kind === InteroDiagnosticKind.error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
-							range: {
-								start: { line: interoDiag.line, character: interoDiag.col },
-								end: { line: interoDiag.line, character: interoDiag.col }
-							},
-							message: interoDiag.message,
-							source: 'intero'
-						}
-					});
-				console.log("err/war number after filter : " + diagnostics.length);
-				connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+				sendDocumentDiagnostics(response.diagnostics.filter(d => {
+					// console.log("file path doc : [" + d.filePath.toLowerCase() + "]");
+					// console.log("file path diag : [" + UriUtils.toFilePath(textDocument.uri).toLowerCase() + "]");
+					return d.filePath.toLowerCase() === UriUtils.toFilePath(textDocument.uri).toLowerCase();
+				}), textDocument.uri);
 				return Promise.resolve();
 			});
 	}
@@ -184,8 +223,7 @@ connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Prom
 	let filePath = UriUtils.toFilePath(textDocumentPosition.textDocument.uri);
 	let {word, range} = DocumentUtils.getIdentifierAtPosition(doc, textDocumentPosition.position, NoMatchAtCursorBehaviour.LookLeft);
 
-	const completeAtRequest = new CompleteAtRequest(filePath, range.start.line + 1, range.start.character,
-		range.end.line + 1, range.end.character, word);
+	const completeAtRequest = new CompleteAtRequest(filePath, DocumentUtils.toInteroRange(range), word);
 
 	return completeAtRequest.send(interoProxy)
 		.then((response: CompleteAtResponse) => {

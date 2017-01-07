@@ -5,6 +5,7 @@ import {InteroResponse} from './interoResponse'
 
 /**
  * Represents an intero request
+ * Indices start at 1 (line and column)
  */
 export interface InteroRequest {
     /**

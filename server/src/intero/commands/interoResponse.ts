@@ -9,10 +9,10 @@ export interface InteroResponse {
     /**
      * Text recieved on stderr
      */
-    rawerr: string;
+    readonly rawerr: string;
 
     /**
      * Text recieved on stdout
      */
-    rawout: string;
+    readonly rawout: string;
 }
