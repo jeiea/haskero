@@ -15,7 +15,7 @@ export class WordSpot {
         this.range = range;
     }
 
-    //public get isEmpty() : boolean { return this.range.start.character === this.range.end.character && this.range.start.line === this.range.end.line }
+    public get isEmpty() : boolean { return this.range.start.character === this.range.end.character && this.range.start.line === this.range.end.line }
 }
 
 /**
@@ -76,7 +76,7 @@ export class DocumentUtils {
         let endOffset = DocumentUtils.getEndingOffset(text, cursorOffset, DocumentUtils.isIdentifierSymbol, sticky);
         let word = text.slice(startOffset, endOffset + 1); //ending offset should be included
 
-        return new WordSpot(word, Range.create(document.positionAt(startOffset), document.positionAt(endOffset)));
+        return new WordSpot(word, Range.create(document.positionAt(startOffset), document.positionAt(endOffset + 1)));
     }
 
     /**

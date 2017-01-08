@@ -127,7 +127,7 @@ connection.onHover((documentInfo): Promise<Hover> => {
 		let filePath = UriUtils.toFilePath(documentInfo.textDocument.uri);
 		let wordRange = DocumentUtils.getIdentifierAtPosition(doc, documentInfo.position, NoMatchAtCursorBehaviour.Stop);
 
-		//if (!wordRange.isEmpty) {
+		if (!wordRange.isEmpty) {
 			const typeAtRequest = new TypeAtRequest(filePath, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
 			return typeAtRequest.send(interoProxy).then((response) => {
 				let typeInfo = { language: 'haskell', value: response.type };
@@ -139,10 +139,10 @@ connection.onHover((documentInfo): Promise<Hover> => {
 					return Promise.resolve(null);
 				}
 			});
-		// }
-		// else {
-		// 	return Promise.resolve(null);
-		// }
+		}
+		else {
+			return Promise.resolve(null);
+		}
 	}
 });
 
