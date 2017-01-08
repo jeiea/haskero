@@ -15,7 +15,7 @@ main :: IO ()
 main = printf "2 + 3 = %d\n" (ourAdd 2 5)
 
 
-xxx = 3 + abc
+xxx = 3 + abc + 1
     where
         innerfunc a = a
         abc = 1
@@ -33,7 +33,7 @@ t = g.f
 
 he x = x
 
-y''' = "e" ++ abc
+y''' = "e" ++abc++"e"
     where
         abc = "salut"
 -- test = 3 + "e"
