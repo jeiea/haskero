@@ -23,7 +23,7 @@ import {UriUtils} from './intero/uri';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
-DebugUtils.init(true, connection);
+DebugUtils.init(false, connection);
 
 // Create a simple text document manager. The text document manager
 // supports full document sync only
@@ -48,7 +48,6 @@ connection.onInitialize((params): Promise<InitializeResult> => {
     const initRequest = new InitRequest();
     return initRequest.send(interoProxy)
         .then((resp: InitResponse) => {
-            connection.console.log("sdfdsf ");
             if (resp.isInteroInstalled) {
                 connection.console.log("Intero initialization done.");
                 //sendAllDocumentsDiagnostics(resp.diagnostics);
@@ -184,25 +183,21 @@ function interoDiagToVScodeDiag(interoDiag : InteroDiagnostic) : Diagnostic {
 
 function sendDocumentDiagnostics(interoDiags : InteroDiagnostic[], documentUri : string) {
     let diagnostics: Diagnostic[] = [];
-    //console.log("err/war number before filter : " + response.diagnostics.length);
     diagnostics = interoDiags.map(interoDiagToVScodeDiag);
-    console.log("err/war number after filter : " + diagnostics.length);
     connection.sendDiagnostics({ uri: documentUri, diagnostics });
 }
 
 function validateTextDocument(textDocument: TextDocumentIdentifier): Promise<void> {
     let problems = 0;
-    connection.console.log("validate : " + textDocument.uri);
+    DebugUtils.instance.connectionLog("validate : " + textDocument.uri);
 
     if (UriUtils.isFileProtocol(textDocument.uri)) {
         const reloadRequest = new ReloadRequest(textDocument.uri);
-        connection.console.log(reloadRequest.filePath);
+        DebugUtils.instance.connectionLog(reloadRequest.filePath);
 
         return reloadRequest.send(interoProxy)
             .then((response: ReloadResponse) => {
                 sendDocumentDiagnostics(response.diagnostics.filter(d => {
-                    // console.log("file path doc : [" + d.filePath.toLowerCase() + "]");
-                    // console.log("file path diag : [" + UriUtils.toFilePath(textDocument.uri).toLowerCase() + "]");
                     return d.filePath.toLowerCase() === UriUtils.toFilePath(textDocument.uri).toLowerCase();
                 }), textDocument.uri);
                 return Promise.resolve();
@@ -238,7 +233,7 @@ connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
 });
 
 documents.onDidSave( e => {
-    connection.console.log(e.document.uri);
+    //connection.console.log(e.document.uri);
     return validateTextDocument(e.document);
 });
 
