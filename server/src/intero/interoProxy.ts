@@ -44,14 +44,14 @@ export class InteroProxy {
      * End of communication utf8 char
      */
     public static get EOTUtf8() : string {
-        return '@';
+        return '\u0004';
     }
 
     /**
      * End of communication char in CMD
      */
     public static get EOTInteroCmd() : string {
-        return '@';
+        return '"\\4"';
     }
 
     public constructor(interoProcess : child_process.ChildProcess) {
@@ -86,7 +86,7 @@ export class InteroProxy {
         let chunk = data.toString();
         this.rawout += chunk;
         DebugUtils.instance.log(chunk);
-        if (InteroProxy.endsWith(chunk, InteroProxy.EOTUtf8)) {//'\u0004')) {
+        if (InteroProxy.endsWith(chunk, InteroProxy.EOTUtf8)) {
             //On linux, issue with synchronisation between stdout and stderr :
             // - use a set time out to wait 50ms for stderr to finish to write data after we recieve the EOC char from stdin
             setTimeout(this.onResponse, 50);
