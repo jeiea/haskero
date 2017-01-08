@@ -46,7 +46,7 @@ To fill a bug, go to my gitlab repository, [open an issue](https://gitlab.com/va
 
 > Plugin (ghc, stack, intero and vscode-haskell-intero) version and VSCode version used :
 
-> If the issue is hard to reproduce on an empty haskell project, a link to a repository containing a sample reproducing the issue
+> If the issue is hard to repeat on an empty haskell project, a link to a repository containing a sample reproducing the issue
 
 ## Features
 
