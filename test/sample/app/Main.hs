@@ -8,12 +8,10 @@ import Lib
 
 import Text.Printf (printf)
 
-aaa x = 3
-
--- ourAddComment
 main :: IO ()
 main = printf "2 + 3 = %d\n" (ourAdd 2 5)
 
+aaa x = 3
 
 xxx = 3 + abc + 1
     where
