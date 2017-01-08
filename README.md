@@ -52,3 +52,7 @@ To fill a bug, go to my gitlab repository, [open an issue](https://gitlab.com/va
 
 To ask for a feature, check if the feature is already requested ([features](https://gitlab.com/vannnns/VSCode-haskell-intero/issues?label_name%5B%5D=Feature) on the gitlab repository).
 If not, create a new issue with the *feature requested* label.
+
+# How it works ?
+
+For technical information, please refer to the server project [readme](https://gitlab.com/vannnns/VSCode-haskell-intero/blob/master/server/README.md)
