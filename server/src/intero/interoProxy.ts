@@ -5,7 +5,7 @@
 import {InteroRequest} from './commands/interoRequest'
 import {InteroResponse} from './commands/interoResponse'
 import {InitRequest, InitResponse} from './commands/init'
-import {DebugUtils} from '../debug/DebugUtils'
+import {DebugUtils} from '../debug/debugUtils'
 
 import child_process = require('child_process');
 import stream = require('stream');
@@ -61,6 +61,7 @@ export class InteroProxy {
         this.onRawResponseQueue = [];
         this.interoProcess.stdout.on('data', this.onData);
         this.interoProcess.stderr.on('data', this.onDataErr);
+        this.interoProcess.stdin.on('error', this.onError);
         this.interoProcess.on('exit', this.onExit);
     }
 
@@ -90,6 +91,15 @@ export class InteroProxy {
             //On linux, issue with synchronisation between stdout and stderr :
             // - use a set time out to wait 50ms for stderr to finish to write data after we recieve the EOC char from stdin
             setTimeout(this.onResponse, 50);
+        }
+    }
+
+    //executed when an error is emitted  on stdin
+    private onError = (er : any) => {
+        DebugUtils.instance.log("error stdin : " + er);
+        if (this.onRawResponseQueue.length > 0) {
+            let resolver = this.onRawResponseQueue.shift();
+            resolver.reject(er);
         }
     }
 

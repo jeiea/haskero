@@ -17,7 +17,7 @@ import {LocAtRequest, LocAtResponse} from './intero/commands/locAt'
 import {TypeAtRequest, TypeAtResponse} from './intero/commands/typeAt'
 import {CompleteAtRequest, CompleteAtResponse} from './intero/commands/completeAt'
 import {DocumentUtils, WordSpot, NoMatchAtCursorBehaviour} from './documentUtils'
-import {DebugUtils} from './debug/DebugUtils'
+import {DebugUtils} from './debug/debugUtils'
 
 import {UriUtils} from './intero/uri';
 
@@ -48,6 +48,7 @@ connection.onInitialize((params): Promise<InitializeResult> => {
     const initRequest = new InitRequest();
     return initRequest.send(interoProxy)
         .then((resp: InitResponse) => {
+
             if (resp.isInteroInstalled) {
                 connection.console.log("Intero initialization done.");
                 //sendAllDocumentsDiagnostics(resp.diagnostics);
@@ -70,6 +71,11 @@ connection.onInitialize((params): Promise<InitializeResult> => {
                     capabilities: {}
                 }
             }
+        }).catch(reason => {
+                connection.console.log("Error: Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing");
+                return {
+                    capabilities: {}
+                }
         });
 });
 
