@@ -1,5 +1,5 @@
 {
-	"name": "haskell-language-server",
+	"name": "haskero-language-server",
 	"description": "Language server for haskell using intero as a backend",
 	"version": "0.1.0",
 	"author": "Julien Vannesson",
@@ -8,9 +8,10 @@
 		"node": "*"
 	},
 	"dependencies": {
-		"vscode-languageserver": "^2.6.2"
+		"vscode-languageserver": "^3.0.4"
 	},
 	"devDependencies": {
+		"@types/node": "^6.0.52",
 		"typescript": "^2.1.4"
 	},
 	"scripts": {

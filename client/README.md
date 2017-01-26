@@ -1,4 +1,4 @@
-# Haskell intero for VSCode
+# Haskero for VSCode
 This is a language server for the haskell language based on intero backend
 
 ## Key features

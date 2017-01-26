@@ -1,14 +1,17 @@
 {
-	"compilerOptions": {
-		"target": "ES5",
-		"module": "commonjs",
+	 "compilerOptions": {
+        "module": "commonjs",
+        "target": "es6",
+        "outDir": "out",
+        "lib": [
+            "es6"
+        ],
+        "sourceMap": true,
 		"moduleResolution": "node",
-		"outDir": "out",
-		"noLib": true,
-		"sourceMap": true
-	},
-	"exclude": [
-		"node_modules",
+        "rootDir": "."
+    },
+    "exclude": [
+        "node_modules",
 		"server"
-	]
+    ]
 }

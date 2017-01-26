@@ -5,7 +5,7 @@ import {
     createConnection, IConnection, TextDocumentSyncKind,
     TextDocuments, TextDocument, Diagnostic, DiagnosticSeverity,
     InitializeParams, InitializeResult, TextDocumentPositionParams,
-    CompletionItem, CompletionItemKind, Files, TextDocumentIdentifier, Location, Range, Position
+    CompletionItem, CompletionItemKind, Files, TextDocumentIdentifier, Location, Range, Position, MarkedString
 } from 'vscode-languageserver';
 
 import child_process = require('child_process');
@@ -39,7 +39,7 @@ let interoProxy : InteroProxy;
 let workspaceRoot: string;
 connection.onInitialize((params): Promise<InitializeResult> => {
     workspaceRoot = params.rootPath;
-    connection.console.log("Initializing intero...");
+    connection.console.log("Initializing Haskero...");
 
     //launch the intero process
     const intero = child_process.spawn('stack', ['ghci', '--with-ghc', 'intero']);
@@ -50,7 +50,7 @@ connection.onInitialize((params): Promise<InitializeResult> => {
         .then((resp: InitResponse) => {
 
             if (resp.isInteroInstalled) {
-                connection.console.log("Intero initialization done.");
+                connection.console.log("Haskero initialization done.");
                 //sendAllDocumentsDiagnostics(resp.diagnostics);
                 return {
                     capabilities: {
@@ -113,7 +113,7 @@ connection.onDefinition((documentInfo): Promise<Location> => {
         const locAtRequest = new LocAtRequest(filePath, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
 
         return locAtRequest.send(interoProxy)
-            .then((response) => {
+            .then((response) : Promise<Location> => {
                 if (response.isOk) {
                     let fileUri = UriUtils.toUri(response.filePath);
                     let loc = Location.create(fileUri, DocumentUtils.toVSCodeRange(response.range));
@@ -134,16 +134,17 @@ connection.onHover((documentInfo): Promise<Hover> => {
 
         if (!wordRange.isEmpty) {
             const typeAtRequest = new TypeAtRequest(filePath, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
-            return typeAtRequest.send(interoProxy).then((response) => {
-                let typeInfo = { language: 'haskell', value: response.type };
-                let hover = { contents: typeInfo };
-                if (typeInfo.value !== null && typeInfo.value !== "") {
-                    return Promise.resolve(hover);
-                }
-                else {
-                    return Promise.resolve(null);
-                }
-            });
+            return typeAtRequest.send(interoProxy)
+                .then((response) : Promise<Hover> => {
+                    let typeInfo : MarkedString = { language: 'haskell', value: response.type };
+                    let hover : Hover = { contents: typeInfo };
+                    if (typeInfo.value !== null && typeInfo.value !== "") {
+                        return Promise.resolve(hover);
+                    }
+                    else {
+                        return Promise.resolve(null);
+                    }
+                });
         }
         else {
             return Promise.resolve(null);

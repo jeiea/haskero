@@ -7,6 +7,8 @@ import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, T
 
 export function activate(context: ExtensionContext) {
 
+	const disposables: Disposable[] = [];
+
 	// The server is implemented in node
 	let serverModule = context.asAbsolutePath(path.join('server', 'server.js'));
 	// The debug options for the server
@@ -32,9 +34,11 @@ export function activate(context: ExtensionContext) {
 	}
 
 	// Create the language client and start the client.
-	let disposable = new LanguageClient('Haskell intero',  serverOptions, clientOptions, true).start();
+	let disposable = new LanguageClient('Haskero',  serverOptions, clientOptions, true).start();
 
 	// Push the disposable to the context's subscriptions so that the
 	// client can be deactivated on extension deactivation
+	//disposables.push(...disposable);
+
 	context.subscriptions.push(disposable);
 }
