@@ -88,10 +88,14 @@ export class ReloadRequest implements InteroRequest {
     }
 
     public send(interoProxy: InteroProxy): Promise<ReloadResponse> {
+        const load = `:l ${this.filePath}`;
         const reloadRequest = ':r';
-        return interoProxy.sendRawRequest(reloadRequest)
+        return interoProxy.sendRawRequest(load)
+            .then(response => {
+                return interoProxy.sendRawRequest(reloadRequest);
+            })
             .then((response: RawResponse) => {
-                return Promise.resolve(new ReloadResponse(response.rawout, response.rawerr));
+                        return Promise.resolve(new ReloadResponse(response.rawout, response.rawerr));
             });
     }
 }
