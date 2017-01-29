@@ -1,5 +1,5 @@
 # Haskero for VSCode
-This is a language server for the haskell language based on intero backend
+Language server for Haskell using [Intero backend](https://github.com/commercialhaskell/intero)
 
 ## Key features
 
@@ -14,11 +14,8 @@ This is a language server for the haskell language based on intero backend
 * It works on `stack` projects only
 * It needs intero to be installed (see : [Installing intero](https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing))
 
-# Haskell for VSCode
-Language server for Haskell using [Intero backend](https://github.com/commercialhaskell/intero)
 
-
-# Features
+# Features details
 
 ## GHC Warnings and errors (on save)
 
