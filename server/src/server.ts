@@ -198,6 +198,7 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): Promise<voi
     let problems = 0;
     DebugUtils.instance.connectionLog("validate : " + textDocument.uri);
 
+    //when a file is opened in diff mode in VSCode, its url is not a path on disk
     if (UriUtils.isFileProtocol(textDocument.uri)) {
         const reloadRequest = new ReloadRequest(textDocument.uri);
         DebugUtils.instance.connectionLog(reloadRequest.filePath);
