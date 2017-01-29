@@ -5,6 +5,10 @@
 	"license": "MIT",
 	"version": "0.1.0",
 	"publisher": "Vans",
+	"repository": {
+		"type": "git",
+		"url": "https://gitlab.com/vannnns/VSCode-haskell-intero"
+	},
 	"engines": {
 		"vscode": "^1.8.0"
 	},
