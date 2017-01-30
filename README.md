@@ -31,7 +31,7 @@ Language server for Haskell using [Intero backend](https://github.com/commercial
 - [ ] Better auto completion (support dot notation for qualified imports, ...)
 - [ ] Insert identifier type one line above
 - [ ] Goto definition in hackage
-- [ ] Live evaluation of random hasell code in the current module scope
+- [ ] Live evaluation of random haskell code in the current module scope
 
 # Feedback
 
