@@ -18,3 +18,6 @@ Each IDE feature like code completion, goto definition, and so on, triggers requ
 `commands` folder stores all implemented commands.
 
 `interoProxy.ts` handles the communication protocol between the language server and intero. It provides an async interface to send command requests and recieve command responses.
+
+## License
+[CeCILL](LICENSE)
