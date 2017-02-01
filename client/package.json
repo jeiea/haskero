@@ -18,6 +18,9 @@
     "categories": [
         "Languages"
     ],
+    "extensionDependencies": [
+        "justusadam.language-haskell"
+    ],
     "activationEvents": [
         "onLanguage:haskell"
     ],
