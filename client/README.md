@@ -30,13 +30,13 @@ Language server for Haskell using [Intero backend](https://github.com/commercial
 
 ## Identifier type definition
 
-> Type definition on hover
+> Type definition on hover (or ctr+k,ctr+i)
 
 ![Type definition](https://gitlab.com/vannnns/haskero/raw/master/client/media/type-at.gif "Type definition")
 
 ## Goto definition
 
-> Goto Identifier definition
+> Goto Identifier definition (or F12)
 
 ![Goto definition](https://gitlab.com/vannnns/haskero/raw/master/client/media/loc-at.gif "Goto definition")
 
