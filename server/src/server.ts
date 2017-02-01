@@ -42,7 +42,7 @@ connection.onInitialize((params): Promise<InitializeResult> => {
     connection.console.log("Initializing Haskero...");
 
     //launch the intero process
-    const intero = child_process.spawn('stack', ['ghci', '--with-ghc', 'intero']);
+    const intero = child_process.spawn('stack', ['ghci', '--with-ghc', 'intero', '--ghci-options="-ignore-dot-ghci"']);
     interoProxy = new InteroProxy(intero);
 
     const initRequest = new InitRequest();
