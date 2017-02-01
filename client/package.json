@@ -4,7 +4,7 @@
     "description": "Haskell language server for VSCode (errors, completion, goto def, etc.)",
     "author": "Julien Vannesson",
     "license": "MIT",
-    "version": "0.1.31",
+    "version": "0.1.32",
     "publisher": "Vans",
     "homepage": "https://gitlab.com/vannnns/haskero/blob/master/README.md",
     "repository": {
