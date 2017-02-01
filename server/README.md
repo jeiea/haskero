@@ -19,5 +19,9 @@ Each IDE feature like code completion, goto definition, and so on, triggers requ
 
 `interoProxy.ts` handles the communication protocol between the language server and intero. It provides an async interface to send command requests and recieve command responses.
 
+## Technical notes
+
+[Technical notes](Notes.md)
+
 ## License
 [CeCILL](LICENSE)
