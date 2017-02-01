@@ -1,5 +1,6 @@
 {
-    "name": "Haskero",
+    "name": "haskero",
+    "displayName": "Haskero",
     "description": "Haskell language server for VSCode (errors, completion, goto def, etc.)",
     "author": "Julien Vannesson",
     "license": "MIT",
