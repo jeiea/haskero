@@ -48,7 +48,6 @@ connection.onInitialize((params): Promise<InitializeResult> => {
     const initRequest = new InitRequest();
     return initRequest.send(interoProxy)
         .then((resp: InitResponse) => {
-
             if (resp.isInteroInstalled) {
                 connection.console.log("Haskero initialization done.");
                 //sendAllDocumentsDiagnostics(resp.diagnostics);
@@ -60,7 +59,7 @@ connection.onInitialize((params): Promise<InitializeResult> => {
                         definitionProvider: true,
                         // Tell the client that the server support code complete
                         completionProvider: {
-                            resolveProvider: true
+                            resolveProvider: false
                         }
                     }
                 }
@@ -219,8 +218,7 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): Promise<voi
 // This handler provides the initial list of the completion items.
 connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Promise<CompletionItem[]> => {
     // The pass parameter contains the position of the text document in
-    // which code complete got requested. For the example we ignore this
-    // info and always provide the same completion items.
+    // which code complete got requested.
 
     let doc = documents.get(textDocumentPosition.textDocument.uri);
     let filePath = UriUtils.toFilePath(textDocumentPosition.textDocument.uri);
@@ -236,9 +234,9 @@ connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Prom
 
 // This handler resolve additional information for the item selected in
 // the completion list.
-connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-    return item;
-});
+// connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
+//     return item;
+// });
 
 documents.onDidSave( e => {
     //connection.console.log(e.document.uri);
