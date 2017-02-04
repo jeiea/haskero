@@ -26,13 +26,15 @@ export class TypeAtResponse implements InteroResponse {
  */
 export class TypeAtRequest implements InteroRequest {
 
-    public constructor(private filePath: string, private range : InteroRange, private identifier: string) {
+    public constructor(private uri: string, private range : InteroRange, private identifier: string) {
     }
 
     public send(interoProxy: InteroProxy): Promise<TypeAtResponse> {
+        const filePath = UriUtils.toFilePath(this.uri);
+        const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //loads the file first otherwise it won't match the last version on disk
-        const load = `:l ${this.filePath}`;
-        const req = `:type-at ${this.filePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
+        const load = `:l ${escapedFilePath}`;
+        const req = `:type-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
         return interoProxy.sendRawRequest(load)
             .then((response) => {
                 return interoProxy.sendRawRequest(req);

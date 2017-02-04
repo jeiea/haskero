@@ -5,6 +5,7 @@ import {InteroRequest} from './interoRequest'
 import {InteroResponse} from './interoResponse'
 import {InteroUtils} from '../interoUtils'
 import {InteroRange} from '../interoRange'
+import {UriUtils} from '../uri'
 
 /**
  * 'complete-at' intero response
@@ -43,12 +44,13 @@ export class CompleteAtResponse implements InteroResponse {
  */
 export class CompleteAtRequest implements InteroRequest {
 
-    public constructor(private filePath: string, private range : InteroRange, private text: string) {
+    public constructor(private uri: string, private range : InteroRange, private text: string) {
     }
 
     public send(interoProxy: InteroProxy): Promise<CompleteAtResponse> {
-        //const load = `:l ${this.filePath}`;
-        const req = `:complete-at ${this.filePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.text}`;
+        const filePath = UriUtils.toFilePath(this.uri);
+        const escapedFilePath = InteroUtils.escapeFilePath(filePath);
+        const req = `:complete-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.text}`;
         return interoProxy.sendRawRequest(req).then((response) => {
                     return Promise.resolve(new CompleteAtResponse(response.rawout, response.rawerr));
         });

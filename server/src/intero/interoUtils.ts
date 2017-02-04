@@ -13,4 +13,12 @@ export class InteroUtils {
     public static normalizeRawResponse(raw : string) : string {
         return raw.replace(InteroProxy.EOTUtf8, '').trim();
     }
+
+    /**
+     * Escape backslash and surround wiht double quotes
+     * Usefull on windows to handle paths with spaces
+     */
+    public static escapeFilePath(path : string) : string {
+        return `"${path.replace(/\\/g, '\\\\')}"`;
+    }
 }

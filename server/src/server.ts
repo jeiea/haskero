@@ -107,9 +107,8 @@ connection.onDidChangeConfiguration((change) => {
 connection.onDefinition((documentInfo): Promise<Location> => {
     if (UriUtils.isFileProtocol(documentInfo.textDocument.uri)) {
         let doc = documents.get(documentInfo.textDocument.uri);
-        let filePath = UriUtils.toFilePath(documentInfo.textDocument.uri);
         let wordRange = DocumentUtils.getIdentifierAtPosition(doc, documentInfo.position, NoMatchAtCursorBehaviour.Stop);
-        const locAtRequest = new LocAtRequest(filePath, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
+        const locAtRequest = new LocAtRequest(documentInfo.textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
 
         return locAtRequest.send(interoProxy)
             .then((response) : Promise<Location> => {
@@ -128,11 +127,9 @@ connection.onDefinition((documentInfo): Promise<Location> => {
 connection.onHover((documentInfo): Promise<Hover> => {
     if (UriUtils.isFileProtocol(documentInfo.textDocument.uri)) {
         let doc = documents.get(documentInfo.textDocument.uri);
-        let filePath = UriUtils.toFilePath(documentInfo.textDocument.uri);
         let wordRange = DocumentUtils.getIdentifierAtPosition(doc, documentInfo.position, NoMatchAtCursorBehaviour.Stop);
-
         if (!wordRange.isEmpty) {
-            const typeAtRequest = new TypeAtRequest(filePath, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
+            const typeAtRequest = new TypeAtRequest(documentInfo.textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
             return typeAtRequest.send(interoProxy)
                 .then((response) : Promise<Hover> => {
                     let typeInfo : MarkedString = { language: 'haskell', value: response.type };
@@ -200,7 +197,7 @@ function validateTextDocument(textDocument: TextDocumentIdentifier): Promise<voi
     //when a file is opened in diff mode in VSCode, its url is not a path on disk
     if (UriUtils.isFileProtocol(textDocument.uri)) {
         const reloadRequest = new ReloadRequest(textDocument.uri);
-        DebugUtils.instance.connectionLog(reloadRequest.filePath);
+        DebugUtils.instance.connectionLog(textDocument.uri);
 
         return reloadRequest.send(interoProxy)
             .then((response: ReloadResponse) => {
@@ -221,10 +218,9 @@ connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): Prom
     // which code complete got requested.
 
     let doc = documents.get(textDocumentPosition.textDocument.uri);
-    let filePath = UriUtils.toFilePath(textDocumentPosition.textDocument.uri);
     let {word, range} = DocumentUtils.getIdentifierAtPosition(doc, textDocumentPosition.position, NoMatchAtCursorBehaviour.LookLeft);
 
-    const completeAtRequest = new CompleteAtRequest(filePath, DocumentUtils.toInteroRange(range), word);
+    const completeAtRequest = new CompleteAtRequest(textDocumentPosition.textDocument.uri, DocumentUtils.toInteroRange(range), word);
 
     return completeAtRequest.send(interoProxy)
         .then((response: CompleteAtResponse) => {

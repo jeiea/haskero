@@ -4,6 +4,7 @@ import {RawResponse, InteroProxy} from '../interoProxy'
 import {InteroRequest} from './interoRequest'
 import {InteroResponse} from './interoResponse'
 import {InteroDiagnostic, InteroDiagnosticKind} from './interoDiagnostic'
+import { InteroUtils } from '../interoUtils'
 import {UriUtils} from '../uri'
 
 /**
@@ -78,17 +79,14 @@ export class ReloadResponse implements InteroResponse {
  */
 export class ReloadRequest implements InteroRequest {
 
-    private _filePath: string;
-    public get filePath(): string {
-        return this._filePath;
-    }
+    public constructor(private readonly uri: string) {
 
-    public constructor(uri: string) {
-        this._filePath = UriUtils.toFilePath(uri);
     }
 
     public send(interoProxy: InteroProxy): Promise<ReloadResponse> {
-        const load = `:l ${this.filePath}`;
+        const filePath = UriUtils.toFilePath(this.uri);
+        const escapedFilePath = InteroUtils.escapeFilePath(filePath);
+        const load = `:l ${escapedFilePath}`;
         const reloadRequest = ':r';
         return interoProxy.sendRawRequest(load)
             .then(response => {

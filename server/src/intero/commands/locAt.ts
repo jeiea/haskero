@@ -4,6 +4,8 @@ import {InteroProxy} from '../interoProxy'
 import {InteroRequest} from './interoRequest'
 import {InteroResponse} from './interoResponse'
 import {InteroRange} from '../interoRange'
+import { InteroUtils } from '../interoUtils'
+import { UriUtils } from '../uri'
 
 /**
  * loc-at intero response
@@ -59,13 +61,15 @@ export class LocAtResponse implements InteroResponse {
  */
 export class LocAtRequest implements InteroRequest {
 
-    public constructor(private filePath: string, private range : InteroRange, private identifier: string) {
+    public constructor(private uri: string, private range : InteroRange, private identifier: string) {
     }
 
     public send(interoProxy: InteroProxy): Promise<LocAtResponse> {
+        const filePath = UriUtils.toFilePath(this.uri);
+        const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //load the file first, otherwise it won't match the last version on disk
-        const load = `:l ${this.filePath}`;
-        const req = `:loc-at ${this.filePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
+        const load = `:l ${escapedFilePath}`;
+        const req = `:loc-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
         return interoProxy.sendRawRequest(load)
             .then((response) => {
                 return interoProxy.sendRawRequest(req);
