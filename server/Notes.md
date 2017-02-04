@@ -1,5 +1,11 @@
 # Notes on intero behavior
 
+## full cmd
+
+sample of a cmd launched by emacsmode :
+
+`stack ghci --with-ghc intero "--docker-run-args=--interactive=true --tty=false" --no-build --no-load --ghci-options -odir=/home/jchia/git/tms/hs/.stack-work/intero/intero31725Fz1 --ghci-options -hidir=/home/jchia/git/tms/hs/.stack-work/intero/intero31725Fz1 rgr-automation`
+
 ## Indices
 
 intero indices are 1 based.
