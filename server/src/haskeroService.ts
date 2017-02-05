@@ -2,7 +2,7 @@ import {
     IPCMessageReader, IPCMessageWriter, Hover,
     createConnection, IConnection, TextDocumentSyncKind,
     TextDocuments, TextDocument, Diagnostic, DiagnosticSeverity,
-    InitializeParams, InitializeResult, TextDocumentPositionParams,
+    InitializeParams, InitializeResult, InitializeError, TextDocumentPositionParams,
     CompletionItem, CompletionItemKind, Files, TextDocumentIdentifier, Location, Range, Position, MarkedString
 } from 'vscode-languageserver'
 
@@ -26,45 +26,51 @@ export class HaskeroService {
 
     public initialize(connection: IConnection) : Promise<InitializeResult> {
         connection.console.log("Initializing Haskero...");
-        connection.console.log("Spawning process 'intero': stack ghci --with-ghc intero --ghci-options=\"-ignore-dot-ghci\"");
+        const stackOptions = ['ghci', '--with-ghc', 'intero', '--no-build', '--no-load', '--ghci-options="-ignore-dot-ghci"'];
+        connection.console.log(`Spawning process 'stack' with options [${stackOptions}]`);
         //launch the intero process
-        const intero = child_process.spawn('stack', ['ghci', '--with-ghc', 'intero', '--ghci-options="-ignore-dot-ghci"']);
+        const intero = child_process.spawn('stack', stackOptions);
+
         this.interoProxy = new InteroProxy(intero);
 
-        const initRequest = new InitRequest();
-        return initRequest
-            .send(this.interoProxy)
-            .then((resp: InitResponse) => {
-                if (resp.isInteroInstalled) {
-                    connection.console.log("Haskero initialization done.");
-                    //sendAllDocumentsDiagnostics(resp.diagnostics);
-                    return {
-                        capabilities: {
-                            // Tell the client that the server works in FULL text document sync mode
-                            textDocumentSync: TextDocumentSyncKind.Full,
-                            hoverProvider: true,
-                            definitionProvider: true,
-                            // Tell the client that the server support code complete
-                            completionProvider: {
-                                resolveProvider: false
-                            }
+        return new Promise((resolve, reject) => {
+            //let the stack process time to start and intero to initialize
+            setTimeout(() => {
+                const initRequest = new InitRequest();
+                return initRequest
+                    .send(this.interoProxy)
+                    .then((resp: InitResponse): void => {
+                        if (resp.isInteroInstalled) {
+                            connection.console.log("Haskero initialization done.");
+                            //sendAllDocumentsDiagnostics(resp.diagnostics);
+                            resolve(
+                                {
+                                    capabilities: {
+                                            // Tell the client that the server works in FULL text document sync mode
+                                            textDocumentSync: TextDocumentSyncKind.Full,
+                                            hoverProvider: true,
+                                            definitionProvider: true,
+                                            // Tell the client that the server support code complete
+                                            completionProvider: {
+                                                resolveProvider: false
+                                            }
+                                        }
+                                });
                         }
-                    }
-                }
-                else {
-                    connection.console.log("Error: Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing");
-                    return {
-                        capabilities: {}
-                    }
-                }
-            })
-            .catch(reason => {
-                connection.console.log("Error spawning process : " + reason);
-                //connection.console.log("Maybe Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing");
-                return {
-                    capabilities: {}
-                }
+                        else {
+                            reject("Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing");
+                        }
+                    })
+                    .catch(reject);
+            }, 50);
+        })
+        .catch(reason => {
+            return Promise.reject<InitializeError>({
+                code: 1,
+                message: reason + ". Look Haskero output tab for further information",
+                data: {retry: false}
             });
+        });;
     }
 
     public getDefinitionLocation(textDocument : TextDocument, position: Position): Promise<Location> {

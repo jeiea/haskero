@@ -32,7 +32,11 @@ export class RawResponse {
 export class InteroProxy {
     private rawout : string;
     private rawoutErr : string;
-
+    private isInteroProcessUp: boolean = true;
+    /**
+     * Error message emitted when interoProcess emits an error and stop to working
+     */
+    private errorMsg: string;
     /**
      * Manage a request <-> response queue.
      * Each request is paired with a response.
@@ -57,16 +61,20 @@ export class InteroProxy {
         this.rawout = '';
         this.rawoutErr = '';
         this.onRawResponseQueue = [];
+        this.interoProcess.on('exit', this.onExit);
+        this.interoProcess.on('error', this.onError);
         this.interoProcess.stdout.on('data', this.onData);
         this.interoProcess.stderr.on('data', this.onDataErr);
         this.interoProcess.stdin.on('error', this.onStdInError);
-        this.interoProcess.on('exit', this.onExit);
     }
 
     /**
      * Send a request to intero
      */
     public sendRawRequest(rawRequest : string) : Promise<RawResponse> {
+        if (!this.isInteroProcessUp) {
+            return Promise.reject(this.errorMsg);
+        }
         let executor = (resolve, reject) : void => {
             this.onRawResponseQueue.push( {resolve:resolve, reject:reject} );
             let req = rawRequest + '\n';
@@ -109,6 +117,7 @@ export class InteroProxy {
     }
 
     private onExit = (code : number) => {
+        this.isInteroProcessUp = false;
         let rawout = this.rawout;
         let rawerr = this.rawoutErr;
         this.rawout = '';
@@ -117,6 +126,11 @@ export class InteroProxy {
             let resolver = this.onRawResponseQueue.shift();
             resolver.reject(`process exited with code ${code}\r\n\r\nstdout:\r\n${rawout}\r\n\r\nstderr:\r\n${rawerr}\r\n`)
         }
+    }
+
+    private onError = (reason : string) => {
+        this.isInteroProcessUp = false;
+        this.errorMsg = `Failed to start process 'stack'. ${reason}`;
     }
 
     private onResponse = () => {
@@ -130,5 +144,4 @@ export class InteroProxy {
             resolver.resolve(new RawResponse(rawout, rawerr));
         }
     }
-
 }
