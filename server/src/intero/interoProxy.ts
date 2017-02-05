@@ -30,7 +30,6 @@ export class RawResponse {
  * InteroProxy hides the complexity behind a simple interface: you send a request and you get a response. All the synchronisation is done by the proxy
  */
 export class InteroProxy {
-    private interoProcess : child_process.ChildProcess;
     private rawout : string;
     private rawoutErr : string;
 
@@ -54,14 +53,13 @@ export class InteroProxy {
         return '"\\4"';
     }
 
-    public constructor(interoProcess : child_process.ChildProcess) {
-        this.interoProcess = interoProcess;
+    public constructor(private interoProcess : child_process.ChildProcess) {
         this.rawout = '';
         this.rawoutErr = '';
         this.onRawResponseQueue = [];
         this.interoProcess.stdout.on('data', this.onData);
         this.interoProcess.stderr.on('data', this.onDataErr);
-        this.interoProcess.stdin.on('error', this.onError);
+        this.interoProcess.stdin.on('error', this.onStdInError);
         this.interoProcess.on('exit', this.onExit);
     }
 
@@ -95,7 +93,7 @@ export class InteroProxy {
     }
 
     //executed when an error is emitted  on stdin
-    private onError = (er : any) => {
+    private onStdInError = (er : any) => {
         DebugUtils.instance.log("error stdin : " + er);
         if (this.onRawResponseQueue.length > 0) {
             let resolver = this.onRawResponseQueue.shift();
@@ -111,8 +109,14 @@ export class InteroProxy {
     }
 
     private onExit = (code : number) => {
-        DebugUtils.instance.log("process intero exited : code " + code);
-        this.onResponse();
+        let rawout = this.rawout;
+        let rawerr = this.rawoutErr;
+        this.rawout = '';
+        this.rawoutErr = '';
+        if (this.onRawResponseQueue.length > 0) {
+            let resolver = this.onRawResponseQueue.shift();
+            resolver.reject(`process exited with code ${code}\r\n\r\nstdout:\r\n${rawout}\r\n\r\nstderr:\r\n${rawerr}\r\n`)
+        }
     }
 
     private onResponse = () => {
