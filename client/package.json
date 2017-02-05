@@ -11,12 +11,27 @@
         "type": "git",
         "url": "https://gitlab.com/vannnns/haskero"
     },
+    "bugs": {
+        "url": "https://gitlab.com/vannnns/haskero/issues"
+    },
     "icon": "images/haskero_128px.png",
+    "galleryBanner": {
+        "color": "#038FD6",
+        "theme": "dark"
+    },
     "engines": {
         "vscode": "^1.8.0"
     },
     "categories": [
-        "Languages"
+        "Languages",
+        "Snippets",
+        "Extension Packs"
+    ],
+    "keywords": [
+        "haskell",
+        "language server",
+        "stack",
+        "cabal"
     ],
     "extensionDependencies": [
         "justusadam.language-haskell"
