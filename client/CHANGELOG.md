@@ -1,3 +1,8 @@
+## Release 0.2.0
+
+ - **new feature**: find usage / find all reference (issue #26)
+ - update readme
+
 ## Release 0.1.36
 
  - refactore error handling (better messages, improved feedback, add additional debug info when installation environment is broken)

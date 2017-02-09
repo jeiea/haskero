@@ -6,6 +6,7 @@ Language server for Haskell using [Intero backend](https://github.com/commercial
 * Code Highlight and snippets (automatic dependency on [Haskell Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=justusadam.language-haskell))
 * Compilation errors and warnings
 * Goto definition
+* Find all references
 * Identifiers types on hover
 * Code completion
 
@@ -39,6 +40,10 @@ Language server for Haskell using [Intero backend](https://github.com/commercial
 **Goto Identifier definition (or F12)**
 
 ![Goto definition](https://gitlab.com/vannnns/haskero/raw/master/client/media/loc-at.gif "Goto definition")
+
+### Find all references
+
+Find all references of a symbol in the **same module** (shift+F12)
 
 ## Incoming improvements
 
