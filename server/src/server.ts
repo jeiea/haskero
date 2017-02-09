@@ -1,7 +1,7 @@
 'use strict';
 
 import {
-    IPCMessageReader, IPCMessageWriter, Hover,
+    IPCMessageReader, IPCMessageWriter, Hover, ReferenceParams,
     createConnection, IConnection, TextDocumentSyncKind,
     TextDocuments, TextDocument, Diagnostic, DiagnosticSeverity,
     InitializeParams, InitializeResult, TextDocumentPositionParams,
@@ -81,6 +81,14 @@ connection.onCompletion((documentInfo): Promise<CompletionItem[]> => {
     if (UriUtils.isFileProtocol(documentURI)) {
         const textDocument = documents.get(documentURI);
         return haskeroService.getCompletionItems(textDocument, documentInfo.position);
+    }
+});
+
+connection.onReferences((referenceParams: ReferenceParams): Promise<Location[]> => {
+    const documentURI = referenceParams.textDocument.uri;
+    if (UriUtils.isFileProtocol(documentURI)) {
+        const textDocument = documents.get(documentURI);
+        return haskeroService.getReferencesLocations(textDocument, referenceParams.position);
     }
 });
 

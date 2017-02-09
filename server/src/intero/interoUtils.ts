@@ -21,4 +21,15 @@ export class InteroUtils {
     public static escapeFilePath(path : string) : string {
         return `"${path.replace(/\\/g, '\\\\')}"`;
     }
+
+
+    public static allMatchs(text: string, regexp: RegExp): RegExpExecArray[] {
+        const matches: RegExpExecArray[] = [];
+        let match: RegExpExecArray;
+
+        while ((match = regexp.exec(text)) != null) {
+            matches.push(match);
+        }
+        return matches;
+    }
 }

@@ -12,6 +12,7 @@ import {InitRequest, InitResponse} from './intero/commands/init';
 import {ReloadRequest, ReloadResponse} from './intero/commands/reload';
 import {InteroDiagnostic, InteroDiagnosticKind} from './intero/commands/interoDiagnostic'
 import {LocAtRequest, LocAtResponse} from './intero/commands/locAt'
+import {UsesRequest, UsesResponse} from './intero/commands/uses'
 import {TypeAtRequest, TypeAtResponse} from './intero/commands/typeAt'
 import {CompleteAtRequest, CompleteAtResponse} from './intero/commands/completeAt'
 import {DocumentUtils, WordSpot, NoMatchAtCursorBehaviour} from './documentUtils'
@@ -42,16 +43,20 @@ export class HaskeroService {
                     .then((resp: InitResponse): void => {
                         if (resp.isInteroInstalled) {
                             connection.console.log("Haskero initialization done.");
-                            //sendAllDocumentsDiagnostics(resp.diagnostics);
                             resolve(
                                 {
                                     capabilities: {
                                             // Tell the client that the server works in FULL text document sync mode
                                             textDocumentSync: TextDocumentSyncKind.Full,
+                                            // support type info on hover
                                             hoverProvider: true,
+                                            // support goto definition
                                             definitionProvider: true,
+                                            // support find usage (ie: find all references)
+                                            referencesProvider : true,
                                             // Tell the client that the server support code complete
                                             completionProvider: {
+                                                // doesn't support completion details
                                                 resolveProvider: false
                                             }
                                         }
@@ -123,6 +128,25 @@ export class HaskeroService {
             });
     }
 
+    public getReferencesLocations(textDocument : TextDocument, position: Position): Promise<Location[]> {
+        let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
+        const usesRequest = new UsesRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
+        return usesRequest
+            .send(this.interoProxy)
+            .then((response) : Promise<Location[]> => {
+                if (response.isOk) {
+                    return Promise.resolve(
+                        response.locations.map((interoLoc) => {
+                            let fileUri = UriUtils.toUri(interoLoc.file);
+                            return Location.create(fileUri, DocumentUtils.toVSCodeRange(interoLoc.range));
+                        })
+                    );
+                }
+                else {
+                    return Promise.resolve(null);
+                }
+            });
+    }
 
     public validateTextDocument(connection: IConnection, textDocument: TextDocumentIdentifier): Promise<void> {
         let problems = 0;
