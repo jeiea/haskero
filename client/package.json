@@ -4,7 +4,7 @@
     "description": "A full featured Haskell IDE",
     "author": "Julien Vannesson",
     "license": "MIT",
-    "version": "0.2.1",
+    "version": "0.2.11",
     "publisher": "Vans",
     "homepage": "https://gitlab.com/vannnns/haskero/blob/master/README.md",
     "repository": {
@@ -41,11 +41,13 @@
         "onLanguage:haskell"
     ],
     "contributes": {
-        "commands": [{
-            "command": "haskero.insertType",
-            "title": "Insert type",
-            "category": "haskell"
-        }]
+        "commands": [
+            {
+                "command": "haskero.insertType",
+                "title": "Insert type",
+                "category": "haskell"
+            }
+        ]
     },
     "main": "./out/src/extension",
     "scripts": {

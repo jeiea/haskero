@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Otherwise the run options are used
     let serverOptions: vscli.ServerOptions = {
         run : { module: serverModule, transport: vscli.TransportKind.ipc },
-        debug: { module: serverModule, transport: vscli.TransportKind.ipc , options: debugOptions }
+        debug: { module: serverModule, transport: vscli.TransportKind.ipc } // , options: debugOptions }
     }
 
     // Options to control the language client
@@ -33,7 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     // Create the language client and start the client.
-    let client = new vscli.LanguageClient('Haskero', 'Haskero',  serverOptions, clientOptions, true);
+    let client = new vscli.LanguageClient('Haskero', 'Haskero',  serverOptions, clientOptions, false);
     let disposable = client.start();
 
     //register all plugin commands
