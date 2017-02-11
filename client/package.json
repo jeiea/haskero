@@ -4,7 +4,7 @@
     "description": "A full featured Haskell IDE",
     "author": "Julien Vannesson",
     "license": "MIT",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "publisher": "Vans",
     "homepage": "https://gitlab.com/vannnns/haskero/blob/master/README.md",
     "repository": {
