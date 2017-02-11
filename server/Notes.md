@@ -1,5 +1,9 @@
 # Notes on intero behavior
 
+
+## GET url on hoogle
+https://www.haskell.org/hoogle/?hoogle=a-%3Ea&mode=json
+
 ## full cmd
 
 sample of a cmd launched by emacsmode :

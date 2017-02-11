@@ -15,7 +15,8 @@ ourAdd x y = x + y
 bounds :: [(Double, Double)]
 bounds = [(9700, 0), (26791, 0.14), (71826, 0.3) ,(152108, 0.41) ,(10000000000, 0.45)]
 
-bounds2 :: Double -> [(Double, Double)] -> [(Double, Double)]
+--bounds2 :: Double -> [(Double, Double)] -> [(Double, Double)]
+bounds2 :: Num t => t -> [(t, t1)] -> [(t, t1)]
 bounds2 _ [] = []
 bounds2 _ (x:[]) = [x]
 bounds2 l ((level,rate):xs) = ((level - l),rate) : bounds2 level xs
@@ -25,7 +26,6 @@ bounds2 l ((level,rate):xs) = ((level - l),rate) : bounds2 level xs
 taxe m =
   foldl calculate (0,m) (bounds2 0 bounds)
   where
-    calculate :: (Double, Double) -> (Double, Double) -> (Double, Double)
     calculate (accuTaxe, leftToTaxe) (level, rate)
       | leftToTaxe <= 0     = (accuTaxe, 0)
       | leftToTaxe <= level = (accuTaxe + leftToTaxe * rate, 0)

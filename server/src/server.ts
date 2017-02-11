@@ -14,7 +14,7 @@ import {UriUtils} from './intero/uri';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
-DebugUtils.init(false, connection);
+DebugUtils.init(true, connection);
 
 // Create a simple text document manager. The text document manager
 // supports full document sync only
