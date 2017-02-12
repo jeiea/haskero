@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Otherwise the run options are used
     let serverOptions: vscli.ServerOptions = {
         run : { module: serverModule, transport: vscli.TransportKind.ipc },
-        debug: { module: serverModule, transport: vscli.TransportKind.ipc } // , options: debugOptions }
+        debug: { module: serverModule, transport: vscli.TransportKind.ipc } //, options: debugOptions }
     }
 
     // Options to control the language client

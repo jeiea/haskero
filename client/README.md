@@ -1,4 +1,4 @@
-# Haskero, an Haskell IDE
+# Haskero, a Haskell IDE
 Haskero is a full featured haskell IDE using [Intero backend](https://github.com/commercialhaskell/intero)
 
 **Key features**

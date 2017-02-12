@@ -122,9 +122,10 @@ export class InteroProxy {
         let rawerr = this.rawoutErr;
         this.rawout = '';
         this.rawoutErr = '';
+        this.errorMsg = `process exited with code ${code}\r\n\r\nstdout:\r\n${rawout}\r\n\r\nstderr:\r\n${rawerr}\r\n`;
         if (this.onRawResponseQueue.length > 0) {
             let resolver = this.onRawResponseQueue.shift();
-            resolver.reject(`process exited with code ${code}\r\n\r\nstdout:\r\n${rawout}\r\n\r\nstderr:\r\n${rawerr}\r\n`)
+            resolver.reject(this.errorMsg);
         }
     }
 

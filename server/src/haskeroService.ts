@@ -67,7 +67,7 @@ export class HaskeroService {
                         }
                     })
                     .catch(reject);
-            }, 50);
+            }, 2000);
         })
         .catch(reason => {
             return Promise.reject<InitializeError>({
