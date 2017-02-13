@@ -1,12 +1,9 @@
 'use strict';
 
-/// <reference path="../../typings/node/node.d.ts"/>
-
 import { InteroRequest } from './commands/interoRequest'
 import { InteroResponse } from './commands/interoResponse'
 import { InitRequest, InitResponse } from './commands/init'
 import { DebugUtils } from '../debug/debugUtils'
-
 import child_process = require('child_process');
 import stream = require('stream');
 

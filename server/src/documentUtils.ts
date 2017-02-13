@@ -97,15 +97,11 @@ export class DocumentUtils {
     public static toVSCodeRange(interoRange: InteroRange): Range {
         return Range.create(interoRange.startLine - 1, interoRange.startCol - 1, interoRange.endLine - 1,
             interoRange.endCol - 1);
-        //the last char index is included in an intero range. The last char index is not included in VSCode range. So the last vscode char index is 1 higher
-        // + 1);
     }
 
     //intero range are 1 based
     public static toInteroRange(range: Range): InteroRange {
         return new InteroRange(range.start.line + 1, range.start.character + 1, range.end.line + 1,
             range.end.character + 1);
-        //the last char index is included in an intero range. The last char index is not included in VSCode range. So the last intero char index is 1 lower
-        //- 1);
     }
 }
