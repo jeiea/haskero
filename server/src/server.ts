@@ -8,9 +8,9 @@ import {
     CompletionItem, CompletionItemKind, Files, TextDocumentIdentifier, Location, Range, Position, MarkedString
 } from 'vscode-languageserver';
 
-import {DebugUtils} from './debug/debugUtils'
-import {HaskeroService} from './haskeroService'
-import {UriUtils} from './intero/uri';
+import { DebugUtils } from './debug/debugUtils'
+import { HaskeroService } from './haskeroService'
+import { UriUtils } from './intero/uri';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -23,7 +23,7 @@ let documents: TextDocuments = new TextDocuments();
 // for open, change and close text document events
 documents.listen(connection);
 
-let haskeroService : HaskeroService;
+let haskeroService: HaskeroService;
 
 // After the server has started the client sends an initilize request. The server receives
 // in the passed params the rootPath of the workspace plus the client capabilites.
@@ -34,7 +34,7 @@ connection.onInitialize((params): Promise<InitializeResult> => {
     return haskeroService.initialize(connection);
 });
 
-documents.onDidOpen((event) : Promise<void> => {
+documents.onDidOpen((event): Promise<void> => {
     return haskeroService.validateTextDocument(connection, event.document);
 });
 
@@ -92,7 +92,7 @@ connection.onReferences((referenceParams: ReferenceParams): Promise<Location[]> 
     }
 });
 
-documents.onDidSave( e => {
+documents.onDidSave(e => {
     return haskeroService.validateTextDocument(connection, e.document);
 });
 

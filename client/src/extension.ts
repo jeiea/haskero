@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as vscli from 'vscode-languageclient';
 import { InsertTypeAbove } from './commands/insertTypeAbove'
-import {EditorUtils} from './utils/editorUtils'
+import { EditorUtils } from './utils/editorUtils'
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -16,7 +16,7 @@ export function activate(context: vscode.ExtensionContext) {
     // If the extension is launched in debug mode then the debug server options are used
     // Otherwise the run options are used
     let serverOptions: vscli.ServerOptions = {
-        run : { module: serverModule, transport: vscli.TransportKind.ipc },
+        run: { module: serverModule, transport: vscli.TransportKind.ipc },
         debug: { module: serverModule, transport: vscli.TransportKind.ipc } //, options: debugOptions }
     }
 
@@ -33,7 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     // Create the language client and start the client.
-    let client = new vscli.LanguageClient('Haskero', 'Haskero',  serverOptions, clientOptions, false);
+    let client = new vscli.LanguageClient('Haskero', 'Haskero', serverOptions, clientOptions, false);
     let disposable = client.start();
 
     //register all plugin commands

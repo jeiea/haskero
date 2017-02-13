@@ -1,9 +1,9 @@
 'use strict';
 
-import {InteroProxy, RawResponse} from '../interoProxy'
-import {InteroRequest} from './interoRequest'
-import {InteroResponse} from './interoResponse'
-import {InteroDiagnostic, InteroDiagnosticKind} from './interoDiagnostic'
+import { InteroProxy, RawResponse } from '../interoProxy'
+import { InteroRequest } from './interoRequest'
+import { InteroResponse } from './interoResponse'
+import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
 import { InteroUtils } from '../interoUtils'
 
 /**
@@ -53,7 +53,7 @@ export class InitResponse implements InteroResponse {
             this._isInteroInstalled = true;
             this._isOk = true;
 
-             //find errors first
+            //find errors first
             const regErrors = /([^\r\n]+):(\d+):(\d+):(?: error:)?\r?\n([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
             let matchErrors = this.removeDuplicates(InteroUtils.allMatchs(rawerr, regErrors));
             let diagnostics = matchErrors.map(this.matchTo(InteroDiagnosticKind.error));
@@ -90,7 +90,7 @@ export class InitRequest implements InteroRequest {
     }
 
     public send(interoProxy: InteroProxy): Promise<InitResponse> {
-        const changePromptRequest = ':set prompt '+ InteroProxy.EOTInteroCmd;
+        const changePromptRequest = ':set prompt ' + InteroProxy.EOTInteroCmd;
         return interoProxy.sendRawRequest(changePromptRequest)
             .then((response: RawResponse) => {
                 return Promise.resolve(new InitResponse(response.rawout, response.rawerr));

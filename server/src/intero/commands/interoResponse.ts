@@ -4,7 +4,7 @@ export interface InteroResponse {
     /**
      * The response state
      */
-    isOk : boolean;
+    isOk: boolean;
 
     /**
      * Text recieved on stderr

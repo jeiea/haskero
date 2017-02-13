@@ -16,7 +16,7 @@ export class EditorUtils {
     /**
      * Returns the leftmost symbol index (0-based) of the given line offset
      */
-    public static findStartingColumn(line: string, currentCol: number) : number {
+    public static findStartingColumn(line: string, currentCol: number): number {
         let col = currentCol;
         while (col >= 0 && EditorUtils.isIdentifierSymbol(line.charAt(col))) {
             col--;
@@ -27,14 +27,14 @@ export class EditorUtils {
     /**
      * Returns the current editor position line
      */
-    public static getCurrentLine(editor: TextEditor) : TextLine {
+    public static getCurrentLine(editor: TextEditor): TextLine {
         return editor.document.lineAt(editor.selection.start.line);
     }
 
     /**
      * Returns the leftmost symbol index (0-based) of the gcurrent position in the editor
      */
-    public static getFirstSymbolFromCurrentPosition(editor: TextEditor) : number {
+    public static getFirstSymbolFromCurrentPosition(editor: TextEditor): number {
         let currentLine = EditorUtils.getCurrentLine(editor);
         let currentPos = editor.selection.start;
         let startingColumn = EditorUtils.findStartingColumn(currentLine.text, currentPos.character);

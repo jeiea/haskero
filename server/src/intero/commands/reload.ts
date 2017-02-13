@@ -1,11 +1,11 @@
 'use strict';
 
-import {RawResponse, InteroProxy} from '../interoProxy'
-import {InteroRequest} from './interoRequest'
-import {InteroResponse} from './interoResponse'
-import {InteroDiagnostic, InteroDiagnosticKind} from './interoDiagnostic'
+import { RawResponse, InteroProxy } from '../interoProxy'
+import { InteroRequest } from './interoRequest'
+import { InteroResponse } from './interoResponse'
+import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
 import { InteroUtils } from '../interoUtils'
-import {UriUtils} from '../uri'
+import { UriUtils } from '../uri'
 
 /**
  * Reload response, returns diagnostics (errors and warnings)
@@ -83,7 +83,7 @@ export class ReloadRequest implements InteroRequest {
                 return interoProxy.sendRawRequest(reloadRequest);
             })
             .then((response: RawResponse) => {
-                        return Promise.resolve(new ReloadResponse(response.rawout, response.rawerr));
+                return Promise.resolve(new ReloadResponse(response.rawout, response.rawerr));
             });
     }
 }

@@ -1,7 +1,7 @@
 'use strict';
 
-import {TextDocument, Position, Range} from 'vscode-languageserver'
-import {InteroRange} from './intero/interoRange'
+import { TextDocument, Position, Range } from 'vscode-languageserver'
+import { InteroRange } from './intero/interoRange'
 
 /**
  * Word at a known position (Range) in the document
@@ -15,7 +15,7 @@ export class WordSpot {
         this.range = range;
     }
 
-    public get isEmpty() : boolean { return this.range.start.character === this.range.end.character && this.range.start.line === this.range.end.line }
+    public get isEmpty(): boolean { return this.range.start.character === this.range.end.character && this.range.start.line === this.range.end.line }
 }
 
 /**
@@ -94,18 +94,18 @@ export class DocumentUtils {
     }
 
     //vscode range are 0 based
-    public static toVSCodeRange(interoRange : InteroRange) : Range {
+    public static toVSCodeRange(interoRange: InteroRange): Range {
         return Range.create(interoRange.startLine - 1, interoRange.startCol - 1, interoRange.endLine - 1,
-                            interoRange.endCol - 1);
-                            //the last char index is included in an intero range. The last char index is not included in VSCode range. So the last vscode char index is 1 higher
-                            // + 1);
+            interoRange.endCol - 1);
+        //the last char index is included in an intero range. The last char index is not included in VSCode range. So the last vscode char index is 1 higher
+        // + 1);
     }
 
     //intero range are 1 based
-    public static toInteroRange(range : Range) : InteroRange {
+    public static toInteroRange(range: Range): InteroRange {
         return new InteroRange(range.start.line + 1, range.start.character + 1, range.end.line + 1,
-                               range.end.character + 1);
-                               //the last char index is included in an intero range. The last char index is not included in VSCode range. So the last intero char index is 1 lower
-                               //- 1);
+            range.end.character + 1);
+        //the last char index is included in an intero range. The last char index is not included in VSCode range. So the last intero char index is 1 lower
+        //- 1);
     }
 }

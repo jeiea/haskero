@@ -7,25 +7,25 @@ import {
 } from 'vscode-languageserver'
 
 import child_process = require('child_process');
-import {InteroProxy} from './intero/interoProxy';
-import {InitRequest, InitResponse} from './intero/commands/init';
-import {ReloadRequest, ReloadResponse} from './intero/commands/reload';
-import {InteroDiagnostic, InteroDiagnosticKind} from './intero/commands/interoDiagnostic'
-import {LocAtRequest, LocAtResponse} from './intero/commands/locAt'
-import {UsesRequest, UsesResponse} from './intero/commands/uses'
-import {TypeAtRequest, TypeAtResponse} from './intero/commands/typeAt'
-import {CompleteAtRequest, CompleteAtResponse} from './intero/commands/completeAt'
-import {DocumentUtils, WordSpot, NoMatchAtCursorBehaviour} from './documentUtils'
-import {UriUtils} from './intero/uri';
-import {DebugUtils} from './debug/debugUtils'
+import { InteroProxy } from './intero/interoProxy';
+import { InitRequest, InitResponse } from './intero/commands/init';
+import { ReloadRequest, ReloadResponse } from './intero/commands/reload';
+import { InteroDiagnostic, InteroDiagnosticKind } from './intero/commands/interoDiagnostic'
+import { LocAtRequest, LocAtResponse } from './intero/commands/locAt'
+import { UsesRequest, UsesResponse } from './intero/commands/uses'
+import { TypeAtRequest, TypeAtResponse } from './intero/commands/typeAt'
+import { CompleteAtRequest, CompleteAtResponse } from './intero/commands/completeAt'
+import { DocumentUtils, WordSpot, NoMatchAtCursorBehaviour } from './documentUtils'
+import { UriUtils } from './intero/uri';
+import { DebugUtils } from './debug/debugUtils'
 
 /**
  * Exposes all haskero capabilities to the server
  */
 export class HaskeroService {
-    private interoProxy : InteroProxy;
+    private interoProxy: InteroProxy;
 
-    public initialize(connection: IConnection) : Promise<InitializeResult> {
+    public initialize(connection: IConnection): Promise<InitializeResult> {
         connection.console.log("Initializing Haskero...");
         const stackOptions = ['ghci', '--with-ghc', 'intero', '--no-build', '--no-load', '--ghci-options="-ignore-dot-ghci"'];
         connection.console.log(`Spawning process 'stack' with options [${stackOptions}]`);
@@ -46,20 +46,20 @@ export class HaskeroService {
                             resolve(
                                 {
                                     capabilities: {
-                                            // Tell the client that the server works in FULL text document sync mode
-                                            textDocumentSync: TextDocumentSyncKind.Full,
-                                            // support type info on hover
-                                            hoverProvider: true,
-                                            // support goto definition
-                                            definitionProvider: true,
-                                            // support find usage (ie: find all references)
-                                            referencesProvider : true,
-                                            // Tell the client that the server support code complete
-                                            completionProvider: {
-                                                // doesn't support completion details
-                                                resolveProvider: false
-                                            }
+                                        // Tell the client that the server works in FULL text document sync mode
+                                        textDocumentSync: TextDocumentSyncKind.Full,
+                                        // support type info on hover
+                                        hoverProvider: true,
+                                        // support goto definition
+                                        definitionProvider: true,
+                                        // support find usage (ie: find all references)
+                                        referencesProvider: true,
+                                        // Tell the client that the server support code complete
+                                        completionProvider: {
+                                            // doesn't support completion details
+                                            resolveProvider: false
                                         }
+                                    }
                                 });
                         }
                         else {
@@ -69,21 +69,21 @@ export class HaskeroService {
                     .catch(reject);
             }, 2000);
         })
-        .catch(reason => {
-            return Promise.reject<InitializeError>({
-                code: 1,
-                message: reason + ". Look Haskero output tab for further information",
-                data: {retry: false}
-            });
-        });;
+            .catch(reason => {
+                return Promise.reject<InitializeError>({
+                    code: 1,
+                    message: reason + ". Look Haskero output tab for further information",
+                    data: { retry: false }
+                });
+            });;
     }
 
-    public getDefinitionLocation(textDocument : TextDocument, position: Position): Promise<Location> {
+    public getDefinitionLocation(textDocument: TextDocument, position: Position): Promise<Location> {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         const locAtRequest = new LocAtRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
         return locAtRequest
             .send(this.interoProxy)
-            .then((response) : Promise<Location> => {
+            .then((response): Promise<Location> => {
                 if (response.isOk) {
                     let fileUri = UriUtils.toUri(response.filePath);
                     let loc = Location.create(fileUri, DocumentUtils.toVSCodeRange(response.range));
@@ -95,15 +95,15 @@ export class HaskeroService {
             });
     }
 
-    public getHoverInformation(textDocument : TextDocument, position: Position): Promise<Hover> {
+    public getHoverInformation(textDocument: TextDocument, position: Position): Promise<Hover> {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         if (!wordRange.isEmpty) {
             const typeAtRequest = new TypeAtRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
             return typeAtRequest
                 .send(this.interoProxy)
-                .then((response) : Promise<Hover> => {
-                    let typeInfo : MarkedString = { language: 'haskell', value: response.type };
-                    let hover : Hover = { contents: typeInfo };
+                .then((response): Promise<Hover> => {
+                    let typeInfo: MarkedString = { language: 'haskell', value: response.type };
+                    let hover: Hover = { contents: typeInfo };
                     if (typeInfo.value !== null && typeInfo.value !== "") {
                         return Promise.resolve(hover);
                     }
@@ -117,7 +117,7 @@ export class HaskeroService {
         }
     }
 
-    public getCompletionItems(textDocument : TextDocument, position: Position): Promise<CompletionItem[]> {
+    public getCompletionItems(textDocument: TextDocument, position: Position): Promise<CompletionItem[]> {
         let {word, range} = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
         const completeAtRequest = new CompleteAtRequest(textDocument.uri, DocumentUtils.toInteroRange(range), word);
 
@@ -128,12 +128,12 @@ export class HaskeroService {
             });
     }
 
-    public getReferencesLocations(textDocument : TextDocument, position: Position): Promise<Location[]> {
+    public getReferencesLocations(textDocument: TextDocument, position: Position): Promise<Location[]> {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         const usesRequest = new UsesRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
         return usesRequest
             .send(this.interoProxy)
-            .then((response) : Promise<Location[]> => {
+            .then((response): Promise<Location[]> => {
                 if (response.isOk) {
                     return Promise.resolve(
                         response.locations.map((interoLoc) => {
@@ -171,9 +171,9 @@ export class HaskeroService {
         }
     }
 
-    private sendAllDocumentsDiagnostics(connection: IConnection, interoDiags : InteroDiagnostic[]) {
+    private sendAllDocumentsDiagnostics(connection: IConnection, interoDiags: InteroDiagnostic[]) {
         //map the interoDiag to a vsCodeDiag and add it to the map of grouped diagnostics
-        let addToMap = (accu : Map<string, Diagnostic[]>, interoDiag : InteroDiagnostic) : Map<string, Diagnostic[]> => {
+        let addToMap = (accu: Map<string, Diagnostic[]>, interoDiag: InteroDiagnostic): Map<string, Diagnostic[]> => {
             let uri = UriUtils.toUri(interoDiag.filePath);
             let vsCodeDiag = this.interoDiagToVScodeDiag(interoDiag);
             if (accu.has(uri)) {
@@ -191,11 +191,11 @@ export class HaskeroService {
         let groupedDiagnostics = interoDiags.reduce<Map<string, Diagnostic[]>>(addToMap, new Map<string, Diagnostic[]>());
 
         groupedDiagnostics.forEach((diags, documentUri) => {
-            connection.sendDiagnostics({uri : documentUri, diagnostics: diags});
+            connection.sendDiagnostics({ uri: documentUri, diagnostics: diags });
         });
     }
 
-    private interoDiagToVScodeDiag(interoDiag : InteroDiagnostic) : Diagnostic {
+    private interoDiagToVScodeDiag(interoDiag: InteroDiagnostic): Diagnostic {
         return {
             severity: interoDiag.kind === InteroDiagnosticKind.error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
             range: {
@@ -207,7 +207,7 @@ export class HaskeroService {
         };
     }
 
-    private sendDocumentDiagnostics(connection: IConnection, interoDiags: InteroDiagnostic[], documentUri : string) {
+    private sendDocumentDiagnostics(connection: IConnection, interoDiags: InteroDiagnostic[], documentUri: string) {
         let diagnostics: Diagnostic[] = [];
         diagnostics = interoDiags.map(this.interoDiagToVScodeDiag);
         connection.sendDiagnostics({ uri: documentUri, diagnostics });
