@@ -11,6 +11,7 @@ import Text.Printf (printf)
 main :: IO ()
 main = printf "2 + 3 = %d\n" (ourAdd 2 5)
 
+aaa :: Num a => t -> a
 aaa x = 3
 
 xxx = 3 + abc + 1
@@ -19,6 +20,13 @@ xxx = 3 + abc + 1
         abc = 1
 
 f xxx = (xxx)
+
+
+
+foo :: Int -> Int
+foo x = foo' (x + 1)
+    where
+        foo' a = a - 1
 
 
 

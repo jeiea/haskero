@@ -1,3 +1,7 @@
+## Release 0.2.1
+
+ - **new feature**: automatic insertion of types signature (issue #12)
+
 ## Release 0.2.0
 
  - **new feature**: find usage / find all reference (issue #26)

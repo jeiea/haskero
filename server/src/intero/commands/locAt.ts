@@ -1,9 +1,9 @@
 'use strict';
 
-import {InteroProxy} from '../interoProxy'
-import {InteroRequest} from './interoRequest'
-import {InteroResponse} from './interoResponse'
-import {InteroRange} from '../interoRange'
+import { InteroProxy } from '../interoProxy'
+import { InteroRequest } from './interoRequest'
+import { InteroResponse } from './interoResponse'
+import { InteroRange } from '../interoRange'
 import { InteroUtils } from '../interoUtils'
 import { UriUtils } from '../uri'
 
@@ -61,7 +61,7 @@ export class LocAtResponse implements InteroResponse {
  */
 export class LocAtRequest implements InteroRequest {
 
-    public constructor(private uri: string, private range : InteroRange, private identifier: string) {
+    public constructor(private uri: string, private range: InteroRange, private identifier: string) {
     }
 
     public send(interoProxy: InteroProxy): Promise<LocAtResponse> {

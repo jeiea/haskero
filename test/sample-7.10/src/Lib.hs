@@ -25,8 +25,10 @@ bounds2 l ((level,rate):xs) = ((level - l),rate) : bounds2 level xs
 taxe m =
   foldl calculate (0,m) (bounds2 0 bounds)
   where
-    calculate :: (Double, Double) -> (Double, Double) -> (Double, Double)
     calculate (accuTaxe, leftToTaxe) (level, rate)
       | leftToTaxe <= 0     = (accuTaxe, 0)
       | leftToTaxe <= level = (accuTaxe + leftToTaxe * rate, 0)
       | otherwise           = (accuTaxe + level * rate, leftToTaxe - level)
+
+myTanh :: Double
+myTanh = tanh 0.2
