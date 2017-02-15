@@ -19,55 +19,44 @@ import {DocumentUtils, WordSpot, NoMatchAtCursorBehaviour} from './documentUtils
 import {UriUtils} from './intero/uri';
 import {DebugUtils} from './debug/debugUtils'
 
+const capabilities = {
+    // Tell the client that the server works in FULL text document sync mode
+    textDocumentSync: TextDocumentSyncKind.Full,
+    // support type info on hover
+    hoverProvider: true,
+    // support goto definition
+    definitionProvider: true,
+    // support find usage (ie: find all references)
+    referencesProvider: true,
+    // Tell the client that the server support code complete
+    completionProvider: {
+        // doesn't support completion details
+        resolveProvider: false
+    }
+}
+
 /**
  * Exposes all haskero capabilities to the server
  */
 export class HaskeroService {
     private interoProxy : InteroProxy;
+    private connection : IConnection;
 
-    public initialize(connection: IConnection) : Promise<InitializeResult> {
-        connection.console.log("Initializing Haskero...");
-        const stackOptions = ['ghci', '--with-ghc', 'intero', '--no-build', '--no-load', '--ghci-options="-ignore-dot-ghci"'];
-        connection.console.log(`Spawning process 'stack' with options [${stackOptions}]`);
-        //launch the intero process
-        const intero = child_process.spawn('stack', stackOptions);
+    public initialize(connection: IConnection, targets: string[]) : Promise<InitializeResult> {
+        connection.console.log(`Initializing Haskero with targets ${targets}`);
+        this.connection = connection;
 
-        this.interoProxy = new InteroProxy(intero);
-
+        // Launch the intero process
         return new Promise((resolve, reject) => {
-            //let the stack process time to start and intero to initialize
-            setTimeout(() => {
-                const initRequest = new InitRequest();
-                return initRequest
-                    .send(this.interoProxy)
-                    .then((resp: InitResponse): void => {
-                        if (resp.isInteroInstalled) {
-                            connection.console.log("Haskero initialization done.");
-                            resolve(
-                                {
-                                    capabilities: {
-                                            // Tell the client that the server works in FULL text document sync mode
-                                            textDocumentSync: TextDocumentSyncKind.Full,
-                                            // support type info on hover
-                                            hoverProvider: true,
-                                            // support goto definition
-                                            definitionProvider: true,
-                                            // support find usage (ie: find all references)
-                                            referencesProvider : true,
-                                            // Tell the client that the server support code complete
-                                            completionProvider: {
-                                                // doesn't support completion details
-                                                resolveProvider: false
-                                            }
-                                        }
-                                });
-                        }
-                        else {
-                            reject("Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing");
-                        }
-                    })
-                    .catch(reject);
-            }, 50);
+            this.spawnIntero(targets)
+                .then((resp) => {
+                    if (resp.isInteroInstalled) {
+                        connection.console.log("Haskero initialization done.");
+                        resolve({ capabilities });
+                    } else {
+                        reject("Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing");
+                    }
+                }).catch(reject)
         })
         .catch(reason => {
             return Promise.reject<InitializeError>({
@@ -75,7 +64,18 @@ export class HaskeroService {
                 message: reason + ". Look Haskero output tab for further information",
                 data: {retry: false}
             });
-        });;
+        });
+    }
+
+    public setTargets(targets: string[], cb: () => void) {
+        // It seems that we have to restart ghci to set new targets,
+        // would be nice if there were a ghci command for it.
+        this.connection.console.log(`Restarting intero with targets: ${targets}`)
+        if (this.interoProxy) this.interoProxy.kill();
+        this.spawnIntero(targets)
+            .then(cb)
+            .catch((reason) =>
+                this.connection.console.log(`Could not restart intero: ${reason}`));
     }
 
     public getDefinitionLocation(textDocument : TextDocument, position: Position): Promise<Location> {
@@ -171,6 +171,25 @@ export class HaskeroService {
         }
     }
 
+    /**
+     * Spawn an intero process (stack ghci --with-ghc intero ... targets)
+     * and set `interoProxy`.
+     */
+    private spawnIntero(targets: string[]): Promise<InitResponse> {
+        const stackOptions = ['ghci', '--with-ghc', 'intero', '--no-build', '--no-load', '--ghci-options="-ignore-dot-ghci"']
+        const args = stackOptions.concat(targets);
+        const intero = child_process.spawn('stack', stackOptions.concat(targets));
+        this.interoProxy = new InteroProxy(intero);
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                return new InitRequest()
+                    .send(this.interoProxy)
+                    .then((resp: InitResponse) => resolve(resp))
+                    .catch(reject)
+            }, 50)
+        });
+    }
+
     private sendAllDocumentsDiagnostics(connection: IConnection, interoDiags : InteroDiagnostic[]) {
         //map the interoDiag to a vsCodeDiag and add it to the map of grouped diagnostics
         let addToMap = (accu : Map<string, Diagnostic[]>, interoDiag : InteroDiagnostic) : Map<string, Diagnostic[]> => {
@@ -212,6 +231,4 @@ export class HaskeroService {
         diagnostics = interoDiags.map(this.interoDiagToVScodeDiag);
         connection.sendDiagnostics({ uri: documentUri, diagnostics });
     }
-
-
 }
