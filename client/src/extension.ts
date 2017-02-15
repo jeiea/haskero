@@ -80,6 +80,7 @@ function registerTargetSelection(targets: string[], setTarget: (newTarget: strin
 
     vscode.commands.registerCommand('haskero.selectTargets', () => {
         vscode.window.showQuickPick([allTargets].concat(targets)).then((newTarget) => {
+            if (!newTarget) return;
             const isAll = newTarget === allTargets;
             setTarget(!isAll ? [newTarget] : targets);
             barItem.text = isAll ? allTargets : newTarget.split(':').splice(1).join(':')
