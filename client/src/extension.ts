@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as vscli from 'vscode-languageclient';
 import { InsertTypeAbove } from './commands/insertTypeAbove'
+import { SelectTarget } from './commands/selectTargets'
 import { EditorUtils } from './utils/editorUtils'
 import { getTargets } from './utils/stack';
 
@@ -38,18 +39,17 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
-    //register all plugin commands
-    registerCommands(client, context);
-
     getTargets().then((targets) => {
         clientOptions.initializationOptions.targets = targets;
 
         // Create the language client and start the client.
         client = new vscli.LanguageClient('Haskero', 'Haskero', serverOptions, clientOptions, false);
 
+        // Register all plugin commands
+        registerCommands(client, context);
+
         // Create the target selection button
-        registerTargetSelection(targets, (newTargets) =>
-            client.sendNotification('setTargets', [newTargets]));
+        createTargetSelectionButton(context);
 
         // Push the disposable to the context's subscriptions so that the
         // client can be deactivated on extension deactivation
@@ -61,29 +61,28 @@ export function activate(context: vscode.ExtensionContext) {
  * Register all Haskero available commands
  */
 function registerCommands(client: vscli.LanguageClient, context: vscode.ExtensionContext) {
-    let insertTypeAboveCmd = new InsertTypeAbove(client);
-    let insertTypeAboveDisposable = vscode.commands.registerCommand(insertTypeAboveCmd.id, insertTypeAboveCmd.handler);
-    context.subscriptions.push(insertTypeAboveDisposable);
+    const cmds = [
+        new InsertTypeAbove(client),
+        new SelectTarget(client),
+    ];
+
+    cmds.forEach((cmd) => {
+        context.subscriptions.push(vscode.commands.registerCommand(cmd.id, cmd.handler));
+    });
 }
 
 /**
- * Register the target selection button in the status bar
+ * Create the Cabal target selection button in the status bar
  */
-function registerTargetSelection(targets: string[], setTarget: (newTarget: string[]) => void) {
-    if (!targets || targets.length == 0) return;
-
-    const allTargets = 'All targets';
+function createTargetSelectionButton(context: vscode.ExtensionContext) {
     const barItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, Number.MIN_VALUE);
-    barItem.text = allTargets;
-    barItem.command = 'haskero.selectTargets';
+    barItem.text = SelectTarget.allTargets;
+    barItem.command = SelectTarget.id;
     barItem.show();
-
-    vscode.commands.registerCommand('haskero.selectTargets', () => {
-        vscode.window.showQuickPick([allTargets].concat(targets)).then((newTarget) => {
-            if (!newTarget) return;
-            const isAll = newTarget === allTargets;
-            setTarget(!isAll ? [newTarget] : targets);
-            barItem.text = isAll ? allTargets : newTarget.split(':').splice(1).join(':')
-        });
-    });
+    context.subscriptions.push(
+        SelectTarget.onTargetsSelected.event((newTarget) => {
+            const isAll = newTarget === SelectTarget.allTargets
+            barItem.text = isAll ? newTarget : newTarget.split(':').splice(1).join(':')
+        })
+    );
 }
