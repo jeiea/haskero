@@ -179,7 +179,7 @@ export class HaskeroService {
                     .send(this.interoProxy)
                     .then((resp: InitResponse) => resolve(resp))
                     .catch(reject)
-            }, 50)
+            }, 2000)
         });
     }
 
