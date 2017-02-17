@@ -171,7 +171,6 @@ export class HaskeroService {
      */
     private spawnIntero(targets: string[]): Promise<InitResponse> {
         const stackOptions = ['ghci', '--with-ghc', 'intero', '--no-build', '--no-load', '--ghci-options="-ignore-dot-ghci"']
-        const args = stackOptions.concat(targets);
         const intero = child_process.spawn('stack', stackOptions.concat(targets));
         this.interoProxy = new InteroProxy(intero);
         return new Promise((resolve, reject) => {
