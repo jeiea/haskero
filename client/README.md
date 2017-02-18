@@ -13,9 +13,9 @@ Haskero is a full featured haskell IDE using [Intero backend](https://github.com
 
 **Dependencies**
 
-* It works on `stack` projects only
-* It needs intero to be installed (see : [Installing intero](https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing))
-* [Haskell Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=justusadam.language-haskell)
+* It works on `stack` projects only (stack 1.2.0 minimum) - see [Installing stack](https://docs.haskellstack.org/en/stable/install_and_upgrade)
+* It needs intero to be installed in the stack project - see [Installing intero](https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing)
+* Automatic dependency (auto install) [Haskell Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=justusadam.language-haskell)
 
 ## Features
 

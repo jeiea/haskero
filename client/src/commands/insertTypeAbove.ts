@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import * as vscli from 'vscode-languageclient'
 import { EditorUtils } from '../utils/editorUtils'
+import { HaskeroClient } from '../utils/haskeroClient';
 
 /**
  * Command which inserts a line with the type signature of the function under the cursor
@@ -8,10 +9,10 @@ import { EditorUtils } from '../utils/editorUtils'
  */
 export class InsertTypeAbove {
 
-    constructor(private readonly client) {
+    constructor(private readonly haskeroClient: HaskeroClient) {
     }
 
-    public readonly id = "haskero.insertType";
+    public readonly id: string = "haskero.insertType";
 
     public handler = () => {
         let editor = vscode.window.activeTextEditor;
@@ -28,7 +29,7 @@ export class InsertTypeAbove {
         }
         //find type information at cursor position in the right document
         //use the langauge server with the standard protocol
-        this.client.sendRequest(vscli.HoverRequest.type, hoverParams)
+        this.haskeroClient.client.sendRequest(vscli.HoverRequest.type, hoverParams)
             .then((hover: vscli.Hover) => {
                 //if the response contains a value field
                 if (hover && this.isValued(hover.contents) && hover.contents.value !== "") {

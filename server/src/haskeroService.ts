@@ -13,19 +13,21 @@ import { DocumentUtils, WordSpot, NoMatchAtCursorBehaviour } from './documentUti
 import { UriUtils } from './intero/uri';
 import { DebugUtils } from './debug/debugUtils'
 
-const capabilities = {
-    // Tell the client that the server works in FULL text document sync mode
-    textDocumentSync: vsrv.TextDocumentSyncKind.Full,
-    // support type info on hover
-    hoverProvider: true,
-    // support goto definition
-    definitionProvider: true,
-    // support find usage (ie: find all references)
-    referencesProvider: true,
-    // Tell the client that the server support code complete
-    completionProvider: {
-        // doesn't support completion details
-        resolveProvider: false
+const serverCapabilities: vsrv.InitializeResult = {
+    capabilities: {
+        // Tell the client that the server works in FULL text document sync mode
+        textDocumentSync: vsrv.TextDocumentSyncKind.Full,
+        // support type info on hover
+        hoverProvider: true,
+        // support goto definition
+        definitionProvider: true,
+        // support find usage (ie: find all references)
+        referencesProvider: true,
+        // Tell the client that the server support code complete
+        completionProvider: {
+            // doesn't support completion details
+            resolveProvider: false
+        }
     }
 }
 
@@ -34,42 +36,48 @@ const capabilities = {
  */
 export class HaskeroService {
     private interoProxy: InteroProxy;
-    private connection : vsrv.IConnection;
+    private connection: vsrv.IConnection;
 
     public initialize(connection: vsrv.IConnection, targets: string[]): Promise<vsrv.InitializeResult> {
         connection.console.log("Initializing Haskero...");
         this.connection = connection;
 
-        // Launch the intero process
-        return new Promise((resolve, reject) => {
-            this.spawnIntero(targets)
-                .then((resp) => {
-                    if (resp.isInteroInstalled) {
-                        connection.console.log("Haskero initialization done.");
-                        resolve({ capabilities });
-                    } else {
-                        reject("Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing");
-                    }
-                }).catch(reject)
-        })
-        .catch(reason => {
-            return Promise.reject<vsrv.InitializeError>({
-                code: 1,
-                message: reason + ". Look Haskero output tab for further information",
-                data: {retry: false}
+        return this.startInteroAndHandleErrors(targets)
+            .then(() => {
+                this.connection.console.log("Haskero initialization done.");
+                return Promise.resolve(serverCapabilities);
             });
-        });
     }
 
-    public setTargets(targets: string[], cb: () => void) {
+    private startInteroAndHandleErrors(targets: string[]): Promise<void> {
+        // Launch the intero process
+        return this.spawnIntero(targets)
+            .then((resp): Promise<void> => {
+                if (resp.isInteroInstalled) {
+                    return Promise.resolve();
+                } else {
+                    return Promise.reject("Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing");
+                }
+            })
+            .catch(reason => {
+                return Promise.reject<vsrv.InitializeError>({
+                    code: 1,
+                    message: reason + ". Look Haskero output tab for further information",
+                    data: { retry: false }
+                });
+            });
+    }
+
+    public changeTargets(targets: string[]): Promise<string> {
         // It seems that we have to restart ghci to set new targets,
         // would be nice if there were a ghci command for it.
         this.connection.console.log(`Restarting intero with targets: ${targets}`)
-        if (this.interoProxy) this.interoProxy.kill();
-        this.spawnIntero(targets)
-            .then(cb)
-            .catch((reason) =>
-                this.connection.console.log(`Could not restart intero: ${reason}`));
+        return this.startInteroAndHandleErrors(targets)
+            .then((): Promise<string> => {
+                this.connection.console.log("Restart done.");
+                return Promise.resolve(`Intero restarted with targets: ${targets}`);
+                //check opened documents
+            });
     }
 
     public getDefinitionLocation(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location> {
@@ -170,8 +178,14 @@ export class HaskeroService {
      * and set `interoProxy`.
      */
     private spawnIntero(targets: string[]): Promise<InitResponse> {
-        const stackOptions = ['ghci', '--with-ghc', 'intero', '--no-build', '--no-load', '--ghci-options="-ignore-dot-ghci"']
-        const intero = child_process.spawn('stack', stackOptions.concat(targets));
+        const stackOptions = ['ghci', '--with-ghc', 'intero', '--no-build', '--no-load', '--ghci-options="-ignore-dot-ghci -Wall"'].concat(targets);
+        this.connection.console.log(`Spawning process 'stack' with command 'stack ${stackOptions.join(' ')}'`);
+
+        if (this.interoProxy) {
+            this.interoProxy.kill();
+        }
+
+        const intero = child_process.spawn('stack', stackOptions);
         this.interoProxy = new InteroProxy(intero);
         return new Promise((resolve, reject) => {
             setTimeout(() => {
