@@ -81,6 +81,14 @@ export class InteroProxy {
         return new Promise(executor);
     }
 
+    /**
+     * Kill the underlying intero process
+     */
+    public kill() {
+        this.interoProcess.kill();
+        this.isInteroProcessUp = false;
+    }
+
     private static endsWith(str: string, suffix: string): boolean {
         return str.indexOf(suffix, str.length - suffix.length) != -1;
     }

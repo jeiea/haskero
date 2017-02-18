@@ -24,7 +24,14 @@ let workspaceRoot: string;
 connection.onInitialize((params): Promise<vsrv.InitializeResult> => {
     workspaceRoot = params.rootPath;
     haskeroService = new HaskeroService();
-    return haskeroService.initialize(connection);
+    return haskeroService.initialize(connection, params.initializationOptions.targets);
+});
+connection.onNotification("setTargets", (targets: string[]) => {
+    haskeroService.setTargets(targets, () => {
+        // Revalidate any open text documents
+        documents.all().forEach((doc) =>
+            haskeroService.validateTextDocument(connection, doc))
+    });
 });
 
 documents.onDidOpen((event): Promise<void> => {
