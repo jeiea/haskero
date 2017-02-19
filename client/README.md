@@ -73,6 +73,12 @@ keybindings.json (File > Preferences > Keyboard Shortcuts)
 
 Find all references of a symbol in the **same module** (shift+F12)
 
+### Switching cabal targers
+
+Support for chosing the cabal targets used in the IDE. Thereby, intellisense is working on test projects.
+
+To change the current target, use the status bar button "Default targets" at the bottom right.
+
 ## Incoming improvements
 
 - [x] Support switching cabal targets
