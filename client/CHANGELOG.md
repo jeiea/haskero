@@ -1,3 +1,8 @@
+## Release 0.2.2
+
+ - **new feature**: support for chosing the cabal targets used by Haskero. Thereby, intellisense is working on test projects as well. (issue #30)
+ - improve info and error messages and adding installation documentation (issue #31)
+
 ## Release 0.2.1
 
  - **new feature**: automatic insertion of types signature (issue #12)

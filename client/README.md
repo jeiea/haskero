@@ -10,12 +10,11 @@ Haskero is a full featured haskell IDE using [Intero backend](https://github.com
 * Find all references
 * Identifiers types on hover
 * Code completion
+* Switching cabal targets
 
-**Dependencies**
+## Installation instructions
 
-* It works on `stack` projects only (stack 1.2.0 minimum) - see [Installing stack](https://docs.haskellstack.org/en/stable/install_and_upgrade)
-* It needs intero to be installed in the stack project - see [Installing intero](https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing)
-* Automatic dependency (auto install) [Haskell Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=justusadam.language-haskell)
+See [installation instructions](https://gitlab.com/vannnns/haskero/blob/master/client/doc/installation.md)
 
 ## Features
 
@@ -76,25 +75,43 @@ Find all references of a symbol in the **same module** (shift+F12)
 
 ## Incoming improvements
 
+- [x] Support switching cabal targets
 - [ ] Better auto completion (support dot notation for qualified imports, ...)
 - [x] Insert identifier type one line above
 - [ ] Goto definition in hackage
 - [ ] Live evaluation of random haskell code in the current module scope
+
+## Dependencies
+
+* It works on `stack` projects only (stack 1.2.0 minimum) - see [Installing stack](https://docs.haskellstack.org/en/stable/install_and_upgrade)
+* It needs intero to be installed in the stack project - see [Installing intero](https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing)
+* Automatic dependency (auto install) [Haskell Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=justusadam.language-haskell)
 
 ## Feedback
 
 ### Bugs
 
 To fill a bug, go to my gitlab repository, [open an issue](https://gitlab.com/vannnns/haskero/issues) and use the following pattern:
-> Bug description :
 
-> Observed behaviour :
+- Bug description :
 
-> Expected behaviour :
+- Observed behaviour :
 
-> Plugin (ghc, stack, intero and haskero) version and VSCode version used :
+- Expected behaviour :
 
-> If the issue is hard to repeat on an empty haskell project, a link to a repository containing a sample repeating the issue
+- OS: windows | linux | macos
+
+- Plugin **(ghc, stack, intero and haskero)** version and **VSCode** version used :
+
+- Steps to reproduce:
+
+1.
+
+2.
+
+3.
+
+- If the issue is hard to repeat on an empty haskell project, a link to a repository containing a sample repeating the issue
 
 ### Features
 
