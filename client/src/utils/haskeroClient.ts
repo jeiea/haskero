@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as vscli from 'vscode-languageclient';
+import * as stack from '../utils/stack';
 
 export interface HaskeroClientInitOptions {
     targets: string[]
@@ -71,6 +72,21 @@ export class HaskeroClient implements vscode.Disposable {
     public stop() {
         this._client.stop();
         //this._isStarted = false;
+    }
+
+
+    public getTargets(): Promise<string[]> {
+        return stack.getTargets()
+            .then(targets => Promise.resolve(targets))
+            .catch(reason => {
+                if (reason.message.indexOf("Invalid argument", 0) > -1) {
+                    const stackmsg = "Stack version is too low for the change targets feature. Update stack (min version = 1.2.0)";
+                    reason.message = stackmsg + "\r\n\r\n" + reason.message;
+                    vscode.window.showErrorMessage(stackmsg);
+                }
+                this._client.error('Error loading stack targets: ' + reason.message);
+                return Promise.reject(reason);
+            });
     }
 
     public dispose() {

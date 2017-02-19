@@ -10,12 +10,27 @@ export function getTargets(): Promise<string[]> {
         process.chdir(workspace.rootPath);
         cp.exec('stack ide targets', (error, stdout, stderr) => {
             if (error) {
-                reject(error + '\nstdout:\n' + stdout + '\nstderr\n' + stderr);
+                reject(error);
             }
             // For some reason stack ide targets writes to stderr
-            if (stderr) resolve(stderr.split('\n').filter((s) => s.length > 0));
+            if (stderr) resolve(parseTargets(stderr));
             else resolve([]);
         });
         process.chdir(cwd);
     });
+}
+
+function allMatchs(text: string, regexp: RegExp): RegExpExecArray[] {
+    const matches: RegExpExecArray[] = [];
+    let match: RegExpExecArray;
+
+    while ((match = regexp.exec(text)) != null) {
+        matches.push(match);
+    }
+    return matches;
+}
+
+function parseTargets(raw: string): string[] {
+    const regTargets = /^.+[:].+$/mg;
+    return allMatchs(raw, regTargets).map(regArr => regArr[0]);
 }

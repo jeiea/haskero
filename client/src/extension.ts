@@ -7,7 +7,7 @@ import { InsertTypeAbove } from './commands/insertTypeAbove'
 import { SelectTarget } from './commands/selectTargets'
 import { EditorUtils } from './utils/editorUtils'
 import { getTargets } from './utils/stack';
-import { allTargets, convertTargets } from './utils/targets';
+import { noTargets, allTargets, targetToStatusBarText, convertTargets } from './utils/targets';
 import { HaskeroClient, HaskeroClientInitOptions } from './utils/haskeroClient';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -17,27 +17,31 @@ export function activate(context: vscode.ExtensionContext) {
 
     let haskeroClient = new HaskeroClient(serverModule, false);
 
-    getTargets()
-        .then((targets) => {
-            let initOptions: HaskeroClientInitOptions = {
-                targets: targets
-            };
+    //for now we disable the default all targets choice, we are waiting for more feedback about the targets switching feature
 
-            haskeroClient.start(initOptions);
+    // getTargets()
+    //     .then((targets) => {
+    let initOptions: HaskeroClientInitOptions = {
+        targets: [] //no target for starting the extension
+    };
 
-            // Register all plugin commands
-            registerCommands(haskeroClient, context);
+    haskeroClient.start(initOptions);
 
-            // Create the target selection button
-            createTargetSelectionButton(context);
+    // Register all plugin commands
+    registerCommands(haskeroClient, context);
 
-            // Push the disposable to the context's subscriptions so that the
-            // client can be deactivated on extension deactivation
-            context.subscriptions.push(haskeroClient);
-        })
-        .catch(reason => {
-            console.log('Error loading stack: ' + reason);
-        });
+    // Create the target selection button
+    createTargetSelectionButton(context);
+
+    // Push the disposable to the context's subscriptions so that the
+    // client can be deactivated on extension deactivation
+    context.subscriptions.push(haskeroClient);
+    // })
+    // .catch(reason => {
+    //     let outputChannel = vscode.window.createOutputChannel("Haskero");
+
+    //     outputChannel.append('Error loading stack: ' + reason);
+    // });
 }
 
 /**
@@ -59,13 +63,12 @@ function registerCommands(haskeroClient: HaskeroClient, context: vscode.Extensio
  */
 function createTargetSelectionButton(context: vscode.ExtensionContext) {
     const barItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, Number.MIN_VALUE);
-    barItem.text = allTargets;
+    barItem.text = targetToStatusBarText(noTargets);
     barItem.command = SelectTarget.id;
     barItem.show();
     context.subscriptions.push(
         SelectTarget.onTargetsSelected.event((newTarget) => {
-            const isAll = newTarget === allTargets
-            barItem.text = isAll ? newTarget : newTarget.split(':').splice(1).join(':')
+            barItem.text = targetToStatusBarText(newTarget);
         })
     );
 }

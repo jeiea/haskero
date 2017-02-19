@@ -38,6 +38,8 @@ export class HaskeroService {
     private interoProxy: InteroProxy;
     private connection: vsrv.IConnection;
 
+    private interoNotFOunt = "Executable named intero not found";
+
     public initialize(connection: vsrv.IConnection, targets: string[]): Promise<vsrv.InitializeResult> {
         connection.console.log("Initializing Haskero...");
         this.connection = connection;
@@ -53,16 +55,12 @@ export class HaskeroService {
         // Launch the intero process
         return this.spawnIntero(targets)
             .then((resp): Promise<void> => {
-                if (resp.isInteroInstalled) {
-                    return Promise.resolve();
-                } else {
-                    return Promise.reject("Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing");
-                }
+                return Promise.resolve();
             })
             .catch(reason => {
                 return Promise.reject<vsrv.InitializeError>({
                     code: 1,
-                    message: reason + ". Look Haskero output tab for further information",
+                    message: reason,
                     data: { retry: false }
                 });
             });
@@ -192,7 +190,12 @@ export class HaskeroService {
                 return new InitRequest()
                     .send(this.interoProxy)
                     .then((resp: InitResponse) => resolve(resp))
-                    .catch(reject)
+                    .catch(reason => {
+                        if (reason.indexOf(this.interoNotFOunt, 0) > -1) {
+                            return reject("Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing (details in Haskero tab output)\r\n\r\nDetails\r\n\r\n" + reason);
+                        }
+                        reject(reason);
+                    })
             }, 2000)
         });
     }
