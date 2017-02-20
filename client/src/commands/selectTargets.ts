@@ -16,9 +16,6 @@ export class SelectTarget {
     constructor(private readonly haskeroClient: HaskeroClient) { }
 
     public handler = () => {
-
-        //this.client.stop();
-
         this.haskeroClient.getTargets().then((targets) => {
             const ts = dialogTargets(targets);
             vscode.window.showQuickPick(ts).then((newTarget) => {
@@ -26,31 +23,19 @@ export class SelectTarget {
 
                 let newTargets = convertTargets(targets, newTarget);
 
-                if (!this.haskeroClient.isStarted) {
-                    let initOptions: HaskeroClientInitOptions = {
-                        targets: newTargets
-                    };
-                    this.haskeroClient.start(initOptions);
-                }
-                else {
-
-                    //this.haskeroClient.client.onReady().then(() => {
-                    //sendNotification need an array of parameters and here, the target array is ONE parameter
-                    this.haskeroClient.client
-                        .sendRequest('changeTargets', [newTargets])
-                        .then(resp => {
-                            this.haskeroClient.client.info("Change target done.", resp);
-                            vscode.window.showInformationMessage("Change target done. " + resp);
-                        }, reason => {
-                            this.haskeroClient.client.error(`Change targets failed. Stopping Haskero for this target. Switch to another target or 'Default targets'.
+                //sendNotification need an array of parameters and here, the target array is ONE parameter
+                this.haskeroClient.client
+                    .sendRequest('changeTargets', [newTargets])
+                    .then(resp => {
+                        this.haskeroClient.client.info("Change target done.", resp);
+                        vscode.window.showInformationMessage("Change target done. " + resp);
+                    }, reason => {
+                        this.haskeroClient.client.error(`Change targets failed. Stopping Haskero for this target. Switch to another target or 'Default targets'.
 Hint : try running a build command to get missing dependencies (> stack build ${newTargets.join(' ')})
 Error details:
 `, reason);
-                            vscode.window.showErrorMessage("Change targets failed. Stopping Haskero for this target. Switch to another target or 'Default targets'.");
-                            //this.haskeroClient.dispose();
-                        });
-                    //});
-                }
+                        vscode.window.showErrorMessage("Change targets failed. Stopping Haskero for this target. Switch to another target or 'Default targets'.");
+                    });
                 SelectTarget.onTargetsSelected.fire(newTarget);
             });
         });
