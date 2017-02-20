@@ -26,21 +26,13 @@ connection.onInitialize((params): Promise<vsrv.InitializeResult> => {
     haskeroService = new HaskeroService();
     return haskeroService.initialize(connection, params.initializationOptions.targets);
 });
-// connection.onNotification("setTargets", (targets: string[]) => {
-//     haskeroService.setTargets(targets, () => {
-//         // Revalidate any open text documents
-//         documents.all().forEach((doc) =>
-//             haskeroService.validateTextDocument(connection, doc))
-//     });
-// });
 
 connection.onRequest("changeTargets", (targets: string[]): Promise<string> => {
-    return haskeroService.changeTargets(targets);
-    // () => {
-    //     // Revalidate any open text documents
-    //     documents.all().forEach((doc) =>
-    //         haskeroService.validateTextDocument(connection, doc))
-
+    return haskeroService.changeTargets(targets)
+        .then((msg) => {
+            documents.all().forEach((doc) => haskeroService.validateTextDocument(connection, doc));
+            return Promise.resolve(msg);
+        });
 });
 
 documents.onDidOpen((event): Promise<void> => {
@@ -57,6 +49,11 @@ interface Settings {
 interface ExampleSettings {
     maxNumberOfProblems: number;
 }
+
+connection.onInitialized((initializedParams: vsrv.InitializedParams) => {
+    console.log("onInitialized");
+    haskeroService.onInitialized();
+});
 
 // hold the maxNumberOfProblems setting
 let maxNumberOfProblems: number;
@@ -78,6 +75,8 @@ connection.onDefinition((documentInfo): Promise<vsrv.Location> => {
 });
 
 connection.onHover((documentInfo): Promise<vsrv.Hover> => {
+    DebugUtils.instance.connectionLog("onHover request");
+
     const documentURI = documentInfo.textDocument.uri;
     if (UriUtils.isFileProtocol(documentURI)) {
         const textDocument = documents.get(documentURI);

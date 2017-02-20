@@ -16,8 +16,9 @@ export class HaskeroClient implements vscode.Disposable {
 
     // private _isStarted: boolean;
     public get isStarted(): boolean {
+        return this._client !== null;
         //return this._isStarted;
-        return this.client.isConnectionActive(); //Compile thanks to a hack in vscode-languageclient/lib/main.d.ts => remove 'private'
+        //return this.client.isConnectionActive(); //Compile thanks to a hack in vscode-languageclient/lib/main.d.ts => remove 'private'
         //we can't rely on the public onDidChangeState function to know if the LanguageClient is started (bug ?)
     }
 
@@ -59,11 +60,12 @@ export class HaskeroClient implements vscode.Disposable {
             debug: { module: serverModule, transport: vscli.TransportKind.ipc }//, options: debugOptions }
         }
         //this._isStarted = false;
-        this._client = new vscli.LanguageClient('Haskero', 'Haskero', this.serverOptions, this.clientOptions, this.debug);
+
     }
 
     public start(initOptions: HaskeroClientInitOptions): vscode.Disposable {
         HaskeroClient.initOptions = initOptions;
+        this._client = new vscli.LanguageClient('Haskero', 'Haskero', this.serverOptions, this.clientOptions, this.debug);
         this.disposable = this._client.start();
         //this._isStarted = true;
         return this;
@@ -71,6 +73,7 @@ export class HaskeroClient implements vscode.Disposable {
 
     public stop() {
         this._client.stop();
+        this._client = null;
         //this._isStarted = false;
     }
 

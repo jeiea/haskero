@@ -1,4 +1,5 @@
 import * as vsrv from 'vscode-languageserver';
+import * as uuid from 'node-uuid'
 
 import child_process = require('child_process');
 import { InteroProxy } from './intero/interoProxy';
@@ -12,22 +13,23 @@ import { CompleteAtRequest, CompleteAtResponse } from './intero/commands/complet
 import { DocumentUtils, WordSpot, NoMatchAtCursorBehaviour } from './documentUtils'
 import { UriUtils } from './intero/uri';
 import { DebugUtils } from './debug/debugUtils'
+import { Features } from './features'
 
 const serverCapabilities: vsrv.InitializeResult = {
     capabilities: {
         // Tell the client that the server works in FULL text document sync mode
         textDocumentSync: vsrv.TextDocumentSyncKind.Full,
-        // support type info on hover
-        hoverProvider: true,
-        // support goto definition
-        definitionProvider: true,
-        // support find usage (ie: find all references)
-        referencesProvider: true,
-        // Tell the client that the server support code complete
-        completionProvider: {
-            // doesn't support completion details
-            resolveProvider: false
-        }
+        // // support type info on hover
+        // hoverProvider: true,
+        // // support goto definition
+        // definitionProvider: true,
+        // // support find usage (ie: find all references)
+        // referencesProvider: true,
+        // // Tell the client that the server support code complete
+        // completionProvider: {
+        //     // doesn't support completion details
+        //     resolveProvider: false
+        // }
     }
 }
 
@@ -37,18 +39,36 @@ const serverCapabilities: vsrv.InitializeResult = {
 export class HaskeroService {
     private interoProxy: InteroProxy;
     private connection: vsrv.IConnection;
-
+    private features: Features;
+    private initializationOk: boolean;
     private interoNotFOunt = "Executable named intero not found";
 
     public initialize(connection: vsrv.IConnection, targets: string[]): Promise<vsrv.InitializeResult> {
         connection.console.log("Initializing Haskero...");
         this.connection = connection;
+        this.features = new Features(connection);
 
         return this.startInteroAndHandleErrors(targets)
             .then(() => {
-                this.connection.console.log("Haskero initialization done.");
+                //server capabilities are sent later with a client/registerCapability request (just send the document sync capability here)
+                //see onInitialized method
+                this.initializationOk = true;
                 return Promise.resolve(serverCapabilities);
-            });
+            })
+            .catch(reason => {
+                this.initializationOk = false;
+                return Promise.reject(reason);
+            })
+    }
+
+    public onInitialized() {
+        if (this.initializationOk) {
+            this.features.registerAllFeatures();
+            this.connection.console.log("Haskero initialization done.");
+        }
+        else {
+            this.connection.console.log("Haskero initialization failed.");
+        }
     }
 
     private startInteroAndHandleErrors(targets: string[]): Promise<void> {
@@ -69,12 +89,27 @@ export class HaskeroService {
     public changeTargets(targets: string[]): Promise<string> {
         // It seems that we have to restart ghci to set new targets,
         // would be nice if there were a ghci command for it.
-        this.connection.console.log(`Restarting intero with targets: ${targets}`)
+
+        const prettyString = (ts) => {
+            if (ts.length === 0) {
+                return "default targets";
+            }
+            else {
+                return `${ts.join(' ')}`;
+            }
+        }
+
+        this.connection.console.log('Restarting intero with targets: ' + prettyString(targets));
         return this.startInteroAndHandleErrors(targets)
             .then((): Promise<string> => {
                 this.connection.console.log("Restart done.");
-                return Promise.resolve(`Intero restarted with targets: ${targets}`);
+                this.features.registerAllFeatures();
+                return Promise.resolve('Intero restarted with targets: ' + prettyString(targets));
                 //check opened documents
+            })
+            .catch(reason => {
+                this.features.unregisterAllFeatures();
+                return Promise.reject(reason);
             });
     }
 

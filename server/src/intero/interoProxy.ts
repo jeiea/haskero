@@ -91,10 +91,11 @@ export class InteroProxy {
         this.interoProcess.stdout.removeAllListeners();
         this.interoProcess.stderr.removeAllListeners();
         this.interoProcess.stdin.removeAllListeners();
-        this.interoProcess.kill();
+
         this.onRawResponseQueue.forEach(resolver => {
             resolver.reject("Intero process killed by Haskero");
         });
+        this.interoProcess.kill();
         this.onRawResponseQueue = [];
         this.isInteroProcessUp = false;
     }

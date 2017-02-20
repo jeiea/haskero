@@ -24,24 +24,30 @@ export class SelectTarget {
             vscode.window.showQuickPick(ts).then((newTarget) => {
                 if (!newTarget) return;
 
+                let newTargets = convertTargets(targets, newTarget);
+
                 if (!this.haskeroClient.isStarted) {
                     let initOptions: HaskeroClientInitOptions = {
-                        targets: convertTargets(targets, newTarget)
+                        targets: newTargets
                     };
                     this.haskeroClient.start(initOptions);
                 }
                 else {
+
                     //this.haskeroClient.client.onReady().then(() => {
                     //sendNotification need an array of parameters and here, the target array is ONE parameter
                     this.haskeroClient.client
-                        .sendRequest('changeTargets', [convertTargets(targets, newTarget)])
+                        .sendRequest('changeTargets', [newTargets])
                         .then(resp => {
                             this.haskeroClient.client.info("Change target done.", resp);
                             vscode.window.showInformationMessage("Change target done. " + resp);
                         }, reason => {
-                            this.haskeroClient.client.error("Change targets failed. Stoping Haskero for this target. Switch to another target or 'Default targets'. ", reason);
-                            vscode.window.showErrorMessage("Change targets failed. " + reason);
-                            this.haskeroClient.stop();
+                            this.haskeroClient.client.error(`Change targets failed. Stopping Haskero for this target. Switch to another target or 'Default targets'.
+Hint : try running a build command to get missing dependencies (> stack build ${newTargets.join(' ')})
+Error details:
+`, reason);
+                            vscode.window.showErrorMessage("Change targets failed. Stopping Haskero for this target. Switch to another target or 'Default targets'.");
+                            //this.haskeroClient.dispose();
                         });
                     //});
                 }
