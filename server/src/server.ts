@@ -51,7 +51,6 @@ interface ExampleSettings {
 }
 
 connection.onInitialized((initializedParams: vsrv.InitializedParams) => {
-    console.log("onInitialized");
     haskeroService.onInitialized();
 });
 

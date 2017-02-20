@@ -8,19 +8,19 @@ export class Features {
 
     private static readonly features: vsrv.Registration[] = [
         {
-            id: uuid.v1(),
+            id: uuid.v4(),
             method: "textDocument/hover"
         },
         {
-            id: uuid.v1(),
+            id: uuid.v4(),
             method: "textDocument/definition"
         },
         {
-            id: uuid.v1(),
+            id: uuid.v4(),
             method: "textDocument/references"
         },
         {
-            id: uuid.v1(),
+            id: uuid.v4(),
             method: "textDocument/completion",
             registerOptions: {
                 resolveProvider: false
