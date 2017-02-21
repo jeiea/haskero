@@ -7,7 +7,7 @@ import { UriUtils } from './intero/uri';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: vsrv.IConnection = vsrv.createConnection(new vsrv.IPCMessageReader(process), new vsrv.IPCMessageWriter(process));
-DebugUtils.init(false, connection);
+DebugUtils.init(true, connection);
 
 // Create a simple text document manager. The text document manager
 // supports full document sync only
@@ -83,7 +83,7 @@ connection.onHover((documentInfo): Promise<vsrv.Hover> => {
     }
 });
 
-connection.onCompletion((documentInfo): Promise<vsrv.CompletionItem[]> => {
+connection.onCompletion((documentInfo: vsrv.TextDocumentPositionParams): Promise<vsrv.CompletionItem[]> => {
     const documentURI = documentInfo.textDocument.uri;
     if (UriUtils.isFileProtocol(documentURI)) {
         const textDocument = documents.get(documentURI);

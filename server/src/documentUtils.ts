@@ -36,7 +36,7 @@ export enum NoMatchAtCursorBehaviour {
  * Tools for document manipulations
  */
 export class DocumentUtils {
-    private static identifierSymbols = /[0-9a-zA-Z_']/g;
+    private static identifierSymbols = /[0-9a-zA-Z_'.]/g;
 
     private static isIdentifierSymbol(c: string): boolean {
         return c.search(DocumentUtils.identifierSymbols) !== -1;
@@ -103,5 +103,17 @@ export class DocumentUtils {
     public static toInteroRange(range: Range): InteroRange {
         return new InteroRange(range.start.line + 1, range.start.character + 1, range.end.line + 1,
             range.end.character + 1);
+    }
+
+    /**
+    * Returns the current text document position line
+    */
+    public static getPositionLine(document: TextDocument, position: Position): string {
+        let text = document.getText();
+        let startingPos = Position.create(position.line, 0);
+        let endingPos = Position.create(position.line, Number.MAX_VALUE);
+        let startingOffset = document.offsetAt(startingPos);
+        let endingOffset = document.offsetAt(endingPos);
+        return text.slice(startingOffset, endingOffset);
     }
 }

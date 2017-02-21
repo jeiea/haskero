@@ -10,10 +10,12 @@ import { LocAtRequest, LocAtResponse } from './intero/commands/locAt'
 import { UsesRequest, UsesResponse } from './intero/commands/uses'
 import { TypeAtRequest, TypeAtResponse } from './intero/commands/typeAt'
 import { CompleteAtRequest, CompleteAtResponse } from './intero/commands/completeAt'
+import { CompleteRequest, CompleteResponse } from './intero/commands/complete'
 import { DocumentUtils, WordSpot, NoMatchAtCursorBehaviour } from './documentUtils'
 import { UriUtils } from './intero/uri';
 import { DebugUtils } from './debug/debugUtils'
 import { Features } from './features'
+import { CompletionUtils } from './completionUtils'
 
 const serverCapabilities: vsrv.InitializeResult = {
     capabilities: {
@@ -153,14 +155,14 @@ export class HaskeroService {
     }
 
     public getCompletionItems(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.CompletionItem[]> {
-        let {word, range} = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
-        const completeAtRequest = new CompleteAtRequest(textDocument.uri, DocumentUtils.toInteroRange(range), word);
 
-        return completeAtRequest
-            .send(this.interoProxy)
-            .then((response: CompleteAtResponse) => {
-                return response.completions.map(c => { return { label: c, kind: vsrv.CompletionItemKind.Variable }; });
-            });
+        let currentLine = DocumentUtils.getPositionLine(textDocument, position);
+        if (currentLine.startsWith('import ')) {
+            return CompletionUtils.getImportCompletionItems(this.interoProxy, textDocument, position, currentLine);
+        }
+        else {
+            return CompletionUtils.getDefaultCompletionItems(this.interoProxy, textDocument, position);
+        }
     }
 
     public getReferencesLocations(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location[]> {

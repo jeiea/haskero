@@ -3,14 +3,15 @@
 import { InteroProxy } from '../interoProxy'
 import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
+import { LoadRequest, LoadResponse } from './load'
 import { InteroUtils } from '../interoUtils'
 import { InteroRange } from '../interoRange'
 import { UriUtils } from '../uri'
 
 /**
- * 'complete-at' intero response
+ * 'complete' intero response
  */
-export class CompleteAtResponse implements InteroResponse {
+export class CompleteResponse implements InteroResponse {
     private _isOk: boolean;
     private _rawout: string;
     private _rawerr: string;
@@ -35,25 +36,34 @@ export class CompleteAtResponse implements InteroResponse {
     public constructor(rawout: string, rawerr: string) {
         this._rawout = rawout;
         this._rawerr = rawerr;
-        this._completions = InteroUtils.normalizeRawResponse(rawout).split(/\r?\n/);
+        this._completions = InteroUtils
+            .normalizeRawResponse(rawout)
+            .split(/\r?\n/)
+            .slice(1)
+            .map(s => s.replace(/"/g, ''));
     }
 }
 
 /**
- * 'complete-at' intero request
+ * 'complete' intero request
  */
-export class CompleteAtRequest implements InteroRequest {
+export class CompleteRequest implements InteroRequest {
 
-    public constructor(private uri: string, private range: InteroRange, private text: string) {
+    public constructor(private readonly uri: string, private readonly text: string) {
+        this.text = text.replace(/[\r\n]/g, '');
     }
 
-    public send(interoProxy: InteroProxy): Promise<CompleteAtResponse> {
+    public send(interoProxy: InteroProxy): Promise<CompleteResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
-        const req = `:complete-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.text}`;
-        return interoProxy.sendRawRequest(req)
+        const loadRequest = new LoadRequest(this.uri, false);
+        const req = `:complete repl "${this.text}"`;
+        return loadRequest.send(interoProxy)
+            .then((loadResponse) => {
+                return interoProxy.sendRawRequest(req);
+            })
             .then((response) => {
-                return Promise.resolve(new CompleteAtResponse(response.rawout, response.rawerr));
+                return Promise.resolve(new CompleteResponse(response.rawout, response.rawerr));
             });
     }
 }
