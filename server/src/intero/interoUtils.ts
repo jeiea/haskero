@@ -11,8 +11,8 @@ export class InteroUtils {
      * Clean a raw response.
      */
     public static normalizeRawResponse(raw: string): string {
-        //#FIX should replace all match, not just the first one
-        return raw.replace(InteroProxy.EOTUtf8, '').trim();
+        let r = new RegExp(InteroProxy.EOTUtf8, 'g');
+        return raw.replace(r, '').trim();
     }
 
     /**
