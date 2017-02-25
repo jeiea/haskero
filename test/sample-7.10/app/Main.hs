@@ -21,7 +21,7 @@ xxx = 3 + abc + 1
         innerfunc a = a
         abc = 1
 
-f xxx = (xxx) M.assocs
+f xxx = (xxx)
 
 foo :: Int -> Int
 foo x = foo' (x + 1)

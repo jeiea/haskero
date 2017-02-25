@@ -1,3 +1,9 @@
+## Release 0.3.0
+
+ - **new feature**: support autocompletion in import (issue #21)
+ - **new feature**: support autocompletion in dot notation for qualified imports (issue #4)
+ - fix a minor bugs with the EOT char
+
 ## Release 0.2.2
 
  - **new feature**: support for chosing the cabal targets used by Haskero. Thereby, intellisense is working on test projects as well. (issue #30)

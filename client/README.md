@@ -28,6 +28,21 @@ See [installation instructions](https://gitlab.com/vannnns/haskero/blob/master/c
 
 ![GHC Warnings](https://gitlab.com/vannnns/haskero/raw/master/client/media/warning-on-save.gif "GHC Warnings")
 
+### Identifier type definition
+
+**Type definition on hover (or ctr+k,ctr+i)**
+
+![Type definition](https://gitlab.com/vannnns/haskero/raw/master/client/media/type-at.gif "Type definition")
+
+### Goto definition
+
+**Goto Identifier definition (or F12)**
+
+![Goto definition](https://gitlab.com/vannnns/haskero/raw/master/client/media/loc-at.gif "Goto definition")
+
+### Find all references
+
+Find all references of a symbol in the **same module** (shift+F12)
 
 ### Automatic types insertion
 
@@ -46,7 +61,7 @@ taxe m =
   foldl calculate (0,m) (bounds2 0 bounds)
 ```
 
-You can associate a short cut (here **ctrl+k t**):
+You can associate a short cut (eg: here **ctrl+k t**):
 
 keybindings.json (File > Preferences > Keyboard Shortcuts)
 ```json
@@ -57,32 +72,22 @@ keybindings.json (File > Preferences > Keyboard Shortcuts)
 }
 ```
 
-### Identifier type definition
-
-**Type definition on hover (or ctr+k,ctr+i)**
-
-![Type definition](https://gitlab.com/vannnns/haskero/raw/master/client/media/type-at.gif "Type definition")
-
-### Goto definition
-
-**Goto Identifier definition (or F12)**
-
-![Goto definition](https://gitlab.com/vannnns/haskero/raw/master/client/media/loc-at.gif "Goto definition")
-
-### Find all references
-
-Find all references of a symbol in the **same module** (shift+F12)
-
 ### Switching cabal targers
 
 Support for chosing the cabal targets used in the IDE. Thereby, intellisense is working on test projects.
 
 To change the current target, use the status bar button "Default targets" at the bottom right.
 
+### Autocompletion
+
+Automatic completion of imports, variables, types, etc.
+
+![Auto completion](https://gitlab.com/vannnns/haskero/raw/master/client/media/autocompletion.gif "Auto completion")
+
 ## Incoming improvements
 
 - [x] Support switching cabal targets
-- [ ] Better auto completion (support dot notation for qualified imports, ...)
+- [x] Better auto completion (support dot notation for qualified imports, ...)
 - [x] Insert identifier type one line above
 - [ ] Goto definition in hackage
 - [ ] Live evaluation of random haskell code in the current module scope
