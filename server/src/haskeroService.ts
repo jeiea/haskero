@@ -155,9 +155,8 @@ export class HaskeroService {
     }
 
     public getCompletionItems(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.CompletionItem[]> {
-
-        let currentLine = DocumentUtils.getPositionLine(textDocument, position);
-        if (currentLine.startsWith('import ')) {
+        const currentLine = DocumentUtils.getPositionLine(textDocument, position);
+        if (currentLine.startsWith("import ")) {
             return CompletionUtils.getImportCompletionItems(this.interoProxy, textDocument, position, currentLine);
         }
         else {

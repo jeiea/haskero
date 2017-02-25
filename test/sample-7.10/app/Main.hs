@@ -1,7 +1,8 @@
 module Main where
 
 import System.IO
-import Control.Monad
+
+import Control.Concurrent.QSem
 import qualified Data.IntMap.Strict as M
 
 import Lib
@@ -20,15 +21,12 @@ xxx = 3 + abc + 1
         innerfunc a = a
         abc = 1
 
-f xxx = (xxx)
-
-
+f xxx = (xxx) M.assocs
 
 foo :: Int -> Int
 foo x = foo' (x + 1)
     where
         foo' a = a - 1
-
 
 
 g x = x

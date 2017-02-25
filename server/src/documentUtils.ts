@@ -109,11 +109,21 @@ export class DocumentUtils {
     * Returns the current text document position line
     */
     public static getPositionLine(document: TextDocument, position: Position): string {
-        let text = document.getText();
-        let startingPos = Position.create(position.line, 0);
-        let endingPos = Position.create(position.line, Number.MAX_VALUE);
-        let startingOffset = document.offsetAt(startingPos);
-        let endingOffset = document.offsetAt(endingPos);
+        const text = document.getText();
+        const startingPos = Position.create(position.line, 0);
+        const endingPos = Position.create(position.line, Number.MAX_VALUE);
+        const startingOffset = document.offsetAt(startingPos);
+        const endingOffset = document.offsetAt(endingPos);
         return text.slice(startingOffset, endingOffset);
     }
+
+    /**
+     * Check if the 'text' is present on the left side of the position, in the same line
+     */
+    public static leftLineContains(document: TextDocument, position: Position, text: string): boolean {
+        const line = DocumentUtils.getPositionLine(document, position);
+        const leftLine = line.substring(0, position.character);
+        return leftLine.indexOf(text) > -1;
+    }
+
 }

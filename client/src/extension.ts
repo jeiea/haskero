@@ -15,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
     // The server is implemented in node
     let serverModule = context.asAbsolutePath(path.join('server', 'server.js'));
 
-    let haskeroClient = new HaskeroClient(serverModule, false);
+    let haskeroClient = new HaskeroClient(serverModule, true);
 
     //for now we disable the default all targets choice, we are waiting for more feedback about the targets switching feature
 
