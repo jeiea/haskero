@@ -52,7 +52,8 @@ export class HaskeroClient implements vscode.Disposable {
 
         this.serverOptions = {
             run: { module: serverModule, transport: vscli.TransportKind.ipc },
-            debug: { module: serverModule, transport: vscli.TransportKind.ipc, options: debugOptions }
+            debug: { module: serverModule, transport: vscli.TransportKind.ipc } //, options: debugOptions }
+            //remove options here otherwise we experience node socket error msg
         }
     }
 
