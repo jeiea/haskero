@@ -40,7 +40,19 @@ export class CompleteResponse implements InteroResponse {
             .normalizeRawResponse(rawout)
             .split(/\r?\n/)
             .slice(1)
-            .map(s => s.replace(/"/g, ''));
+            .reduce(this.reducer, [])
+    }
+
+    //remove unwanted reponses
+    //as we :load module before the :complete repl request, we can have artefacts from the previous :load answer in the stderr of :complete
+    //it should be fixed with issue #15
+    private reducer(accu: Array<string>, line: string): Array<string> {
+        let res = line.match(/^"(.*)"$/);
+        if (res !== null) {
+            accu.push(res[1]);
+            return accu;
+        }
+        return accu;
     }
 }
 
@@ -56,6 +68,8 @@ export class CompleteRequest implements InteroRequest {
     public send(interoProxy: InteroProxy): Promise<CompleteResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
+        //send a load request first otherwise :complete is not executed on the right module (it's executed
+        //on the current module)
         const loadRequest = new LoadRequest(this.uri, false);
         const req = `:complete repl "${this.text}"`;
         return loadRequest.send(interoProxy)

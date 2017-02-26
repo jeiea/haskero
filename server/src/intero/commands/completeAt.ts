@@ -35,7 +35,7 @@ export class CompleteAtResponse implements InteroResponse {
     public constructor(rawout: string, rawerr: string) {
         this._rawout = rawout;
         this._rawerr = rawerr;
-        this._completions = InteroUtils.normalizeRawResponse(rawout).split(/\r?\n/);
+        this._completions = InteroUtils.normalizeRawResponse(rawout).split(/\r?\n/).filter(s => s !== '');
     }
 }
 

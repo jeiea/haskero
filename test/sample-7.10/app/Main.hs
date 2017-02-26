@@ -2,13 +2,14 @@ module Main where
 
 import System.IO
 
+
+import System.IO.Unsafe as P
 import Control.Concurrent.QSem
 import qualified Data.IntMap.Strict as M
 
 import Lib
 
 import Text.Printf (printf)
-
 
 main :: IO ()
 main = printf "2 + 3 = %d\n" (ourAdd 2 5)

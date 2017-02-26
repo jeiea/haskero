@@ -69,7 +69,21 @@ export class CompletionUtils {
         return completeAtRequest
             .send(interoProxy)
             .then((response: CompleteAtResponse) => {
-                return response.completions.map(completion => {
+                let completions = response.completions;
+                if (completions.length < 1) {
+                    const completeRequest = new CompleteRequest(textDocument.uri, word);
+                    return completeRequest
+                        .send(interoProxy)
+                        .then((response: CompleteResponse) => {
+                            return Promise.resolve(response.completions);
+                        });
+                }
+                else {
+                    return Promise.resolve(completions);
+                }
+            })
+            .then(completions => {
+                return completions.map(completion => {
                     return {
                         label: CompletionUtils.truncResp(word, completion),
                         kind: vsrv.CompletionItemKind.Variable
