@@ -11,12 +11,19 @@ import Lib
 
 import Text.Printf (printf)
 
+newtype MyType = MyType { unMyType :: String }
+
+data MyData = String | Int
+
 main :: IO ()
 main = printf "2 + 3 = %d\n" (ourAdd 2 5)
 
-aaa :: Num a => t -> a
+
+
 aaa x = 3
 
+
+xxx :: Integer
 xxx = 3 + abc + 1
     where
         innerfunc a = a

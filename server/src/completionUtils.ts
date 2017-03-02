@@ -2,13 +2,28 @@ import * as vsrv from 'vscode-languageserver';
 import { InteroProxy } from './intero/interoProxy';
 import { DocumentUtils, WordSpot, NoMatchAtCursorBehaviour } from './documentUtils'
 import { CompleteAtRequest, CompleteAtResponse } from './intero/commands/completeAt'
+import { InfoRequest, InfoResponse } from './intero/commands/info'
 import { CompleteRequest, CompleteResponse } from './intero/commands/complete'
+import { IdentifierKind } from './intero/identifierKind'
 import { zipWith } from './functionalUtils'
 
 /**
  * Handle completion special cases (import, dot notation, etc.)
  */
 export class CompletionUtils {
+
+    private static toCompletionType(kind: IdentifierKind) {
+        switch (kind) {
+            case IdentifierKind.Class:
+                return vsrv.CompletionItemKind.Class;
+            case IdentifierKind.Data:
+                return vsrv.CompletionItemKind.Constructor;
+            case IdentifierKind.Function:
+                return vsrv.CompletionItemKind.Function;
+            case IdentifierKind.Type:
+                return vsrv.CompletionItemKind.Interface;
+        }
+    }
 
     private static truncResp(word: string, completion: string) {
         // the completion response sent back from intero is too wide
@@ -41,7 +56,7 @@ export class CompletionUtils {
 
     public static getImportCompletionItems(interoProxy: InteroProxy, textDocument: vsrv.TextDocument, position: vsrv.Position, line: string): Promise<vsrv.CompletionItem[]> {
         if (!DocumentUtils.leftLineContains(textDocument, position, " as ")) {
-            let {word, range} = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
+            let { word, range } = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
             const lineToComplete = line.substring(0, position.character);
             const completeRequest = new CompleteRequest(textDocument.uri, lineToComplete);
 
@@ -62,15 +77,17 @@ export class CompletionUtils {
 
     }
 
-    public static getDefaultCompletionItems(interoProxy: InteroProxy, textDocument: vsrv.TextDocument, position: vsrv.Position) {
-        let {word, range} = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
+    public static getDefaultCompletionItems(interoProxy: InteroProxy, textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.CompletionItem[]> {
+        let { word, range } = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
         const completeAtRequest = new CompleteAtRequest(textDocument.uri, DocumentUtils.toInteroRange(range), word);
 
+        console.log("ici");
         return completeAtRequest
             .send(interoProxy)
             .then((response: CompleteAtResponse) => {
                 let completions = response.completions;
                 if (completions.length < 1) {
+                    console.log("lenght < 1");
                     const completeRequest = new CompleteRequest(textDocument.uri, word);
                     return completeRequest
                         .send(interoProxy)
@@ -79,16 +96,54 @@ export class CompletionUtils {
                         });
                 }
                 else {
+                    console.log("=== length0 " + completions.length);
                     return Promise.resolve(completions);
                 }
             })
             .then(completions => {
-                return completions.map(completion => {
-                    return {
-                        label: CompletionUtils.truncResp(word, completion),
-                        kind: vsrv.CompletionItemKind.Variable
-                    };
-                });
+                console.log("=== length " + completions.length);
+                console.trace("!!!");
+                return Promise.all(
+                    completions.map((completion): Promise<vsrv.CompletionItem> => {
+                        let infoReq = new InfoRequest(completion);
+                        console.log("=== une question ===");
+                        return infoReq
+                            .send(interoProxy)
+                            .then((infoResponse): Promise<vsrv.CompletionItem> => {
+                                console.log("=== une réponse ===");
+                                var identifier = CompletionUtils.truncResp(word, completion);
+                                return Promise.resolve({
+                                    label: identifier,
+                                    kind: CompletionUtils.toCompletionType(infoResponse.kind),
+                                    detail: "a -> a",
+                                    documentation: infoResponse.type,
+                                    data: completion
+                                });
+                            });
+                    })
+                );
+                // return completions.map(completion => {
+                //     var identifier = CompletionUtils.truncResp(word, completion);
+                //     return Promise.resolve({
+                //         label: identifier,
+                //         kind: vsrv.CompletionItemKind.Variable,
+                //         data: completion
+                //     });
+                // });
+            }).catch(oops => console.log("=== oops ==="));
+    }
+
+    public static getResolveInfos(interoProxy: InteroProxy, item: vsrv.CompletionItem): Promise<vsrv.CompletionItem> {
+        const infoRequest = new InfoRequest(item.data);
+        return infoRequest
+            .send(interoProxy)
+            .then((infoResponse: InfoResponse) => {
+                return {
+                    label: item.label,
+                    kind: CompletionUtils.toCompletionType(infoResponse.kind),
+                    detail: "a -> a",
+                    documentation: infoResponse.type
+                };
             });
     }
 }

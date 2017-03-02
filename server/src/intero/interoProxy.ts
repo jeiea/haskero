@@ -44,14 +44,16 @@ export class InteroProxy {
      * End of communication utf8 char
      */
     public static get EOTUtf8(): string {
-        return '\u0004';
+        // return '\u0004';
+        return '@';
     }
 
     /**
      * End of communication char in CMD
      */
     public static get EOTInteroCmd(): string {
-        return '"\\4"';
+        // return '"\\4"';
+        return '@';
     }
 
     public constructor(private interoProcess: child_process.ChildProcess) {
@@ -73,9 +75,9 @@ export class InteroProxy {
             return Promise.reject(this.errorMsg);
         }
         let executor = (resolve, reject): void => {
-            this.onRawResponseQueue.push({ resolve: resolve, reject: reject });
             let req = rawRequest + '\n';
             this.interoProcess.stdin.write(req);
+            this.onRawResponseQueue.push({ resolve: resolve, reject: reject });
             DebugUtils.instance.log('>' + req);
         };
         return new Promise(executor);
@@ -109,6 +111,9 @@ export class InteroProxy {
         let chunk = data.toString();
         this.rawout += chunk;
         DebugUtils.instance.log(chunk);
+        //FIX : use contains as the EOT char is not always at the end of a chunk
+        //eg : if we send two questions before the first answer, we can get chunk with the form:
+        // end_of_raw_answer1 EOT start_of_raw_answer2
         if (InteroProxy.endsWith(chunk, InteroProxy.EOTUtf8)) {
             //On linux, issue with synchronisation between stdout and stderr :
             // - use a set time out to wait 50ms for stderr to finish to write data after we recieve the EOC char from stdin

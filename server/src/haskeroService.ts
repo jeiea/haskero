@@ -164,6 +164,10 @@ export class HaskeroService {
         }
     }
 
+    public getResolveInfos(item: vsrv.CompletionItem): Promise<vsrv.CompletionItem> {
+        return null;//  CompletionUtils.getResolveInfos(this.interoProxy, item);
+    }
+
     public getReferencesLocations(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location[]> {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         const usesRequest = new UsesRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);

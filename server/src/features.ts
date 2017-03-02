@@ -23,7 +23,7 @@ export class Features {
             id: uuid.v4(),
             method: "textDocument/completion",
             registerOptions: {
-                resolveProvider: false
+                resolveProvider: true
             }
         }
     ];
