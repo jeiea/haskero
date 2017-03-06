@@ -22,14 +22,71 @@ export class RawResponse {
 }
 
 /**
+ * Package chunks of data in clean unique response
+ */
+class ResponseReader {
+
+    public rawout: string;
+    public rawerr: string;
+
+    constructor(private stdout: stream.Readable, private stderr: stream.Readable, private onAnswer: (rawout: string, rawerr: string) => void) {
+        this.rawout = '';
+        this.rawerr = '';
+        stdout.on('data', this.onData);
+        stderr.on('data', this.onDataErr);
+    }
+
+    // create an instance function to force the 'this' capture
+    private onData = (data: Buffer) => {
+        let chunk = data.toString();
+        DebugUtils.instance.log(chunk);
+
+        //the EOT char is not always at the end of a chunk
+        //eg : if we send two questions before the first answer comes back, we can get chunk with the form:
+        // end_of_raw_answer1 EOT start_of_raw_answer2
+        // or even:
+        // end_of_raw_answer1 EOT full_raw_answer2 EOT start_of_raw_answer3
+        let responsesChunks = chunk.split(InteroProxy.EOTUtf8);
+        this.rawout += responsesChunks.shift();
+
+
+        while (responsesChunks.length > 0) {
+            //On linux, issue with synchronisation between stdout and stderr :
+            // - use a set time out to wait 50ms for stderr to finish to write data after we recieve the EOC char from stdin
+            setTimeout(this.onResponse(this.rawout), 50);
+            this.rawout = responsesChunks.shift();
+        }
+    }
+
+    // create an instance function to force the 'this' capture
+    private onDataErr = (data: Buffer) => {
+        let chunk = data.toString();
+        this.rawerr += chunk;
+        DebugUtils.instance.log(chunk);
+    }
+
+    private onResponse = (rawout: string) => () => {
+        DebugUtils.instance.log('>>><<<');
+        this.onAnswer(rawout, this.rawerr);
+        this.rawerr = "";
+    }
+
+    public clear() {
+        this.rawerr = '';
+        this.rawout = '';
+    }
+}
+
+/**
  * Handle communication with intero
  * Intero responds on stderr and stdout without any synchronisation
  * InteroProxy hides the complexity behind a simple interface: you send a request and you get a response. All the synchronisation is done by the proxy
  */
 export class InteroProxy {
-    private rawout: string;
-    private rawoutErr: string;
+
     private isInteroProcessUp: boolean = true;
+    private responseReader: ResponseReader;
+
     /**
      * Error message emitted when interoProcess emits an error and stop to working
      */
@@ -57,13 +114,11 @@ export class InteroProxy {
     }
 
     public constructor(private interoProcess: child_process.ChildProcess) {
-        this.rawout = '';
-        this.rawoutErr = '';
+
         this.onRawResponseQueue = [];
         this.interoProcess.on('exit', this.onExit);
         this.interoProcess.on('error', this.onError);
-        this.interoProcess.stdout.on('data', this.onData);
-        this.interoProcess.stderr.on('data', this.onDataErr);
+        this.responseReader = new ResponseReader(this.interoProcess.stdout, this.interoProcess.stderr, this.onResponse);
         this.interoProcess.stdin.on('error', this.onStdInError);
     }
 
@@ -87,8 +142,6 @@ export class InteroProxy {
      * Kill the underlying intero process
      */
     public kill() {
-        this.rawout = '';
-        this.rawoutErr = '';
         this.interoProcess.removeAllListeners();
         this.interoProcess.stdout.removeAllListeners();
         this.interoProcess.stderr.removeAllListeners();
@@ -102,25 +155,6 @@ export class InteroProxy {
         this.isInteroProcessUp = false;
     }
 
-    private static endsWith(str: string, suffix: string): boolean {
-        return str.indexOf(suffix, str.length - suffix.length) != -1;
-    }
-
-    // create an instance function to force the 'this' capture
-    private onData = (data: Buffer) => {
-        let chunk = data.toString();
-        this.rawout += chunk;
-        DebugUtils.instance.log(chunk);
-        //FIX : use contains as the EOT char is not always at the end of a chunk
-        //eg : if we send two questions before the first answer, we can get chunk with the form:
-        // end_of_raw_answer1 EOT start_of_raw_answer2
-        if (InteroProxy.endsWith(chunk, InteroProxy.EOTUtf8)) {
-            //On linux, issue with synchronisation between stdout and stderr :
-            // - use a set time out to wait 50ms for stderr to finish to write data after we recieve the EOC char from stdin
-            setTimeout(this.onResponse, 50);
-        }
-    }
-
     //executed when an error is emitted  on stdin
     private onStdInError = (er: any) => {
         DebugUtils.instance.log("error stdin : " + er);
@@ -130,19 +164,11 @@ export class InteroProxy {
         }
     }
 
-    // create an instance function to force the 'this' capture
-    private onDataErr = (data: Buffer) => {
-        let chunk = data.toString();
-        this.rawoutErr += chunk;
-        DebugUtils.instance.log(chunk);
-    }
-
     private onExit = (code: number) => {
         this.isInteroProcessUp = false;
-        let rawout = this.rawout;
-        let rawerr = this.rawoutErr;
-        this.rawout = '';
-        this.rawoutErr = '';
+        let rawout = this.responseReader.rawout;
+        let rawerr = this.responseReader.rawerr;
+        this.responseReader.clear();
         this.errorMsg = `process exited with code ${code}\r\n\r\nstdout:\r\n${rawout}\r\n\r\nstderr:\r\n${rawerr}\r\n`;
         if (this.onRawResponseQueue.length > 0) {
             let resolver = this.onRawResponseQueue.shift();
@@ -155,12 +181,7 @@ export class InteroProxy {
         this.errorMsg = `Failed to start process 'stack', Haskero must be used on stack projects only. ${reason}`;
     }
 
-    private onResponse = () => {
-        DebugUtils.instance.log('>>><<<');
-        let rawout = this.rawout;
-        let rawerr = this.rawoutErr;
-        this.rawout = '';
-        this.rawoutErr = '';
+    private onResponse = (rawout: string, rawerr: string) => {
         if (this.onRawResponseQueue.length > 0) {
             let resolver = this.onRawResponseQueue.shift();
             resolver.resolve(new RawResponse(rawout, rawerr));
