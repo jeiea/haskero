@@ -17,7 +17,7 @@ export class CompletionUtils {
             case IdentifierKind.Class:
                 return vsrv.CompletionItemKind.Class;
             case IdentifierKind.Data:
-                return vsrv.CompletionItemKind.Constructor;
+                return vsrv.CompletionItemKind.Enum;
             case IdentifierKind.Function:
                 return vsrv.CompletionItemKind.Function;
             case IdentifierKind.Type:
@@ -115,8 +115,8 @@ export class CompletionUtils {
                                 return Promise.resolve({
                                     label: identifier,
                                     kind: CompletionUtils.toCompletionType(infoResponse.kind),
-                                    detail: "a -> a",
-                                    documentation: infoResponse.type,
+                                    detail: infoResponse.detail,
+                                    documentation: infoResponse.documentation,
                                     data: completion
                                 });
                             });
@@ -141,8 +141,8 @@ export class CompletionUtils {
                 return {
                     label: item.label,
                     kind: CompletionUtils.toCompletionType(infoResponse.kind),
-                    detail: "a -> a",
-                    documentation: infoResponse.type
+                    detail: infoResponse.detail,
+                    documentation: infoResponse.documentation
                 };
             });
     }
