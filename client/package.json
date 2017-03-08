@@ -47,7 +47,39 @@
                 "title": "Insert type",
                 "category": "haskell"
             }
-        ]
+        ],
+        //-----------------------------------
+        // Configuration secion
+        //-----------------------------------
+        "configuration": {
+            "title": "Haskero configuration",
+            "properties": {
+                "haskero.ignoreDotGhci": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Ignore '.ghci' config files when launching intero ghci"
+                },
+                "haskero.ghciParameters": {
+                    "type": [
+                        "string"
+                    ],
+                    "default": [
+                        "--no-build",
+                        "--no-load"
+                    ],
+                    "description": "(Warning, can break Haskero behavior) Parameters sent to intero ghci"
+                },
+                "haskero.startupCommands": {
+                    "type": [
+                        "string"
+                    ],
+                    "default": [
+                        ":set -Wall"
+                    ],
+                    "description": "(Warning, can break Haskero behavior) Commands sent to intero after a startup. (eg: :set -Wall)"
+                }
+            }
+        }
     },
     "main": "./out/src/extension",
     "scripts": {
