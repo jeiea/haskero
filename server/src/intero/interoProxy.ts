@@ -152,6 +152,7 @@ export class InteroProxy {
         });
         this.interoProcess.kill();
         this.onRawResponseQueue = [];
+        this.responseReader = null;
         this.isInteroProcessUp = false;
     }
 
