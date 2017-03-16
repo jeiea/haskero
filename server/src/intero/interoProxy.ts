@@ -120,6 +120,7 @@ export class InteroProxy {
         this.interoProcess.on('error', this.onError);
         this.responseReader = new ResponseReader(this.interoProcess.stdout, this.interoProcess.stderr, this.onResponse);
         this.interoProcess.stdin.on('error', this.onStdInError);
+        this.interoProcess.stdin.write('\n');
     }
 
     /**
