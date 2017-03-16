@@ -48,9 +48,6 @@
                 "category": "haskell"
             }
         ],
-        //-----------------------------------
-        // Configuration secion
-        //-----------------------------------
         "configuration": {
             "title": "Haskero configuration",
             "properties": {
