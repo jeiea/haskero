@@ -27,12 +27,12 @@ export class HaskeroClient implements vscode.Disposable {
     private readonly clientOptions: vscli.LanguageClientOptions = {
         // Register the server for plain text documents
         documentSelector: ['haskell'],
-        // synchronize: {
-        //     // Synchronize the setting section 'languageServerExample' to the server
-        //     configurationSection: 'languageServerExample',
-        //     // Notify the server about file changes to '.clientrc files contain in the workspace
-        //     fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc')
-        // },
+        synchronize: {
+            // Synchronize the setting section 'haskero' to the server
+            configurationSection: 'haskero'
+            //     // Notify the server about file changes to '.clientrc files contain in the workspace
+            //     fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc')
+        },
 
         //using a callback here because LanguageClient detects if initializationOptions is a func and call it
         //thanks to this trick, we can change initOptions AFTER the LanguageClient instanciation
