@@ -5,6 +5,16 @@ import { DebugUtils } from './debug/debugUtils'
 import { HaskeroService } from './haskeroService'
 import { UriUtils } from './intero/uri';
 
+interface Settings {
+    haskero: HaskeroSettings
+}
+
+interface HaskeroSettings {
+    ignoreDotGhci: boolean,
+    ghciParameters: [string],
+    startupCommands: [string]
+}
+
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: vsrv.IConnection = vsrv.createConnection(new vsrv.IPCMessageReader(process), new vsrv.IPCMessageWriter(process));
 DebugUtils.init(true, connection);
@@ -39,28 +49,15 @@ documents.onDidOpen((event): Promise<void> => {
     return haskeroService.validateTextDocument(connection, event.document);
 });
 
-// The settings interface describe the server relevant settings part
-interface Settings {
-    languageServerExample: ExampleSettings;
-}
-
-// These are the example settings we defined in the client's package.json
-// file
-interface ExampleSettings {
-    maxNumberOfProblems: number;
-}
-
 connection.onInitialized((initializedParams: vsrv.InitializedParams) => {
     haskeroService.onInitialized();
 });
 
-// hold the maxNumberOfProblems setting
-let maxNumberOfProblems: number;
 // The settings have changed. Is send on server activation
 // as well.
 connection.onDidChangeConfiguration((change) => {
     let settings = <Settings>change.settings;
-    maxNumberOfProblems = settings.languageServerExample.maxNumberOfProblems || 100;
+
     // Revalidate any open text documents
     documents.all().forEach(<(value: vsrv.TextDocument, index: number, array: vsrv.TextDocument[]) => void>Function.bind(haskeroService.validateTextDocument, connection));
 });
