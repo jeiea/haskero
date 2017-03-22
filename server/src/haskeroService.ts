@@ -216,7 +216,7 @@ export class HaskeroService {
      * and set `interoProxy`.
      */
     private spawnIntero(targets: string[]): Promise<InitResponse> {
-        const stackOptions = ['ghci', '--with-ghc', 'intero', '--no-build', '--no-load', '--ghci-options="-ignore-dot-ghci -Wall"'].concat(targets);
+        const stackOptions = ['ghci', '--with-ghc', 'intero', '--no-build', '--no-load', '--ghci-options=-ignore-dot-ghci -Wall'].concat(targets);
         this.connection.console.log(`Spawning process 'stack' with command 'stack ${stackOptions.join(' ')}'`);
 
         if (this.interoProxy) {
