@@ -4,20 +4,12 @@ import * as vsrv from 'vscode-languageserver';
 import { DebugUtils } from './debug/debugUtils'
 import { HaskeroService } from './haskeroService'
 import { UriUtils } from './intero/uri';
+import { HaskeroSettings, InteroSettings } from './haskeroSettings'
 
-interface Settings {
-    haskero: HaskeroSettings
-}
-
-interface HaskeroSettings {
-    ignoreDotGhci: boolean,
-    ghciParameters: [string],
-    startupCommands: [string]
-}
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: vsrv.IConnection = vsrv.createConnection(new vsrv.IPCMessageReader(process), new vsrv.IPCMessageWriter(process));
-DebugUtils.init(true, connection);
+DebugUtils.init(false, connection);
 
 // Create a simple text document manager. The text document manager
 // supports full document sync only
@@ -34,7 +26,8 @@ let workspaceRoot: string;
 connection.onInitialize((params): Promise<vsrv.InitializeResult> => {
     workspaceRoot = params.rootPath;
     haskeroService = new HaskeroService();
-    return haskeroService.initialize(connection, params.initializationOptions.targets);
+    console.dir(params.initializationOptions.settings);
+    return haskeroService.initialize(connection, params.initializationOptions.settings, params.initializationOptions.targets);
 });
 
 connection.onRequest("changeTargets", (targets: string[]): Promise<string> => {
@@ -53,11 +46,12 @@ connection.onInitialized((initializedParams: vsrv.InitializedParams) => {
     haskeroService.onInitialized();
 });
 
-// The settings have changed. Is send on server activation
+// The settings have changed. Is sent on server activation
 // as well.
 connection.onDidChangeConfiguration((change) => {
-    let settings = <Settings>change.settings;
-
+    let settings = <HaskeroSettings>change.settings.haskero;
+    console.dir(settings);
+    haskeroService.changeSettings(settings);
     // Revalidate any open text documents
     documents.all().forEach(<(value: vsrv.TextDocument, index: number, array: vsrv.TextDocument[]) => void>Function.bind(haskeroService.validateTextDocument, connection));
 });

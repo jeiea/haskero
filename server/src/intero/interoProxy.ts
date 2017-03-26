@@ -101,16 +101,16 @@ export class InteroProxy {
      * End of communication utf8 char
      */
     public static get EOTUtf8(): string {
-        // return '\u0004';
-        return '@';
+        return '\u0004';
+        //return '@';
     }
 
     /**
      * End of communication char in CMD
      */
     public static get EOTInteroCmd(): string {
-        // return '"\\4"';
-        return '@';
+        return '"\\4"';
+        //return '@';
     }
 
     public constructor(private interoProcess: child_process.ChildProcess) {

@@ -51,29 +51,23 @@
         "configuration": {
             "title": "Haskero configuration",
             "properties": {
-                "haskero.ignoreDotGhci": {
+                "haskero.intero.ignoreDotGhci": {
                     "type": "boolean",
                     "default": true,
                     "description": "Ignore '.ghci' config files when launching intero ghci"
                 },
-                "haskero.ghciParameters": {
-                    "type": [
-                        "string"
-                    ],
+                "haskero.intero.startupParams": {
+                    "type": "array",
                     "default": [
                         "--no-build",
                         "--no-load"
                     ],
                     "description": "(Warning, can break Haskero behavior) Parameters sent to intero ghci"
                 },
-                "haskero.startupCommands": {
-                    "type": [
-                        "string"
-                    ],
-                    "default": [
-                        ":set -Wall"
-                    ],
-                    "description": "(Warning, can break Haskero behavior) Commands sent to intero after a startup. (eg: :set -Wall)"
+                "haskero.maxAutoCompletionDetails": {
+                    "type": "number",
+                    "default": 100,
+                    "description": "Maximum autocompletion information requests sent to get type info + module, etc. in the autocompletion flow. Set to 0 to disable detail info in autocompletion."
                 }
             }
         }

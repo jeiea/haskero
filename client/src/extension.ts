@@ -8,20 +8,18 @@ import { SelectTarget } from './commands/selectTargets'
 import { EditorUtils } from './utils/editorUtils'
 import { getTargets } from './utils/stack';
 import { noTargets, allTargets, targetToStatusBarText, convertTargets } from './utils/targets';
-import { HaskeroClient, HaskeroClientInitOptions } from './utils/haskeroClient';
+import { HaskeroClient, HaskeroClientInitOptions, InteroSettings, HaskeroSettings } from './utils/haskeroClient';
 
 export function activate(context: vscode.ExtensionContext) {
 
     // The server is implemented in node
     let serverModule = context.asAbsolutePath(path.join('server', 'server.js'));
-
     let haskeroClient = new HaskeroClient(serverModule, true);
 
-    //for now we disable the default all targets choice, we are waiting for more feedback about the targets switching feature
 
-    // getTargets()
-    //     .then((targets) => {
+
     let initOptions: HaskeroClientInitOptions = {
+        settings: getSettings(),
         targets: [] //no target for starting the extension
     };
 
@@ -36,12 +34,21 @@ export function activate(context: vscode.ExtensionContext) {
     // Push the disposable to the context's subscriptions so that the
     // client can be deactivated on extension deactivation
     context.subscriptions.push(haskeroClient);
-    // })
-    // .catch(reason => {
-    //     let outputChannel = vscode.window.createOutputChannel("Haskero");
+}
 
-    //     outputChannel.append('Error loading stack: ' + reason);
-    // });
+function getSettings(): HaskeroSettings {
+    ///get initialization settings from current workspace getConfiguration
+    let interoSettings: InteroSettings = {
+        startupParams: <[string]>vscode.workspace.getConfiguration('haskero.intero').get('ghciParameters'),
+        ignoreDotGhci: <boolean>vscode.workspace.getConfiguration('haskero.intero').get('ignoreDotGhci')
+    };
+
+    let haskeroSettings: HaskeroSettings = {
+        intero: interoSettings,
+        maxAutoCompletionDetails: <number>vscode.workspace.getConfiguration('haskero').get('maxAutoCompletionDetails')
+    }
+
+    return haskeroSettings;
 }
 
 /**

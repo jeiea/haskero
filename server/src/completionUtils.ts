@@ -55,6 +55,7 @@ export class CompletionUtils {
     }
 
     public static getImportCompletionItems(interoProxy: InteroProxy, textDocument: vsrv.TextDocument, position: vsrv.Position, line: string): Promise<vsrv.CompletionItem[]> {
+        //if the cursor is after a " as " text, it means that we are in the 'name' area of an import, so we disable module autocompletion
         if (!DocumentUtils.leftLineContains(textDocument, position, " as ")) {
             let { word, range } = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
             const lineToComplete = line.substring(0, position.character);
@@ -77,17 +78,16 @@ export class CompletionUtils {
 
     }
 
-    public static getDefaultCompletionItems(interoProxy: InteroProxy, textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.CompletionItem[]> {
+    public static getDefaultCompletionItems(interoProxy: InteroProxy, textDocument: vsrv.TextDocument, position: vsrv.Position, maxInfoRequests: number): Promise<vsrv.CompletionItem[]> {
         let { word, range } = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
         const completeAtRequest = new CompleteAtRequest(textDocument.uri, DocumentUtils.toInteroRange(range), word);
 
-        console.log("ici");
+        //First, get all completion texts
         return completeAtRequest
             .send(interoProxy)
             .then((response: CompleteAtResponse) => {
                 let completions = response.completions;
                 if (completions.length < 1) {
-                    console.log("lenght < 1");
                     const completeRequest = new CompleteRequest(textDocument.uri, word);
                     return completeRequest
                         .send(interoProxy)
@@ -96,30 +96,35 @@ export class CompletionUtils {
                         });
                 }
                 else {
-                    console.log("=== length0 " + completions.length);
                     return Promise.resolve(completions);
                 }
             })
+            //Then for each text, get its type informations
             .then(completions => {
-                console.log("=== length " + completions.length);
-                console.trace("!!!");
                 return Promise.all(
-                    completions.map((completion): Promise<vsrv.CompletionItem> => {
-                        let infoReq = new InfoRequest(completion);
-                        console.log("=== une question ===");
-                        return infoReq
-                            .send(interoProxy)
-                            .then((infoResponse): Promise<vsrv.CompletionItem> => {
-                                console.log("=== une réponse ===");
-                                var identifier = CompletionUtils.truncResp(word, completion);
-                                return Promise.resolve({
-                                    label: identifier,
-                                    kind: CompletionUtils.toCompletionType(infoResponse.kind),
-                                    detail: infoResponse.detail,
-                                    documentation: infoResponse.documentation,
-                                    data: completion
+                    completions.map((completion, idx): Promise<vsrv.CompletionItem> => {
+                        if (idx < maxInfoRequests) {
+                            let infoReq = new InfoRequest(completion);
+                            return infoReq
+                                .send(interoProxy)
+                                .then((infoResponse): Promise<vsrv.CompletionItem> => {
+                                    var identifier = CompletionUtils.truncResp(word, completion);
+                                    return Promise.resolve({
+                                        label: identifier,
+                                        kind: CompletionUtils.toCompletionType(infoResponse.kind),
+                                        detail: infoResponse.detail,
+                                        documentation: infoResponse.documentation,
+                                        data: completion
+                                    });
                                 });
+                        }
+                        else {
+                            return Promise.resolve({
+                                label: completion,
+                                kind: vsrv.CompletionItemKind.Function,
+                                data: null
                             });
+                        }
                     })
                 );
                 // return completions.map(completion => {
@@ -130,7 +135,7 @@ export class CompletionUtils {
                 //         data: completion
                 //     });
                 // });
-            }).catch(oops => console.log("=== oops ==="));
+            });
     }
 
     public static getResolveInfos(interoProxy: InteroProxy, item: vsrv.CompletionItem): Promise<vsrv.CompletionItem> {

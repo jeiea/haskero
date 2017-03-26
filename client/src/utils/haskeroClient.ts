@@ -3,7 +3,18 @@ import * as vscode from 'vscode';
 import * as vscli from 'vscode-languageclient';
 import * as stack from '../utils/stack';
 
+export interface HaskeroSettings {
+    intero: InteroSettings,
+    maxAutoCompletionDetails: number
+}
+
+export interface InteroSettings {
+    ignoreDotGhci: boolean,
+    startupParams: [string]
+}
+
 export interface HaskeroClientInitOptions {
+    settings: HaskeroSettings,
     targets: string[]
 }
 
@@ -42,9 +53,7 @@ export class HaskeroClient implements vscode.Disposable {
         }
     };
 
-    private static initOptions = {
-        targets: []
-    };
+    private static initOptions: HaskeroClientInitOptions;
 
     constructor(serverModule: string, private readonly debug: boolean) {
         // The debug options for the server

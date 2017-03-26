@@ -16,6 +16,7 @@ import { UriUtils } from './intero/uri';
 import { DebugUtils } from './debug/debugUtils'
 import { Features } from './features'
 import { CompletionUtils } from './completionUtils'
+import { HaskeroSettings, InteroSettings } from './haskeroSettings'
 
 const serverCapabilities: vsrv.InitializeResult = {
     capabilities: {
@@ -44,9 +45,11 @@ export class HaskeroService {
     private features: Features;
     private initializationOk: boolean;
     private interoNotFOunt = "Executable named intero not found";
+    private settings: HaskeroSettings;
 
-    public initialize(connection: vsrv.IConnection, targets: string[]): Promise<vsrv.InitializeResult> {
+    public initialize(connection: vsrv.IConnection, settings: HaskeroSettings, targets: string[]): Promise<vsrv.InitializeResult> {
         connection.console.log("Initializing Haskero...");
+        this.settings = settings;
         this.connection = connection;
         this.features = new Features(connection);
 
@@ -107,12 +110,15 @@ export class HaskeroService {
                 this.connection.console.log("Restart done.");
                 this.features.registerAllFeatures();
                 return Promise.resolve('Intero restarted with targets: ' + prettyString(targets));
-                //check opened documents
             })
             .catch(reason => {
                 this.features.unregisterAllFeatures();
                 return Promise.reject(reason);
             });
+    }
+
+    public changeSettings(newSettings: HaskeroSettings) {
+        this.settings = newSettings;
     }
 
     public getDefinitionLocation(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location> {
@@ -160,7 +166,7 @@ export class HaskeroService {
             return CompletionUtils.getImportCompletionItems(this.interoProxy, textDocument, position, currentLine);
         }
         else {
-            return CompletionUtils.getDefaultCompletionItems(this.interoProxy, textDocument, position);
+            return CompletionUtils.getDefaultCompletionItems(this.interoProxy, textDocument, position, this.settings.maxAutoCompletionDetails);
         }
     }
 
