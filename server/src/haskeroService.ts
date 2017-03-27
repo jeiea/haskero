@@ -46,12 +46,14 @@ export class HaskeroService {
     private initializationOk: boolean;
     private interoNotFOunt = "Executable named intero not found";
     private settings: HaskeroSettings;
+    private currentTargets: string[];
 
     public initialize(connection: vsrv.IConnection, settings: HaskeroSettings, targets: string[]): Promise<vsrv.InitializeResult> {
         connection.console.log("Initializing Haskero...");
         this.settings = settings;
         this.connection = connection;
         this.features = new Features(connection);
+        this.currentTargets = targets;
 
         return this.startInteroAndHandleErrors(targets)
             .then(() => {
@@ -109,6 +111,7 @@ export class HaskeroService {
             .then((): Promise<string> => {
                 this.connection.console.log("Restart done.");
                 this.features.registerAllFeatures();
+                this.currentTargets = targets;
                 return Promise.resolve('Intero restarted with targets: ' + prettyString(targets));
             })
             .catch(reason => {
@@ -118,7 +121,16 @@ export class HaskeroService {
     }
 
     public changeSettings(newSettings: HaskeroSettings) {
-        this.settings = newSettings;
+        //if ghci options have changed we need to restart intero
+        if (this.settings.intero.ignoreDotGhci != newSettings.intero.ignoreDotGhci ||
+            this.settings.intero.startupParams != newSettings.intero.startupParams) {
+            this.settings = newSettings;
+            //chaging targets restarts intero
+            this.changeTargets(this.currentTargets);
+        }
+        else {
+            this.settings = newSettings;
+        }
     }
 
     public getDefinitionLocation(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location> {
@@ -217,19 +229,30 @@ export class HaskeroService {
         }
     }
 
+    private static readonly defautStartupParameters = ['--no-build', '--no-load'];
+
+    private getStartupParameters(): string[] {
+        const ignoreDotGhci = this.settings.intero.ignoreDotGhci ? '-ignore-dot-ghci ' : '';
+        let startupOptions = this.settings.intero.startupParams || HaskeroService.defautStartupParameters;
+        startupOptions.concat([`--ghci-options=${ignoreDotGhci}-Wall`]);
+        return startupOptions;
+    }
+
     /**
      * Spawn an intero process (stack ghci --with-ghc intero ... targets)
      * and set `interoProxy`.
      */
     private spawnIntero(targets: string[]): Promise<InitResponse> {
-        const stackOptions = ['ghci', '--with-ghc', 'intero', '--no-build', '--no-load', '--ghci-options=-ignore-dot-ghci -Wall'].concat(targets);
-        this.connection.console.log(`Spawning process 'stack' with command 'stack ${stackOptions.join(' ')}'`);
+        const rootOptions = ['ghci', '--with-ghc', 'intero'];
+        const allOptions = rootOptions.concat(this.getStartupParameters()).concat(targets);
+
+        this.connection.console.log(`Spawning process 'stack' with command 'stack ${allOptions.join(' ')}'`);
 
         if (this.interoProxy) {
             this.interoProxy.kill();
         }
 
-        const intero = child_process.spawn('stack', stackOptions);
+        const intero = child_process.spawn('stack', allOptions);
         this.interoProxy = new InteroProxy(intero);
         return new Promise((resolve, reject) => {
             setTimeout(() => {
