@@ -1,3 +1,21 @@
+# Ideas
+
+## Rename
+
+To rename an identifier: 
+- change the identifier in the source
+- :r in ghci
+- parse compilation errors to extract reference locations and rename each location
+
+## Type aware autocompletion
+
+Use the new _ placeholder:
+- replace the current token with a _
+- :l file in ghci
+- parse response to extract type aware autocompletion list
+- filter the list with the token previously removed
+
+
 # Notes on intero behavior
 
 
