@@ -1,8 +1,8 @@
 ## Release 1.0.0
 
-Haskero is mature enough to get to the 1.0.0 release !
+Haskero is mature enought to get to the 1.0.0 release !
 
- - **new feature**: support type infos and module definition info in autocompletion (issues #23 #22)
+ - **new feature**: support type infos and modules definition info in autocompletion (issues #23 #22)
  - **new feature**: add options to configure autocompletion and intero/ghci settings (issue #32)
  - fix rare bugs when users spamed haskero with completion/hover/locat requests
  - fix a regression where .ghci files where not ignored anymore

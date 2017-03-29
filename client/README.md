@@ -78,11 +78,38 @@ Support for chosing the cabal targets used in the IDE. Thereby, intellisense is 
 
 To change the current target, use the status bar button "Default targets" at the bottom right.
 
-### Autocompletion
+### Rich autocompletion
 
-Automatic completion of imports, variables, types, etc.
+Automatic completion of imports, variables, types, etc. with type and module information.
 
 ![Auto completion](https://gitlab.com/vannnns/haskero/raw/master/client/media/autocompletion.gif "Auto completion")
+
+## Settings
+
+Haskero settings to change the default behavior or customizing intero startup parameters.
+
+```json
+{
+    "haskero.intero.ignoreDotGhci": {
+        "type": "boolean",
+        "default": true,
+        "description": "Ignore '.ghci' config files when launching intero ghci"
+    },
+    "haskero.intero.startupParams": {
+        "type": "array",
+        "default": [
+            "--no-build",
+            "--no-load"
+        ],
+        "description": "(Warning, can break Haskero behavior) Parameters sent to intero ghci"
+    },
+    "haskero.maxAutoCompletionDetails": {
+        "type": "number",
+        "default": 100,
+        "description": "Maximum autocompletion information requests sent to get type info/module in the autocompletion flow. Set to 0 to disable details info in autocompletion."
+    }
+}
+```
 
 ## Incoming improvements
 
