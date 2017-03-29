@@ -123,7 +123,7 @@ export class HaskeroService {
     public changeSettings(newSettings: HaskeroSettings) {
         //if ghci options have changed we need to restart intero
         if (this.settings.intero.ignoreDotGhci != newSettings.intero.ignoreDotGhci ||
-            this.settings.intero.startupParams != newSettings.intero.startupParams) {
+            JSON.stringify(this.settings.intero.startupParams.sort()) != JSON.stringify(newSettings.intero.startupParams.sort())) {
             this.settings = newSettings;
             //chaging targets restarts intero
             this.changeTargets(this.currentTargets);
@@ -229,13 +229,9 @@ export class HaskeroService {
         }
     }
 
-    private static readonly defautStartupParameters = ['--no-build', '--no-load'];
-
     private getStartupParameters(): string[] {
         const ignoreDotGhci = this.settings.intero.ignoreDotGhci ? '-ignore-dot-ghci ' : '';
-        let startupOptions = this.settings.intero.startupParams || HaskeroService.defautStartupParameters;
-        startupOptions.concat([`--ghci-options=${ignoreDotGhci}-Wall`]);
-        return startupOptions;
+        return this.settings.intero.startupParams.concat([`--ghci-options=${ignoreDotGhci}-Wall`]);
     }
 
     /**

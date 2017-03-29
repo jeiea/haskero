@@ -53,7 +53,7 @@ connection.onDidChangeConfiguration((change) => {
     console.dir(settings);
     haskeroService.changeSettings(settings);
     // Revalidate any open text documents
-    documents.all().forEach(<(value: vsrv.TextDocument, index: number, array: vsrv.TextDocument[]) => void>Function.bind(haskeroService.validateTextDocument, connection));
+    //documents.all().forEach(<(value: vsrv.TextDocument, index: number, array: vsrv.TextDocument[]) => void>Function.bind(haskeroService.validateTextDocument, connection));
 });
 
 connection.onDefinition((documentInfo): Promise<vsrv.Location> => {

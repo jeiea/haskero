@@ -10,7 +10,7 @@ export interface HaskeroSettings {
 
 export interface InteroSettings {
     ignoreDotGhci: boolean,
-    startupParams: [string]
+    startupParams: string[]
 }
 
 export interface HaskeroClientInitOptions {

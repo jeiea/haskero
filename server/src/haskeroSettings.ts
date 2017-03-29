@@ -5,5 +5,5 @@ export interface HaskeroSettings {
 
 export interface InteroSettings {
     ignoreDotGhci: boolean,
-    startupParams: [string]
+    startupParams: string[]
 }

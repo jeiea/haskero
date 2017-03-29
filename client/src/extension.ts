@@ -36,16 +36,28 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(haskeroClient);
 }
 
+/**
+ * Returns value if value is not null or undefined, otherwise returns defaultValue
+*/
+function df<T>(value: T, defaultValue: T): T {
+    if (!value) {
+        return defaultValue;
+    }
+    else {
+        return value;
+    }
+}
+
 function getSettings(): HaskeroSettings {
     ///get initialization settings from current workspace getConfiguration
     let interoSettings: InteroSettings = {
-        startupParams: <[string]>vscode.workspace.getConfiguration('haskero.intero').get('ghciParameters'),
-        ignoreDotGhci: <boolean>vscode.workspace.getConfiguration('haskero.intero').get('ignoreDotGhci')
+        startupParams: df(<[string]>vscode.workspace.getConfiguration('haskero.intero').get('startupParams'), ['--no-build', '--no-load']),
+        ignoreDotGhci: df(<boolean>vscode.workspace.getConfiguration('haskero.intero').get('ignoreDotGhci'), true)
     };
 
     let haskeroSettings: HaskeroSettings = {
         intero: interoSettings,
-        maxAutoCompletionDetails: <number>vscode.workspace.getConfiguration('haskero').get('maxAutoCompletionDetails')
+        maxAutoCompletionDetails: df(<number>vscode.workspace.getConfiguration('haskero').get('maxAutoCompletionDetails'), 100)
     }
 
     return haskeroSettings;
