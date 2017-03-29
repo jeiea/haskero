@@ -67,7 +67,7 @@
                 "haskero.maxAutoCompletionDetails": {
                     "type": "number",
                     "default": 100,
-                    "description": "Maximum autocompletion information requests sent to get type info + module, etc. in the autocompletion flow. Set to 0 to disable detail info in autocompletion."
+                    "description": "Maximum autocompletion information requests sent to get type info/module in the autocompletion flow. Set to 0 to disable details info in autocompletion."
                 }
             }
         }
