@@ -16,8 +16,6 @@ export function activate(context: vscode.ExtensionContext) {
     let serverModule = context.asAbsolutePath(path.join('server', 'server.js'));
     let haskeroClient = new HaskeroClient(serverModule, true);
 
-
-
     let initOptions: HaskeroClientInitOptions = {
         settings: getSettings(),
         targets: [] //no target for starting the extension
@@ -25,10 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     haskeroClient.start(initOptions);
 
-    // Register all plugin commands
     registerCommands(haskeroClient, context);
-
-    // Create the target selection button
     createTargetSelectionButton(context);
 
     // Push the disposable to the context's subscriptions so that the

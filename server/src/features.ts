@@ -8,6 +8,10 @@ export class Features {
 
     private static readonly features: vsrv.Registration[] = [
         {
+            /**
+             * The id used to register the request. The id can be used to deregister
+             * the request again.
+             */
             id: uuid.v4(),
             method: "textDocument/hover"
         },
