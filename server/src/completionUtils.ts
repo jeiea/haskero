@@ -139,16 +139,24 @@ export class CompletionUtils {
     }
 
     public static getResolveInfos(interoProxy: InteroProxy, item: vsrv.CompletionItem): Promise<vsrv.CompletionItem> {
-        const infoRequest = new InfoRequest(item.data);
-        return infoRequest
-            .send(interoProxy)
-            .then((infoResponse: InfoResponse) => {
-                return {
-                    label: item.label,
-                    kind: CompletionUtils.toCompletionType(infoResponse.kind),
-                    detail: infoResponse.detail,
-                    documentation: infoResponse.documentation
-                };
-            });
+        //When the global getCompletionItems didn't get details (because it reachs the maxAutoCompletionDetails limit)
+        //it returns data = null and label = completion text
+        //in this particular case only, we try to get the details for the completion item
+        if (!item.data && item.label) {
+            const infoRequest = new InfoRequest(item.label);
+            return infoRequest
+                .send(interoProxy)
+                .then((infoResponse: InfoResponse) => {
+                    return {
+                        label: item.label,
+                        kind: CompletionUtils.toCompletionType(infoResponse.kind),
+                        detail: infoResponse.detail,
+                        documentation: infoResponse.documentation
+                    };
+                });
+        }
+        else {
+            return null;
+        }
     }
 }

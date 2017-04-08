@@ -183,7 +183,7 @@ export class HaskeroService {
     }
 
     public getResolveInfos(item: vsrv.CompletionItem): Promise<vsrv.CompletionItem> {
-        return null;//  CompletionUtils.getResolveInfos(this.interoProxy, item);
+        return CompletionUtils.getResolveInfos(this.interoProxy, item);
     }
 
     public getReferencesLocations(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location[]> {
