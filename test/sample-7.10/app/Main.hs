@@ -28,6 +28,7 @@ xxx = 3 + abc + 1
     where
         innerfunc a = a
         abc = 1
+        foo = 6
 
 f xxx = (xxx)
 
