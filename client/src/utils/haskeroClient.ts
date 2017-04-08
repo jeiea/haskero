@@ -5,6 +5,7 @@ import * as stack from '../utils/stack';
 
 export interface HaskeroSettings {
     intero: InteroSettings,
+    debugMode: boolean,
     maxAutoCompletionDetails: number
 }
 

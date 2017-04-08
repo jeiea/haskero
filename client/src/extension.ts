@@ -52,6 +52,7 @@ function getSettings(): HaskeroSettings {
 
     let haskeroSettings: HaskeroSettings = {
         intero: interoSettings,
+        debugMode: df(<boolean>vscode.workspace.getConfiguration('haskero').get('debugMode'), false),
         maxAutoCompletionDetails: df(<number>vscode.workspace.getConfiguration('haskero').get('maxAutoCompletionDetails'), 100)
     }
 

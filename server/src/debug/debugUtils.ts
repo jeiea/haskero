@@ -24,7 +24,7 @@ export class DebugUtils {
         }
     }
 
-    private isDebugOn: boolean;
+    public isDebugOn: boolean;
     private connection: IConnection;
 
     private constructor(isDebugOn: boolean, connection: IConnection) {
