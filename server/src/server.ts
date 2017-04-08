@@ -50,7 +50,7 @@ connection.onInitialized((initializedParams: vsrv.InitializedParams) => {
 // as well.
 connection.onDidChangeConfiguration((change) => {
     let settings = <HaskeroSettings>change.settings.haskero;
-    console.dir(settings);
+    DebugUtils.instance.isDebugOn = settings.debugMode;
     haskeroService.changeSettings(settings);
     // Revalidate any open text documents
     //documents.all().forEach(<(value: vsrv.TextDocument, index: number, array: vsrv.TextDocument[]) => void>Function.bind(haskeroService.validateTextDocument, connection));
@@ -65,8 +65,6 @@ connection.onDefinition((documentInfo): Promise<vsrv.Location> => {
 });
 
 connection.onHover((documentInfo): Promise<vsrv.Hover> => {
-    DebugUtils.instance.connectionLog("onHover request");
-
     const documentURI = documentInfo.textDocument.uri;
     if (UriUtils.isFileProtocol(documentURI)) {
         const textDocument = documents.get(documentURI);

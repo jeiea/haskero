@@ -127,21 +127,13 @@ export class CompletionUtils {
                         }
                     })
                 );
-                // return completions.map(completion => {
-                //     var identifier = CompletionUtils.truncResp(word, completion);
-                //     return Promise.resolve({
-                //         label: identifier,
-                //         kind: vsrv.CompletionItemKind.Variable,
-                //         data: completion
-                //     });
-                // });
             });
     }
 
     public static getResolveInfos(interoProxy: InteroProxy, item: vsrv.CompletionItem): Promise<vsrv.CompletionItem> {
         //When the global getCompletionItems didn't get details (because it reachs the maxAutoCompletionDetails limit)
         //it returns data = null and label = completion text
-        //in this particular case only, we try to get the details for the completion item
+        //in this particular case only, we still try to get the details for the completion item
         if (!item.data && item.label) {
             const infoRequest = new InfoRequest(item.label);
             return infoRequest

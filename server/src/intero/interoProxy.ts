@@ -98,7 +98,7 @@ export class InteroProxy {
     private onRawResponseQueue: Array<{ resolve: (response: RawResponse) => void, reject: any }>;
 
     /**
-     * End of communication utf8 char
+     * End of transmission utf8 char
      */
     public static get EOTUtf8(): string {
         return '\u0004';
@@ -106,7 +106,7 @@ export class InteroProxy {
     }
 
     /**
-     * End of communication char in CMD
+     * End of transmission char in CMD
      */
     public static get EOTInteroCmd(): string {
         return '"\\4"';
