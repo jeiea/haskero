@@ -231,7 +231,19 @@ export class HaskeroService {
 
     private getStartupParameters(): string[] {
         const ignoreDotGhci = this.settings.intero.ignoreDotGhci ? '-ignore-dot-ghci ' : '';
-        return this.settings.intero.startupParams.concat([`--ghci-options=${ignoreDotGhci}-Wall`]);
+        //concat startup params AFTER default ghci-options (otherwise, it's impossible to override default ghci-options like -fno-warn-name-shadowing)
+        return [`--ghci-options=${ignoreDotGhci}-Wall`].concat(this.settings.intero.startupParams);
+    }
+
+    private prettifyStartupParamsCmd(parameters: string[]) {
+        return parameters.map(p => {
+            if (p.indexOf(' ') > -1) {
+                return "\"" + p + "\"";
+            }
+            else {
+                return p;
+            }
+        }).join(' ');
     }
 
     /**
@@ -242,7 +254,7 @@ export class HaskeroService {
         const rootOptions = ['ghci', '--with-ghc', 'intero'];
         const allOptions = rootOptions.concat(this.getStartupParameters()).concat(targets);
 
-        this.connection.console.log(`Spawning process 'stack' with command 'stack ${allOptions.join(' ')}'`);
+        this.connection.console.log(`Spawning process 'stack' with command 'stack ${this.prettifyStartupParamsCmd(allOptions)}'`);
 
         if (this.interoProxy) {
             this.interoProxy.kill();
