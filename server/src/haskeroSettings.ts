@@ -1,5 +1,6 @@
 export interface HaskeroSettings {
     intero: InteroSettings,
+    debugMode: boolean,
     maxAutoCompletionDetails: number
 }
 
