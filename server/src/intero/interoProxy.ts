@@ -39,7 +39,7 @@ class ResponseReader {
     // create an instance function to force the 'this' capture
     private onData = (data: Buffer) => {
         let chunk = data.toString();
-        DebugUtils.instance.log(chunk);
+        DebugUtils.instance.log('<<< intero onData:\r\n' + chunk);
 
         //the EOT char is not always at the end of a chunk
         //eg : if we send two questions before the first answer comes back, we can get chunk with the form:
@@ -66,7 +66,7 @@ class ResponseReader {
     }
 
     private onResponse = (rawout: string) => () => {
-        DebugUtils.instance.log('>>><<<');
+        DebugUtils.instance.log('<<< end of intero response');
         this.onAnswer(rawout, this.rawerr);
         this.rawerr = "";
     }
@@ -134,7 +134,7 @@ export class InteroProxy {
             let req = rawRequest + '\n';
             this.interoProcess.stdin.write(req);
             this.onRawResponseQueue.push({ resolve: resolve, reject: reject });
-            DebugUtils.instance.log('>' + req);
+            DebugUtils.instance.log('>>> ' + req);
         };
         return new Promise(executor);
     }
