@@ -116,21 +116,23 @@ export class HaskeroService {
             })
             .catch(reason => {
                 this.features.unregisterAllFeatures();
-                return Promise.reject(reason);
+                return Promise.reject(reason.message);
             });
     }
 
-    public changeSettings(newSettings: HaskeroSettings) {
+    public changeSettings(newSettings: HaskeroSettings): Promise<string> {
         //if ghci options have changed we need to restart intero
         if (this.settings.intero.ignoreDotGhci != newSettings.intero.ignoreDotGhci ||
+            this.settings.intero.stackPath != newSettings.intero.stackPath ||
             JSON.stringify(this.settings.intero.startupParams.sort()) != JSON.stringify(newSettings.intero.startupParams.sort()) ||
             JSON.stringify(this.settings.intero.ghciOptions.sort()) != JSON.stringify(newSettings.intero.ghciOptions.sort())) {
             this.settings = newSettings;
             //chaging targets restarts intero
-            this.changeTargets(this.currentTargets);
+            return this.changeTargets(this.currentTargets);
         }
         else {
             this.settings = newSettings;
+            return Promise.resolve("Settings updated");
         }
     }
 
@@ -259,14 +261,15 @@ export class HaskeroService {
     private spawnIntero(targets: string[]): Promise<InitResponse> {
         const rootOptions = ['ghci', '--with-ghc', 'intero'];
         const allOptions = rootOptions.concat(this.getStartupParameters()).concat(targets);
+        const stackPath = this.settings.intero.stackPath;
 
-        this.connection.console.log(`Spawning process 'stack' with command 'stack ${this.prettifyStartupParamsCmd(allOptions)}'`);
+        this.connection.console.log(`Spawning process 'stack' with command '${stackPath} ${this.prettifyStartupParamsCmd(allOptions)}'`);
 
         if (this.interoProxy) {
             this.interoProxy.kill();
         }
 
-        const intero = child_process.spawn('stack', allOptions);
+        const intero = child_process.spawn(stackPath, allOptions);
         this.interoProxy = new InteroProxy(intero);
         return new Promise((resolve, reject) => {
             setTimeout(() => {

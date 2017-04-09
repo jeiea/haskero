@@ -64,6 +64,11 @@
                     ],
                     "description": "(Warning, can break Haskero behavior) Parameters sent to intero ghci"
                 },
+                "haskero.intero.stackPath": {
+                    "type": "string",
+                    "default": "stack",
+                    "description": "(Warning, can break Haskero behavior) path to the stack executable."
+                },
                 "haskero.intero.ghciOptions": {
                     "type": "array",
                     "default": [

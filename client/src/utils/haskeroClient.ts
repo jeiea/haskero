@@ -10,6 +10,7 @@ export interface HaskeroSettings {
 }
 
 export interface InteroSettings {
+    stackPath: string,
     ignoreDotGhci: boolean,
     ghciOptions: string[],
     startupParams: string[]

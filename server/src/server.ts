@@ -45,14 +45,20 @@ connection.onInitialized((initializedParams: vsrv.InitializedParams) => {
     haskeroService.onInitialized();
 });
 
-// The settings have changed. Is sent on server activation
-// as well.
+// The settings have changed.
+// Is sent on server activation as well.
 connection.onDidChangeConfiguration((change) => {
     let settings = <HaskeroSettings>change.settings.haskero;
     DebugUtils.instance.isDebugOn = settings.debugMode;
-    haskeroService.changeSettings(settings);
-    // Revalidate any open text documents
-    //documents.all().forEach(<(value: vsrv.TextDocument, index: number, array: vsrv.TextDocument[]) => void>Function.bind(haskeroService.validateTextDocument, connection));
+    return haskeroService.changeSettings(settings)
+        .then((msg) => {
+            documents.all().forEach((doc) => haskeroService.validateTextDocument(connection, doc));
+        })
+        .catch(reason => {
+            // A DidChangeConfiguration request doesn't have a response so we use showErrorMessage
+            // to show an error message
+            connection.window.showErrorMessage("Error while loading Haskero configuration: " + reason);
+        });
 });
 
 connection.onDefinition((documentInfo): Promise<vsrv.Location> => {

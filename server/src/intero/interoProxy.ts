@@ -180,7 +180,7 @@ export class InteroProxy {
 
     private onError = (reason: string) => {
         this.isInteroProcessUp = false;
-        this.errorMsg = `Failed to start process 'stack', Haskero must be used on stack projects only. ${reason}`;
+        this.errorMsg = `Failed to start process 'stack', Haskero must be used on stack projects only. Details: ${reason}`;
     }
 
     private onResponse = (rawout: string, rawerr: string) => {
