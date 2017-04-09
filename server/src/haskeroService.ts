@@ -123,7 +123,8 @@ export class HaskeroService {
     public changeSettings(newSettings: HaskeroSettings) {
         //if ghci options have changed we need to restart intero
         if (this.settings.intero.ignoreDotGhci != newSettings.intero.ignoreDotGhci ||
-            JSON.stringify(this.settings.intero.startupParams.sort()) != JSON.stringify(newSettings.intero.startupParams.sort())) {
+            JSON.stringify(this.settings.intero.startupParams.sort()) != JSON.stringify(newSettings.intero.startupParams.sort()) ||
+            JSON.stringify(this.settings.intero.ghciOptions.sort()) != JSON.stringify(newSettings.intero.ghciOptions.sort())) {
             this.settings = newSettings;
             //chaging targets restarts intero
             this.changeTargets(this.currentTargets);
@@ -230,9 +231,14 @@ export class HaskeroService {
     }
 
     private getStartupParameters(): string[] {
-        const ignoreDotGhci = this.settings.intero.ignoreDotGhci ? '-ignore-dot-ghci ' : '';
+        let ghciOptions: string[] = [];
+        if (this.settings.intero.ignoreDotGhci) {
+            ghciOptions.push('-ignore-dot-ghci');
+        }
+        ghciOptions = ghciOptions.concat(this.settings.intero.ghciOptions);
         //concat startup params AFTER default ghci-options (otherwise, it's impossible to override default ghci-options like -fno-warn-name-shadowing)
-        return [`--ghci-options=${ignoreDotGhci}-Wall`].concat(this.settings.intero.startupParams);
+        return [`--ghci-options=${ghciOptions.join(' ')}`]
+            .concat(this.settings.intero.startupParams);
     }
 
     private prettifyStartupParamsCmd(parameters: string[]) {

@@ -64,6 +64,13 @@
                     ],
                     "description": "(Warning, can break Haskero behavior) Parameters sent to intero ghci"
                 },
+                "haskero.intero.ghciOptions": {
+                    "type": "array",
+                    "default": [
+                        "-Wall"
+                    ],
+                    "description": "(Warning, can break Haskero behavior) Parameters sent to intero ghci via --ghci-options"
+                },
                 "haskero.maxAutoCompletionDetails": {
                     "type": "number",
                     "default": 100,

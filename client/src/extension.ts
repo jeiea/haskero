@@ -47,6 +47,7 @@ function getSettings(): HaskeroSettings {
     ///get initialization settings from current workspace getConfiguration
     let interoSettings: InteroSettings = {
         startupParams: df(<[string]>vscode.workspace.getConfiguration('haskero.intero').get('startupParams'), ['--no-build', '--no-load']),
+        ghciOptions: df(<[string]>vscode.workspace.getConfiguration('haskero.intero').get('ghciOptions'), ['-Wall']),
         ignoreDotGhci: df(<boolean>vscode.workspace.getConfiguration('haskero.intero').get('ignoreDotGhci'), true)
     };
 
