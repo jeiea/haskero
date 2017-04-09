@@ -1,3 +1,8 @@
+## Release 1.0.1
+
+ - **new option**: option `haskero.debugMode` allows user to investigate communication between haskero and intero. (issue #41)
+ - fix ordering issue with startup parameters. (issue #39)
+
 ## Release 1.0.0
 
 Haskero is mature enought to get to the 1.0.0 release !
