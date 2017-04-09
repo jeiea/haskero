@@ -26,7 +26,6 @@ let workspaceRoot: string;
 connection.onInitialize((params): Promise<vsrv.InitializeResult> => {
     workspaceRoot = params.rootPath;
     haskeroService = new HaskeroService();
-    console.dir(params.initializationOptions.settings);
     return haskeroService.initialize(connection, params.initializationOptions.settings, params.initializationOptions.targets);
 });
 
