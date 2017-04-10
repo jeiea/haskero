@@ -35,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
  * Returns value if value is not null or undefined, otherwise returns defaultValue
 */
 function df<T>(value: T, defaultValue: T): T {
-    if (!value) {
+    if (value === null || value === undefined) {
         return defaultValue;
     }
     else {
