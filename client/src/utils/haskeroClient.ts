@@ -77,7 +77,7 @@ export class HaskeroClient implements vscode.Disposable {
     }
 
     public getTargets(): Promise<string[]> {
-        return stack.getTargets()
+        return stack.getTargets(HaskeroClient.initOptions.settings.intero.stackPath)
             .then(targets => Promise.resolve(targets))
             .catch(reason => {
                 if (reason.message.indexOf("Invalid argument", 0) > -1) {
