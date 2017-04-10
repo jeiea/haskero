@@ -4,11 +4,11 @@ import { workspace } from 'vscode';
 /**
  * Get targets defined in the project, if error then []
  */
-export function getTargets(): Promise<string[]> {
+export function getTargets(stackPath: string): Promise<string[]> {
     return new Promise((resolve, reject) => {
         const cwd = process.cwd();
         process.chdir(workspace.rootPath);
-        cp.exec('stack ide targets', (error, stdout, stderr) => {
+        cp.exec(`${stackPath} ide targets`, (error, stdout, stderr) => {
             if (error) {
                 reject(error);
             }
