@@ -7,7 +7,7 @@ import { InsertTypeAbove } from './commands/insertTypeAbove'
 import { SelectTarget } from './commands/selectTargets'
 import { EditorUtils } from './utils/editorUtils'
 import { getTargets } from './utils/stack';
-import { noTargets, allTargets, targetToStatusBarText, convertTargets } from './utils/targets';
+import { noTargets, allTargets } from './utils/targets';
 import { HaskeroClient, HaskeroClientInitOptions, InteroSettings, HaskeroSettings } from './utils/haskeroClient';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -80,12 +80,12 @@ function registerCommands(haskeroClient: HaskeroClient, context: vscode.Extensio
  */
 function createTargetSelectionButton(context: vscode.ExtensionContext) {
     const barItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, Number.MIN_VALUE);
-    barItem.text = targetToStatusBarText(noTargets);
+    barItem.text = "Default target";
     barItem.command = SelectTarget.id;
     barItem.show();
     context.subscriptions.push(
-        SelectTarget.onTargetsSelected.event((newTarget) => {
-            barItem.text = targetToStatusBarText(newTarget);
+        SelectTarget.onTargetsSelected.event((haskeroTargets) => {
+            barItem.text = haskeroTargets.toText();
         })
     );
 }

@@ -1,10 +1,11 @@
 import * as cp from 'child_process';
 import { workspace } from 'vscode';
+import { HaskeroTargets } from './targets'
 
 /**
  * Get targets defined in the project, if error then []
  */
-export function getTargets(stackPath: string): Promise<string[]> {
+export function getTargets(stackPath: string): Promise<HaskeroTargets> {
     return new Promise((resolve, reject) => {
         const cwd = process.cwd();
         process.chdir(workspace.rootPath);
@@ -12,9 +13,16 @@ export function getTargets(stackPath: string): Promise<string[]> {
             if (error) {
                 reject(error);
             }
+
+            let targets;
             // For some reason stack ide targets writes to stderr
-            if (stderr) resolve(parseTargets(stderr));
-            else resolve([]);
+            if (stderr) {
+                targets = parseTargets(stderr)
+            }
+            else {
+                targets = [];
+            }
+            resolve(new HaskeroTargets(targets));
         });
         process.chdir(cwd);
     });

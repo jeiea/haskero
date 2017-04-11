@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as vscli from 'vscode-languageclient';
 import * as stack from '../utils/stack';
+import { HaskeroTargets } from './targets'
 
 export interface HaskeroSettings {
     intero: InteroSettings,
@@ -22,6 +23,8 @@ export interface HaskeroClientInitOptions {
 }
 
 export class HaskeroClient implements vscode.Disposable {
+
+    private targets: HaskeroTargets = null;
 
     private _client: vscli.LanguageClient;
     public get client(): vscli.LanguageClient {
@@ -76,18 +79,26 @@ export class HaskeroClient implements vscode.Disposable {
         return this;
     }
 
-    public getTargets(): Promise<string[]> {
-        return stack.getTargets(HaskeroClient.initOptions.settings.intero.stackPath)
-            .then(targets => Promise.resolve(targets))
-            .catch(reason => {
-                if (reason.message.indexOf("Invalid argument", 0) > -1) {
-                    const stackmsg = "Stack version is too low for the change targets feature. Update stack (min version = 1.2.0)";
-                    reason.message = stackmsg + "\r\n\r\n" + reason.message;
-                    vscode.window.showErrorMessage(stackmsg);
-                }
-                this._client.error('Error loading stack targets: ' + reason.message);
-                return Promise.reject(reason);
-            });
+    public getTargets(): Promise<HaskeroTargets> {
+        if (this.targets === null) {
+            return stack.getTargets(HaskeroClient.initOptions.settings.intero.stackPath)
+                .then(targets => {
+                    this.targets = targets;
+                    return Promise.resolve(targets);
+                })
+                .catch(reason => {
+                    if (reason.message.indexOf("Invalid argument", 0) > -1) {
+                        const stackmsg = "Stack version is too low for the change targets feature. Update stack (min version = 1.2.0)";
+                        reason.message = stackmsg + "\r\n\r\n" + reason.message;
+                        vscode.window.showErrorMessage(stackmsg);
+                    }
+                    this._client.error('Error loading stack targets: ' + reason.message);
+                    return Promise.reject(reason);
+                });
+        }
+        else {
+            return Promise.resolve(this.targets);
+        }
     }
 
     public dispose() {

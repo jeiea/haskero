@@ -126,6 +126,12 @@ export class HaskeroService {
             this.settings.intero.stackPath != newSettings.intero.stackPath ||
             JSON.stringify(this.settings.intero.startupParams.sort()) != JSON.stringify(newSettings.intero.startupParams.sort()) ||
             JSON.stringify(this.settings.intero.ghciOptions.sort()) != JSON.stringify(newSettings.intero.ghciOptions.sort())) {
+
+            // console.log("change in settings detected\r\n>old settings:\r\n");
+            // console.dir(this.settings);
+            // console.log("\r\nnew settings:\r\n");
+            // console.dir(newSettings);
+
             this.settings = newSettings;
             //chaging targets restarts intero
             return this.changeTargets(this.currentTargets);

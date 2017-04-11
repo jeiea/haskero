@@ -1,37 +1,61 @@
 export const allTargets: string = 'All targets';
 export const noTargets: string = 'Default';
 
-/**
- * Convert the newTarget name to a parameter for the an initRequest or changeTargetzsRequest
- */
-export function convertTargets(targets: string[], newTarget: string): string[] {
-    switch (newTarget) {
-        case allTargets:
-            return targets;
-        case noTargets:
-            return [];
-        default:
-            return [newTarget];
+export class Target {
+    constructor(public readonly name: string, public isSelected = false, public readonly isVirtual = false, public readonly isUnique = false) { }
+
+    public toText(): string {
+        switch (this.name) {
+            case allTargets:
+                return allTargets;
+            case noTargets:
+                return "Default targets";
+            default:
+                return this.name.split(':').splice(1).join(':')
+        }
     }
 }
 
-/**
- * Map a target to its label in the status bar
-*/
-export function targetToStatusBarText(target: string): string {
-    switch (target) {
-        case allTargets:
-            return allTargets;
-        case noTargets:
-            return "Default targets";
-        default:
-            return target.split(':').splice(1).join(':')
-    }
-}
+export class HaskeroTargets {
 
-/**
- * Return all targets to show in the dialog box
- */
-export function dialogTargets(targets: string[]) {
-    return [noTargets, allTargets].concat(targets);
+    private _targets: Map<string, Target>;
+
+    public get targetList(): Target[] {
+        return [... this._targets.values()];
+    }
+
+    /**
+     * Creates a HaskeroTargets
+     * @param stackTargets cabal targets
+     */
+    constructor(private stackTargets: string[]) {
+
+        this._targets = new Map<string, Target>();
+
+        this._targets.set(allTargets, new Target(allTargets, false, true, true));
+        this._targets.set(noTargets, new Target(noTargets, true, true, true));
+
+        stackTargets.forEach(t => {
+            this._targets.set(t, new Target(t));
+        });
+    }
+
+    public setSelectedTarget(targetName: string, isSelected: boolean) {
+        this._targets.get(targetName).isSelected = isSelected;
+    }
+
+    public toInteroTargets(): string[] {
+        if (this._targets.get(allTargets).isSelected) return this.stackTargets;
+        if (this._targets.get(noTargets).isSelected) return [];
+
+        return [...this._targets.values()].filter(e => e.isSelected).map(t => t.name);
+    }
+
+    public toText(): string {
+        return "Targets: [" + this.getSelectedTargets().map(t => t.name).join(" ") + "]";
+    }
+
+    public getSelectedTargets(): Target[] {
+        return this.targetList.filter(t => t.isSelected);
+    }
 }
