@@ -80,7 +80,7 @@ function registerCommands(haskeroClient: HaskeroClient, context: vscode.Extensio
  */
 function createTargetSelectionButton(context: vscode.ExtensionContext) {
     const barItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, Number.MIN_VALUE);
-    barItem.text = "Default target";
+    barItem.text = "Targets: default";
     barItem.command = SelectTarget.id;
     barItem.show();
     context.subscriptions.push(

@@ -27,8 +27,7 @@ export default class CheckBox {
     }
 
     public static nameToValue(name: string) {
-        //if (name === "Default target") return "Default";
-
+        //remove the 2 begining char (box and space)
         return name.slice(2);
     }
 }

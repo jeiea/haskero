@@ -23,6 +23,10 @@ export class SelectTarget {
             const boxList = new CheckBoxList(haskeroTargets.targetList.map(t => new CheckBox(t.name, t.isSelected, t.isUnique)));
 
             boxList.show().then((checkBoxes) => {
+                if (checkBoxes === null) {
+                    return;
+                }
+
                 checkBoxes.forEach(cb => {
                     haskeroTargets.setSelectedTarget(cb.value, cb.isSelected);
                 });
@@ -36,7 +40,8 @@ export class SelectTarget {
                         this.haskeroClient.client.info("Change target done.", resp);
                         vscode.window.showInformationMessage("Change target done. " + resp);
                         SelectTarget.onTargetsSelected.fire(haskeroTargets);
-                    }, reason => {
+                    },
+                    reason => {
                         this.haskeroClient.client.error(`Change targets failed. Stopping Haskero for this target. Switch to another target or 'Default targets'.
 Hint : try running a build command to get missing dependencies (> stack build ${newTargets.join(' ')})
 Error details:
