@@ -103,10 +103,27 @@ Haskero settings to change the default behavior or customizing intero startup pa
         ],
         "description": "(Warning, can break Haskero behavior) Parameters sent to intero ghci"
     },
+    "haskero.intero.stackPath": {
+        "type": "string",
+        "default": "stack",
+        "description": "(Warning, can break Haskero behavior) path to the stack executable."
+    },
+    "haskero.intero.ghciOptions": {
+        "type": "array",
+        "default": [
+            "-Wall"
+        ],
+        "description": "(Warning, can break Haskero behavior) Parameters sent to intero ghci via --ghci-options"
+    },
     "haskero.maxAutoCompletionDetails": {
         "type": "number",
         "default": 100,
         "description": "Maximum autocompletion information requests sent to get type info/module in the autocompletion flow. Set to 0 to disable details info in autocompletion."
+    },
+    "haskero.debugMode": {
+        "type": "boolean",
+        "default": false,
+        "description": "Active debug mode. Can slow down haskero."
     }
 }
 ```

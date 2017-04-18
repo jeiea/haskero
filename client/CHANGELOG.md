@@ -1,3 +1,9 @@
+## Release 1.1.0
+
+ - **new feature**: Select desired targets. The target selection button now opens a checkboxlist popup, it is possible to select multiple targets.
+ - **new option**:  `haskero.intero.stackPath` allows the user to set the path of the *stack* executable (issue #38)
+ - **new option**:  `haskero.intero.ghciOptions` allows the user to override `--ghci-options` parameters. Can be used to disable the default `-Wall` option
+
 ## Release 1.0.1
 
  - **new option**: option `haskero.debugMode` allows user to investigate communication between haskero and intero. (issue #41)
