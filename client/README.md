@@ -11,6 +11,7 @@ Haskero is a full featured haskell IDE using [Intero backend](https://github.com
 * Identifiers types on hover
 * Code completion
 * Switching cabal targets
+* Hoogle integration (automatic dependency on [Hoogle vscode](https://marketplace.visualstudio.com/items?itemName=jcanero.hoogle-vscode))
 
 ## Installation instructions
 

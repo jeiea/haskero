@@ -1,3 +1,7 @@
+## Release 1.2.0
+
+ - **new dependency**: dependency to `jcanero.hoogle-vscode` vscode extension to add hoogle support
+
 ## Release 1.1.0
 
  - **new feature**: Select desired targets. The target selection button now opens a checkboxlist popup, it is possible to select multiple targets.

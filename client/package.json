@@ -35,7 +35,8 @@
         "intero"
     ],
     "extensionDependencies": [
-        "justusadam.language-haskell"
+        "justusadam.language-haskell",
+        "jcanero.hoogle-vscode"
     ],
     "activationEvents": [
         "onLanguage:haskell"
