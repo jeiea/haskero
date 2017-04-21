@@ -32,13 +32,8 @@ export class TypeAtRequest implements InteroRequest {
     public send(interoProxy: InteroProxy): Promise<TypeAtResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
-        //loads the file first otherwise it won't match the last version on disk
-        const load = `:l ${escapedFilePath}`;
         const req = `:type-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
-        return interoProxy.sendRawRequest(load)
-            .then((response) => {
-                return interoProxy.sendRawRequest(req);
-            })
+        return interoProxy.sendRawRequest(req)
             .then((response) => {
                 return Promise.resolve(new TypeAtResponse(response.rawout, response.rawerr));
             });
