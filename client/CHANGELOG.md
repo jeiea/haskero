@@ -1,7 +1,8 @@
 ## Release 1.2.0
 
  - **new dependency**: dependency to `jcanero.hoogle-vscode` vscode extension to add hoogle support
- - Optimization: type-hover speed greetly improved (issue #40)
+ - Improve type hover and insert type signatures (issue #42)
+ - Optimization: type hover speed greetly improved (issue #40)
 
 ## Release 1.1.0
 
