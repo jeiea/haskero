@@ -1,3 +1,9 @@
+# Current work notes
+
+When removing :l for each typehover, completion, and so on request. We have an issue when changing targets or opening a vscode with opened tabs on several hs files:
+ - none of these scenarios trigger a didOpen event. So haskero doesn't know when to :load a hs file.
+ - onHover, etc failed because the file is not loaded in ghci
+
 # Ideas
 
 ## Rename
