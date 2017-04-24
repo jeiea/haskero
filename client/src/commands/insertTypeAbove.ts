@@ -28,16 +28,18 @@ export class InsertTypeAbove {
             position: editor.selection.start
         }
         //find type information at cursor position in the right document
-        //use the langauge server with the standard protocol
-        this.haskeroClient.client.sendRequest(vscli.HoverRequest.type, hoverParams)
+        //use the language server with the standard protocol
+        this.haskeroClient.client.sendRequest("insertTypeAbove", hoverParams)
             .then((hover: vscli.Hover) => {
                 //if the response contains a value field
                 if (hover && this.isValued(hover.contents) && hover.contents.value !== "") {
                     let signature = hover.contents.value;
                     editor.edit(this.addSignatureEditBuilder(editor, this.normalizeSignature(signature)));
                 }
+            },
+            reason => {
+                this.haskeroClient.client.error("Error while inserting type", reason);
             });
-        //.then : commented, don't do anything if insertion has failed
     }
 
 

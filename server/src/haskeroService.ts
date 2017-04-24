@@ -8,7 +8,7 @@ import { ReloadRequest, ReloadResponse } from './intero/commands/reload';
 import { InteroDiagnostic, InteroDiagnosticKind } from './intero/commands/interoDiagnostic'
 import { LocAtRequest, LocAtResponse } from './intero/commands/locAt'
 import { UsesRequest, UsesResponse } from './intero/commands/uses'
-import { TypeAtRequest, TypeAtResponse } from './intero/commands/typeAt'
+import { TypeAtRequest, TypeAtResponse, TypeInfoKind } from './intero/commands/typeAt'
 import { CompleteAtRequest, CompleteAtResponse } from './intero/commands/completeAt'
 import { CompleteRequest, CompleteResponse } from './intero/commands/complete'
 import { DocumentUtils, WordSpot, NoMatchAtCursorBehaviour } from './documentUtils'
@@ -159,10 +159,10 @@ export class HaskeroService {
             });
     }
 
-    public getHoverInformation(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Hover> {
+    public getHoverInformation(textDocument: vsrv.TextDocument, position: vsrv.Position, infoKind: TypeInfoKind): Promise<vsrv.Hover> {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         if (!wordRange.isEmpty) {
-            const typeAtRequest = new TypeAtRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
+            const typeAtRequest = new TypeAtRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word, infoKind);
             return typeAtRequest
                 .send(this.interoProxy)
                 .then((response): Promise<vsrv.Hover> => {

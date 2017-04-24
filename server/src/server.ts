@@ -3,7 +3,8 @@
 import * as vsrv from 'vscode-languageserver';
 import { DebugUtils } from './debug/debugUtils'
 import { HaskeroService } from './haskeroService'
-import { UriUtils } from './intero/uri';
+import { TypeInfoKind } from './intero/commands/typeAt'
+import { UriUtils } from './intero/uri'
 import { HaskeroSettings, InteroSettings } from './haskeroSettings'
 
 
@@ -35,6 +36,14 @@ connection.onRequest("changeTargets", (targets: string[]): Promise<string> => {
             documents.all().forEach((doc) => haskeroService.validateTextDocument(connection, doc));
             return Promise.resolve(msg);
         });
+});
+
+connection.onRequest("insertTypeAbove", (documentInfo): Promise<vsrv.Hover> => {
+    const documentURI = documentInfo.textDocument.uri;
+    if (UriUtils.isFileProtocol(documentURI)) {
+        const textDocument = documents.get(documentURI);
+        return haskeroService.getHoverInformation(textDocument, documentInfo.position, TypeInfoKind.Generic);
+    }
 });
 
 documents.onDidOpen((event): Promise<void> => {
@@ -73,7 +82,7 @@ connection.onHover((documentInfo): Promise<vsrv.Hover> => {
     const documentURI = documentInfo.textDocument.uri;
     if (UriUtils.isFileProtocol(documentURI)) {
         const textDocument = documents.get(documentURI);
-        return haskeroService.getHoverInformation(textDocument, documentInfo.position);
+        return haskeroService.getHoverInformation(textDocument, documentInfo.position, TypeInfoKind.Instanciated);
     }
 });
 
