@@ -1,8 +1,7 @@
 # Current work notes
 
-When removing :l for each typehover, completion, and so on request. We have an issue when changing targets or opening a vscode with opened tabs on several hs files:
- - none of these scenarios trigger a didOpen event. So haskero doesn't know when to :load a hs file.
- - onHover, etc failed because the file is not loaded in ghci
+Hovering a word when intero is rebooting (eg: while changing intera targets) and more generaly sending a LSP request when intero is rebooting, cause haskero do fall out os sync with interoProxy and next request
+doesn't recieve a response
 
 # Ideas
 
