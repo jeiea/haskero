@@ -17,14 +17,13 @@ export class TypeAtResponse implements InteroResponse {
     public readonly type: string;
 
     public constructor(public readonly rawout: string, public readonly rawerr: string, private infoKind: TypeInfoKind, private id?: string) {
-        //if the instanciated info kind is used, intero doesn't responds the identifier name, so we add it
-        if (infoKind === TypeInfoKind.Instanciated) {
-            this.type = id + ' ';
+        this.type = InteroUtils.normalizeRawResponse(rawout);
+        if (this.type && this.type.length > 0) {
+            //if the instanciated info kind is used, intero doesn't responds the identifier name, so we add it
+            if (infoKind === TypeInfoKind.Instanciated) {
+                this.type = id + ' ' + this.type;
+            }
         }
-        else {
-            this.type = '';
-        }
-        this.type += InteroUtils.normalizeRawResponse(rawout);
     }
 }
 
