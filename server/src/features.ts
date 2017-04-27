@@ -29,6 +29,17 @@ export class Features {
             registerOptions: {
                 resolveProvider: true
             }
+        },
+        {
+            id: uuid.v4(),
+            method: "textDocument/codeAction"
+        },
+        {
+            id: uuid.v4(),
+            method: "workspace/executeCommand",
+            registerOptions: {
+                commands: ["hohohocmd"]
+            }
         }
     ];
 

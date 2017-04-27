@@ -46,6 +46,12 @@ connection.onRequest("insertTypeAbove", (documentInfo): Promise<vsrv.Hover> => {
     }
 });
 
+connection.onExecuteCommand((exeCmdParams: vsrv.ExecuteCommandParams): any => {
+    console.log("pouet");
+    console.dir(exeCmdParams);
+    return null;
+})
+
 documents.onDidOpen((event): Promise<void> => {
     return haskeroService.validateTextDocument(connection, event.document);
 });
@@ -104,6 +110,33 @@ connection.onReferences((referenceParams: vsrv.ReferenceParams): Promise<vsrv.Lo
         const textDocument = documents.get(documentURI);
         return haskeroService.getReferencesLocations(textDocument, referenceParams.position);
     }
+});
+
+/**
+ * Code action lifecycle:
+ *  - a bunch of diagnostics are sent from the server to the client (errors, warings, etc)
+ *  - each diagnostic is a candidate for a codeAction
+ *  - each time the user is hovering a range of code where diagnosics are attached (warning, error, etc.) a codeAction request is sent
+ *    from the client to the server (ie : this very function is executed) with all the diagnotics for this range of code sent as parameters
+ *  - the codeAction request needs a response containing one or several commands with unique ID and custom parameters
+ *  - the title of the commands are displayed to the user, next to the line
+ *  - when the user clicks on a command, a commandRequest is sent to the server with the command id and custom parameters
+ *  - the onExecuteCommand function is executed with the command id/parameters and a WorkspaceEdit response is sent back to the client
+ *    to modify corresponding files
+ */
+connection.onCodeAction((params: vsrv.CodeActionParams): vsrv.Command[] => {
+    console.dir(params.context.diagnostics);
+
+    if (params.context.diagnostics.length > 0) {
+        return params.context.diagnostics.map(d => {
+            if (d.message.indexOf('Top-level binding with no type signature') > -1) {
+                return vsrv.Command.create('hohoho', 'hohohocmd');
+            }
+        });
+        //message: '    Top-level binding with no type signature: t :: c -> c',
+    }
+
+    return null;
 });
 
 documents.onDidSave(e => {
