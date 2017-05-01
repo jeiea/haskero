@@ -1,3 +1,7 @@
+## Release 1.3.0
+
+ - **new feature**: Add codeAction support. A little bulbe is displayed to add top-level type signature automaticaly. (issue #28)
+
 ## Release 1.2.0
 
  - **new dependency**: dependency to `jcanero.hoogle-vscode` vscode extension to add hoogle support
