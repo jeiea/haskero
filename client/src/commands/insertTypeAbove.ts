@@ -57,7 +57,7 @@ export class InsertTypeAbove {
             let currentLine = EditorUtils.getCurrentLine(editor);
             let insertingPosition = new vscode.Position(currentLine.lineNumber, 0);
             //insert the type signature line where the function defintion is located
-            editBuilder.insert(insertingPosition, padding + signature + '\n');
+            editBuilder.insert(insertingPosition, padding + signature + '\n'); //FIXME: potential bug with windows CR/LF
         }
     }
 
