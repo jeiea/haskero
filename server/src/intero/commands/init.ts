@@ -5,6 +5,7 @@ import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
 import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
 import { InteroUtils } from '../interoUtils'
+import { allMatchs } from "../../utils/regexp";
 
 /**
  * Response from interoInit request
@@ -41,11 +42,11 @@ export class InitResponse implements InteroResponse {
 
         //find errors first
         const regErrors = /([^\r\n]+):(\d+):(\d+):(?: error:)?\r?\n([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
-        let matchErrors = this.removeDuplicates(InteroUtils.allMatchs(rawerr, regErrors));
+        let matchErrors = this.removeDuplicates(allMatchs(rawerr, regErrors));
         let diagnostics = matchErrors.map(this.matchTo(InteroDiagnosticKind.error));
 
         const regWarnings = /([^\r\n]+):(\d+):(\d+): Warning:(?: \[.*\])?\r?\n?([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
-        let matchWarnings = this.removeDuplicates(InteroUtils.allMatchs(rawerr, regWarnings));
+        let matchWarnings = this.removeDuplicates(allMatchs(rawerr, regWarnings));
         diagnostics = diagnostics.concat(matchWarnings.map(this.matchTo(InteroDiagnosticKind.warning)));
 
         this._diagnostics = diagnostics;

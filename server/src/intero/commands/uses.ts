@@ -7,6 +7,7 @@ import { InteroRange } from '../interoRange'
 import { InteroUtils } from '../interoUtils'
 import { InteroLocation } from '../interoLocation'
 import { UriUtils } from '../uri'
+import { allMatchs } from "../../utils/regexp";
 
 /**
  * uses intero response
@@ -29,7 +30,7 @@ export class UsesResponse implements InteroResponse {
         };
 
         const pattern = /(.*):\((\d+),(\d+)\)-\((\d+),(\d+)\)/gi;
-        let matches = InteroUtils.allMatchs(rawout, pattern);
+        let matches = allMatchs(rawout, pattern);
 
         if (matches.length > 1) {
             this._locations = matches.map(toInteroLoc)
