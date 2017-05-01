@@ -6,6 +6,8 @@ import { HaskeroService } from './haskeroService'
 import { TypeInfoKind } from './intero/commands/typeAt'
 import { UriUtils } from './intero/uri'
 import { HaskeroSettings, InteroSettings } from './haskeroSettings'
+import { CodeActionService } from "./codeActions/codeActionService";
+import { CommandsService } from "./commands/commandsService";
 
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
@@ -46,11 +48,15 @@ connection.onRequest("insertTypeAbove", (documentInfo): Promise<vsrv.Hover> => {
     }
 });
 
-connection.onExecuteCommand((exeCmdParams: vsrv.ExecuteCommandParams): any => {
-    console.log("pouet");
-    console.dir(exeCmdParams);
-    return null;
-})
+connection.onExecuteCommand((exeCmdParams: vsrv.ExecuteCommandParams): void => {
+    let cmd = CommandsService.getCommandInstance(exeCmdParams);
+    if (!cmd) {
+        console.log("Unknown command : ");
+        console.dir(exeCmdParams);
+        return null;
+    }
+    cmd.execute(connection.workspace, documents, haskeroService);
+});
 
 documents.onDidOpen((event): Promise<void> => {
     return haskeroService.validateTextDocument(connection, event.document);
@@ -125,18 +131,14 @@ connection.onReferences((referenceParams: vsrv.ReferenceParams): Promise<vsrv.Lo
  *    to modify corresponding files
  */
 connection.onCodeAction((params: vsrv.CodeActionParams): vsrv.Command[] => {
-    console.dir(params.context.diagnostics);
-
-    if (params.context.diagnostics.length > 0) {
-        return params.context.diagnostics.map(d => {
-            if (d.message.indexOf('Top-level binding with no type signature') > -1) {
-                return vsrv.Command.create('hohoho', 'hohohocmd');
-            }
-        });
-        //message: '    Top-level binding with no type signature: t :: c -> c',
-    }
-
-    return null;
+    let CAs = CodeActionService.CodeActions;
+    return params.context.diagnostics
+        .map(diag =>
+            CAs.map(codeAction =>
+                codeAction.getCommand(params.textDocument, diag)
+            ))
+        .reduce((accu, commands) => accu.concat(commands), []) //flatten commands[][] to commands[]
+        .filter(c => c !== null);
 });
 
 documents.onDidSave(e => {
