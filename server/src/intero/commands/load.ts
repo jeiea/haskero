@@ -5,8 +5,8 @@ import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
 import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
 import { InteroUtils } from '../interoUtils'
-import { UriUtils } from '../uri'
-import { allMatchs } from "../../utils/regexp";
+import { UriUtils } from '../../utils/uriUtils'
+import { allMatchs } from "../../utils/regexpUtils";
 
 /**
  * Load response, returns diagnostics (errors and warnings)
@@ -35,6 +35,9 @@ export class LoadResponse implements InteroResponse {
         return this._diagnostics;
     }
 
+    public readonly errors: InteroDiagnostic[];
+    public readonly warnings: InteroDiagnostic[];
+
     public constructor(rawout: string, rawerr: string, parseDiagnostics: boolean) {
         this._rawout = rawout;
         this._rawerr = rawerr;
@@ -42,13 +45,13 @@ export class LoadResponse implements InteroResponse {
             //find errors first
             const regErrors = /([^\r\n]+):(\d+):(\d+):(?: error:)?\r?\n([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
             let matchErrors = this.removeDuplicates(allMatchs(rawerr, regErrors));
-            let diagnostics = matchErrors.map(this.matchTo(InteroDiagnosticKind.error));
+            this.errors = matchErrors.map(this.matchTo(InteroDiagnosticKind.error));
 
             const regWarnings = /([^\r\n]+):(\d+):(\d+): Warning:(?: \[.*\])?\r?\n?([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
             let matchWarnings = this.removeDuplicates(allMatchs(rawerr, regWarnings));
-            diagnostics = diagnostics.concat(matchWarnings.map(this.matchTo(InteroDiagnosticKind.warning)));
+            this.warnings = matchWarnings.map(this.matchTo(InteroDiagnosticKind.warning));
 
-            this._diagnostics = diagnostics;
+            this._diagnostics = this.errors.concat(this.warnings);
         }
         else {
             this._diagnostics = [];
@@ -72,16 +75,17 @@ export class LoadResponse implements InteroResponse {
 /**
  * Reload request
  */
-export class LoadRequest implements InteroRequest {
+export class LoadRequest implements InteroRequest<LoadResponse> {
 
-    public constructor(private readonly uri: string, private readonly parseDiagnostics) {
+    public constructor(private readonly uris: string[], private readonly parseDiagnostics: boolean) {
 
     }
 
     public send(interoProxy: InteroProxy): Promise<LoadResponse> {
-        const filePath = UriUtils.toFilePath(this.uri);
-        const escapedFilePath = InteroUtils.escapeFilePath(filePath);
-        const load = `:l ${escapedFilePath}`;
+
+        const filePaths = this.uris.map(UriUtils.toFilePath);
+        const escapedFilePaths = filePaths.map(InteroUtils.escapeFilePath);
+        const load = `:l ${escapedFilePaths.join(' ')}`;
         return interoProxy.sendRawRequest(load)
             .then((response: RawResponse) => {
                 return Promise.resolve(new LoadResponse(response.rawout, response.rawerr, this.parseDiagnostics));

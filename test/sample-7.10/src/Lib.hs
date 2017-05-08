@@ -32,3 +32,6 @@ taxe m =
 
 myTanh :: Double
 myTanh = tanh 0.2
+
+myUsage :: Int --dsffffffffffffffffffffffffffffffffffffff
+myUsage = ourAdd 5 6 + ourAdd 5 6

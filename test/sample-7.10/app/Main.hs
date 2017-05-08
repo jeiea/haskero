@@ -7,7 +7,7 @@ import System.IO.Unsafe as P
 import Control.Concurrent.QSem
 import qualified Data.IntMap.Strict as M
 
-import Lib
+import Lib (ourAdd)
 
 import Text.Printf (printf)
 
@@ -54,3 +54,8 @@ y''' = "e" ++abc++"e"
 
 -- test2 = 3 + "e"
 
+function2 :: Num a => a -> a -> a
+function2 c d = function1 c d
+
+function1 :: Num a => a -> a -> a
+function1 a b = a + b

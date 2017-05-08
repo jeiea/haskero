@@ -1,6 +1,6 @@
 import * as vsrv from 'vscode-languageserver';
 import * as uuid from 'node-uuid'
-import { CommandsService } from "./commands/commandsService";
+import { CommandsService } from "../commands/commandsService";
 
 /**
  * Manage features activation with the language client
@@ -34,6 +34,10 @@ export class Features {
         {
             id: uuid.v4(),
             method: "textDocument/codeAction"
+        },
+        {
+            id: uuid.v4(),
+            method: "textDocument/rename"
         },
         {
             id: uuid.v4(),

@@ -1,5 +1,7 @@
 import * as vsrv from 'vscode-languageserver';
 import * as uuid from 'node-uuid'
+import * as tmp from 'tmp'
+import * as fs from 'fs'
 
 import child_process = require('child_process');
 import { InteroProxy } from './intero/interoProxy';
@@ -11,12 +13,14 @@ import { UsesRequest, UsesResponse } from './intero/commands/uses'
 import { TypeAtRequest, TypeAtResponse, TypeInfoKind } from './intero/commands/typeAt'
 import { CompleteAtRequest, CompleteAtResponse } from './intero/commands/completeAt'
 import { CompleteRequest, CompleteResponse } from './intero/commands/complete'
-import { DocumentUtils, WordSpot, NoMatchAtCursorBehaviour } from './documentUtils'
-import { UriUtils } from './intero/uri';
+import { DocumentUtils, WordSpot, NoMatchAtCursorBehaviour } from './utils/documentUtils'
+import { UriUtils } from './utils/uriUtils';
 import { DebugUtils } from './debug/debugUtils'
-import { Features } from './features'
+import { Features } from './features/features'
 import { CompletionUtils } from './completionUtils'
 import { HaskeroSettings, InteroSettings } from './haskeroSettings'
+import { InteroRequest } from "./intero/commands/interoRequest";
+import { InteroResponse } from "./intero/commands/interoResponse";
 
 const serverCapabilities: vsrv.InitializeResult = {
     capabilities: {
@@ -47,6 +51,11 @@ export class HaskeroService {
     private interoNotFOunt = "Executable named intero not found";
     private settings: HaskeroSettings;
     private currentTargets: string[];
+
+
+    public executeInteroRequest<V extends InteroResponse>(request: InteroRequest<V>): Promise<V> {
+        return request.send(this.interoProxy);
+    }
 
     public initialize(connection: vsrv.IConnection, settings: HaskeroSettings, targets: string[]): Promise<vsrv.InitializeResult> {
         connection.console.log("Initializing Haskero...");

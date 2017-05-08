@@ -4,10 +4,11 @@ import * as vsrv from 'vscode-languageserver';
 import { DebugUtils } from './debug/debugUtils'
 import { HaskeroService } from './haskeroService'
 import { TypeInfoKind } from './intero/commands/typeAt'
-import { UriUtils } from './intero/uri'
+import { UriUtils } from './utils/uriUtils'
 import { HaskeroSettings, InteroSettings } from './haskeroSettings'
 import { CodeActionService } from "./codeActions/codeActionService";
 import { CommandsService } from "./commands/commandsService";
+import * as features from "./features"
 
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
@@ -21,14 +22,13 @@ let documents: vsrv.TextDocuments = new vsrv.TextDocuments();
 // for open, change and close text document events
 documents.listen(connection);
 
-let haskeroService: HaskeroService;
+let haskeroService = new HaskeroService();
 
 // After the server has started the client sends an initilize request. The server receives
 // in the passed params the rootPath of the workspace plus the client capabilites.
 let workspaceRoot: string;
 connection.onInitialize((params): Promise<vsrv.InitializeResult> => {
     workspaceRoot = params.rootPath;
-    haskeroService = new HaskeroService();
     return haskeroService.initialize(connection, params.initializationOptions.settings, params.initializationOptions.targets);
 });
 
@@ -140,6 +140,9 @@ connection.onCodeAction((params: vsrv.CodeActionParams): vsrv.Command[] => {
         .reduce((accu, commands) => accu.concat(commands), []) //flatten commands[][] to commands[]
         .filter(c => c !== null);
 });
+
+connection.onRenameRequest(features.rename(documents, haskeroService));
+
 
 documents.onDidSave(e => {
     return haskeroService.validateTextDocument(connection, e.document);
