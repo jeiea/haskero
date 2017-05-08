@@ -5,8 +5,8 @@ import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
 import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
 import { InteroUtils } from '../interoUtils'
-import { UriUtils } from '../uri'
-import { allMatchs } from "../../utils/regexp";
+import { UriUtils } from '../../utils/uriUtils'
+import { allMatchs } from "../../utils/regexpUtils";
 
 /**
  * Reload response, returns diagnostics (errors and warnings)
@@ -68,7 +68,7 @@ export class ReloadResponse implements InteroResponse {
 /**
  * Reload request
  */
-export class ReloadRequest implements InteroRequest {
+export class ReloadRequest implements InteroRequest<ReloadResponse> {
 
     public constructor(private readonly uri: string) {
 

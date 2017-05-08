@@ -5,7 +5,7 @@ import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
 import { InteroRange } from '../interoRange'
 import { InteroUtils } from '../interoUtils'
-import { UriUtils } from '../uri'
+import { UriUtils } from '../../utils/uriUtils'
 
 /**
  * loc-at intero response
@@ -59,7 +59,7 @@ export class LocAtResponse implements InteroResponse {
 /**
  * loc-at intero request
  */
-export class LocAtRequest implements InteroRequest {
+export class LocAtRequest implements InteroRequest<InteroResponse> {
 
     public constructor(private uri: string, private range: InteroRange, private identifier: string) {
     }
@@ -68,6 +68,7 @@ export class LocAtRequest implements InteroRequest {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //load the file first, otherwise it won't match the last version on disk
+        //TODO replace :l with :module +Module
         const load = `:l ${escapedFilePath}`;
         const req = `:loc-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
         return interoProxy.sendRawRequest(load)

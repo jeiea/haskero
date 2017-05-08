@@ -1,11 +1,11 @@
 import * as vsrv from 'vscode-languageserver';
 import { InteroProxy } from './intero/interoProxy';
-import { DocumentUtils, WordSpot, NoMatchAtCursorBehaviour } from './documentUtils'
+import { DocumentUtils, WordSpot, NoMatchAtCursorBehaviour } from './utils/documentUtils'
 import { CompleteAtRequest, CompleteAtResponse } from './intero/commands/completeAt'
 import { InfoRequest, InfoResponse } from './intero/commands/info'
 import { CompleteRequest, CompleteResponse } from './intero/commands/complete'
 import { IdentifierKind } from './intero/identifierKind'
-import { zipWith } from './functionalUtils'
+import { zipWith } from './utils/functionalUtils'
 
 /**
  * Handle completion special cases (import, dot notation, etc.)

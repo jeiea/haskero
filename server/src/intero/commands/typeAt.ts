@@ -6,7 +6,7 @@ import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
 import { InteroRange } from '../interoRange'
 import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
-import { UriUtils } from '../uri'
+import { UriUtils } from '../../utils/uriUtils'
 
 /**
  * type-at intero response
@@ -30,7 +30,7 @@ export class TypeAtResponse implements InteroResponse {
 /**
  * type-at intero request
  */
-export class TypeAtRequest implements InteroRequest {
+export class TypeAtRequest implements InteroRequest<TypeAtResponse> {
     public constructor(private uri: string, private range: InteroRange, private identifier: string, private infoKind: TypeInfoKind) {
     }
 

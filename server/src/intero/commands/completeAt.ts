@@ -5,7 +5,7 @@ import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
 import { InteroUtils } from '../interoUtils'
 import { InteroRange } from '../interoRange'
-import { UriUtils } from '../uri'
+import { UriUtils } from '../../utils/uriUtils'
 
 /**
  * 'complete-at' intero response
@@ -42,7 +42,7 @@ export class CompleteAtResponse implements InteroResponse {
 /**
  * 'complete-at' intero request
  */
-export class CompleteAtRequest implements InteroRequest {
+export class CompleteAtRequest implements InteroRequest<CompleteAtResponse> {
 
     public constructor(private uri: string, private range: InteroRange, private text: string) {
     }

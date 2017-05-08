@@ -6,7 +6,7 @@ import { InteroResponse } from './interoResponse'
 import { LoadRequest, LoadResponse } from './load'
 import { InteroUtils } from '../interoUtils'
 import { InteroRange } from '../interoRange'
-import { UriUtils } from '../uri'
+import { UriUtils } from '../../utils/uriUtils'
 
 /**
  * 'complete' intero response
@@ -59,7 +59,7 @@ export class CompleteResponse implements InteroResponse {
 /**
  * 'complete' intero request
  */
-export class CompleteRequest implements InteroRequest {
+export class CompleteRequest implements InteroRequest<CompleteResponse> {
 
     public constructor(private readonly uri: string, private readonly text: string) {
         this.text = text.replace(/[\r\n]/g, '');
@@ -70,7 +70,7 @@ export class CompleteRequest implements InteroRequest {
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //send a load request first otherwise :complete is not executed on the right module (it's executed
         //on the current module)
-        const loadRequest = new LoadRequest(this.uri, false);
+        const loadRequest = new LoadRequest([this.uri], false);
         const req = `:complete repl "${this.text}"`;
         return loadRequest.send(interoProxy)
             .then((loadResponse) => {

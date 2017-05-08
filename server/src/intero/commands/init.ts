@@ -5,7 +5,7 @@ import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
 import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
 import { InteroUtils } from '../interoUtils'
-import { allMatchs } from "../../utils/regexp";
+import { allMatchs } from "../../utils/regexpUtils";
 
 /**
  * Response from interoInit request
@@ -70,7 +70,7 @@ export class InitResponse implements InteroResponse {
  * Initialises intero.
  * Changes the EOC char used by intero proxy to slice stdin in several responses
  */
-export class InitRequest implements InteroRequest {
+export class InitRequest implements InteroRequest<InitResponse> {
 
     public constructor() {
     }

@@ -1,7 +1,7 @@
 import * as vsrv from 'vscode-languageserver';
 import { HaskeroCodeAction } from "./haskeroCodeAction";
 import { TopLevelTypeSignatureInstance } from "../commands/topLevelTypeSignature";
-import { firstGroupOfFirstMatch } from "../utils/regexp";
+import { firstGroupOfFirstMatch } from "../utils/regexpUtils";
 
 export class TopLevelTypeSignatureCA implements HaskeroCodeAction {
 

@@ -6,8 +6,8 @@ import { InteroResponse } from './interoResponse'
 import { InteroRange } from '../interoRange'
 import { InteroUtils } from '../interoUtils'
 import { InteroLocation } from '../interoLocation'
-import { UriUtils } from '../uri'
-import { allMatchs } from "../../utils/regexp";
+import { UriUtils } from '../../utils/uriUtils'
+import { allMatchs } from "../../utils/regexpUtils";
 
 /**
  * uses intero response
@@ -45,7 +45,7 @@ export class UsesResponse implements InteroResponse {
 /**
  * uses intero request
  */
-export class UsesRequest implements InteroRequest {
+export class UsesRequest implements InteroRequest<UsesResponse> {
 
     public constructor(private uri: string, private range: InteroRange, private identifier: string) {
     }
