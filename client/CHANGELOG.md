@@ -1,3 +1,6 @@
+## Release 1.3.1
+ - fix issue with ghc error messages on 8.x
+
 ## Release 1.3.0
 
  - **new feature**: Rename *identifiers* (only identifiers, not Types/Class/data) in the current module and in the definition module. (issue #45)
