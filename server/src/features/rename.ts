@@ -9,26 +9,38 @@ import { LocAtRequest } from "../intero/commands/locAt";
 import { InteroRange } from "../intero/interoRange";
 import { InteroDiagnostic } from "../intero/commands/interoDiagnostic";
 import { ShowModulesRequest } from "../intero/commands/showModules";
+import { TypeInfoKind } from "../intero/commands/typeAt";
+import { InfoRequest } from "../intero/commands/info";
+import { TypeRequest } from "../intero/commands/type";
 
 export default function (documents: vsrv.TextDocuments, haskeroService: HaskeroService) {
     return async (params: vsrv.RenameParams): Promise<vsrv.WorkspaceEdit> => {
-        let loadedModulesPaths = (await haskeroService.executeInteroRequest(new ShowModulesRequest())).modules;
-        let modulesPathToFix = [...loadedModulesPaths];
+        if ((await safeRename(documents, params)) === false) {
+            return null;
+        }
 
+        //list modules to check for rename
+        let loadedModulesPaths = await getLoadedModules(params.textDocument.uri);
+
+        //modules to fix are different from loaded modules
+        let modulesPathToFix = [...loadedModulesPaths];
         console.log("modulesToFix:"); console.dir(modulesPathToFix);
+
+        //contains all the edits this rename involves
+        let filesEdits = new Map<string, vsrv.TextEdit[]>();
 
         //1 - get definition site information
 
         let definitionDocument: vsrv.TextDocument;
         let definitionPosition: vsrv.Position;
         {
-            let document = documents.get(params.textDocument.uri);
-            let location = await haskeroService.getDefinitionLocation(document, params.position);
+            let sourceDocument = documents.get(params.textDocument.uri);
+            let location = await haskeroService.getDefinitionLocation(sourceDocument, params.position);
             //if we are at the defintion site
             if (location.uri === params.textDocument.uri && DocumentUtils.isPositionInRange(params.position, location.range)) {
                 //intero loc-at function returns a wrong range for defintion site, the range includes the identifier and the corps of the definition
                 //so we jsut take the params position instead
-                definitionDocument = document;
+                definitionDocument = sourceDocument;
                 definitionPosition = params.position;
             }
             else {
@@ -42,29 +54,78 @@ export default function (documents: vsrv.TextDocuments, haskeroService: HaskeroS
         //2 - rename definition site oldName to newName
 
         let newText = renameIdentifier(definitionDocument, definitionDocument.getText(), definitionRange, params.newName);
-        let tmpDefinitionFilePath = await createTmpFile(newText);
-        await fixModuleFile(UriUtils.toUri(tmpDefinitionFilePath), null, oldName, params.newName); //the definition site for the definition is null
+        //create a text edit to rename the definition site
+        addEdits(filesEdits, definitionDocument.uri, [vsrv.TextEdit.replace(definitionRange, params.newName)]);
 
-        // remove the definition site module from the modules to fix list
+        //create a tmp file for the definition file with this newname and fix all errors
+        let tmpDefinitionFilePath = await createTmpFile(newText);
+        let tmpDefinitionURI = UriUtils.toUri(tmpDefinitionFilePath);
+        let definitionSiteEdits = await fixModuleFile(tmpDefinitionURI, null, oldName, params.newName); //the definition site for the definition is null
+        addEdits(filesEdits, definitionDocument.uri, definitionSiteEdits);
+
+        // remove the definition site module from the list of modules to fix
         modulesPathToFix.splice(modulesPathToFix.indexOf(UriUtils.toFilePath(definitionDocument.uri)), 1);
 
         //3 - fix all previously opened modules
 
         await Promise.all(modulesPathToFix.map(async modulePath => {
-            let moduleDocument = await DocumentUtils.loadUriFromDisk(UriUtils.toUri(modulePath));
+            let moduleURI = UriUtils.toUri(modulePath);
+            let moduleDocument = await DocumentUtils.loadUriFromDisk(moduleURI);
             let tmpFilePath = await createTmpFile(moduleDocument.getText());
-            await fixModuleFile(UriUtils.toUri(tmpFilePath), UriUtils.toUri(tmpDefinitionFilePath), oldName, params.newName);
+            let modulesEdits = await fixModuleFile(UriUtils.toUri(tmpFilePath), tmpDefinitionURI, oldName, params.newName);
+            addEdits(filesEdits, moduleURI, modulesEdits);
         }));
 
         //4 - unload all modules and reload previously loaded modules
         await haskeroService.executeInteroRequest(new LoadRequest([], false));
         await haskeroService.executeInteroRequest(new LoadRequest(loadedModulesPaths.map(UriUtils.toUri), false));
-        return null;
+
+        let workSpaceEdits: vsrv.WorkspaceEdit = { changes: {} };
+        filesEdits.forEach((v, k) => {
+            workSpaceEdits.changes[k] = v;
+            console.log(k);
+            v.forEach(c => console.dir(c));
+        });
+
+        return workSpaceEdits;
     }
 
+    async function getLoadedModules(sourceDocumentUri: string): Promise<string[]> {
+        let loadedModulesPaths = (await haskeroService.executeInteroRequest(new ShowModulesRequest())).modules;
 
+        //sometimes, the renameDocument where the user asks for a rename is not loaded
+        //we have to add it
+        let renameDocumentPath = UriUtils.toFilePath(sourceDocumentUri);
+        if (!loadedModulesPaths.some(m => m === renameDocumentPath)) {
+            loadedModulesPaths.push(renameDocumentPath);
+        }
+        return loadedModulesPaths;
+    }
 
-    async function fixModuleFile(uri: string, uriDefinitionModule: string, oldName: string, newName: string): Promise<void> {
+    /**
+     * Returns true if it's safe to rename, false otherwise
+     * Abord rename if
+     *  - we try to rename a Type
+     *  - the new name allready exists
+     */
+    async function safeRename(documents: vsrv.TextDocuments, params: vsrv.RenameParams): Promise<boolean> {
+        let isTypeDefinition = /^[A-Z].*/;
+        let sourceDocument = documents.get(params.textDocument.uri);
+        let nameToChange = DocumentUtils.getIdentifierAtPosition(sourceDocument, params.position, NoMatchAtCursorBehaviour.LookBoth).word;
+        let typeResponse = await haskeroService.executeInteroRequest(new TypeRequest(params.newName));
+        return typeResponse.identifierExists === false && !isTypeDefinition.test(nameToChange);
+    }
+
+    function addEdits(filesEdits: Map<string, vsrv.TextEdit[]>, uri: string, edits: vsrv.TextEdit[]) {
+        let es = filesEdits.get(uri);
+        if (!es) {
+            es = [];
+            filesEdits.set(uri, es);
+        }
+        es.push(...edits);
+    }
+
+    async function fixModuleFile(uri: string, uriDefinitionModule: string, oldName: string, newName: string): Promise<vsrv.TextEdit[]> {
         let filePath = UriUtils.toFilePath(uri);
         let document = await DocumentUtils.loadUriFromDisk(uri);
         let newText = document.getText();
@@ -72,21 +133,25 @@ export default function (documents: vsrv.TextDocuments, haskeroService: HaskeroS
         let loadResponse = await haskeroService.executeInteroRequest(new LoadRequest(uris, true));
         let oldNameErrors = loadResponse.errors.filter(e => e.filePath === filePath && e.message.indexOf(oldName) > -1);
 
+        let edits = new Array<vsrv.TextEdit>();
+
         if (oldNameErrors.length > 0) {
-            oldNameErrors
+            edits = oldNameErrors
                 .reverse() //starting from the end, its a trick to rename identifier from the end in order avoid shifts when renaming with a new identifier with different length
-                .forEach(e => {
+                .map(e => {
                     let range = errorToRange(document, e);
                     newText = renameIdentifier(document, newText, range, newName);
+                    return vsrv.TextEdit.replace(range, newName);
                 });
 
             await saveNewTextForDocument(document, newText);
-            await fixModuleFile(uri, uriDefinitionModule, oldName, newName);
+            edits.push(...await fixModuleFile(uri, uriDefinitionModule, oldName, newName));
         }
         else {
-            console.log("------------");
-            console.log(newText);
+            //console.log("------------");
+            //console.log(newText);
         }
+        return edits;
     }
 
     async function saveNewTextForDocument(document: vsrv.TextDocument, newText: string): Promise<{}> {
@@ -105,7 +170,7 @@ export default function (documents: vsrv.TextDocuments, haskeroService: HaskeroS
     }
 
     function errorToRange(document: vsrv.TextDocument, error: InteroDiagnostic): vsrv.Range {
-        //position in error message are 1 based. Position are 0 based, but there is a issue somewhere because we it works without (-1) :-(
+        //position in error message are 1 based. Position are 0 based, but there is a issue somewhere because it works without (-1) :-(
         let identifier = DocumentUtils.getIdentifierAtPosition(document, vsrv.Position.create(error.line, error.col), NoMatchAtCursorBehaviour.LookBoth);
         return identifier.range;
     }
