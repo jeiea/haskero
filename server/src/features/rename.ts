@@ -12,19 +12,21 @@ import { ShowModulesRequest } from "../intero/commands/showModules";
 import { TypeInfoKind } from "../intero/commands/typeAt";
 import { InfoRequest } from "../intero/commands/info";
 import { TypeRequest } from "../intero/commands/type";
+import { DebugUtils } from "../debug/debugUtils";
 
 export default function (documents: vsrv.TextDocuments, haskeroService: HaskeroService) {
     return async (params: vsrv.RenameParams): Promise<vsrv.WorkspaceEdit> => {
+
+        //list modules to check for rename
+        let loadedModulesPaths = await getAndLoadMissingModules(params.textDocument.uri);
+
+        //sourceModule : haskell source where the user asked for a rename
         if ((await safeRename(documents, params)) === false) {
             return null;
         }
 
-        //list modules to check for rename
-        let loadedModulesPaths = await getLoadedModules(params.textDocument.uri);
-
         //modules to fix are different from loaded modules
         let modulesPathToFix = [...loadedModulesPaths];
-        console.log("modulesToFix:"); console.dir(modulesPathToFix);
 
         //contains all the edits this rename involves
         let filesEdits = new Map<string, vsrv.TextEdit[]>();
@@ -83,21 +85,22 @@ export default function (documents: vsrv.TextDocuments, haskeroService: HaskeroS
         let workSpaceEdits: vsrv.WorkspaceEdit = { changes: {} };
         filesEdits.forEach((v, k) => {
             workSpaceEdits.changes[k] = v;
-            console.log(k);
-            v.forEach(c => console.dir(c));
+            // console.log(k);
+            // v.forEach(c => console.dir(c));
         });
 
         return workSpaceEdits;
     }
 
-    async function getLoadedModules(sourceDocumentUri: string): Promise<string[]> {
+    async function getAndLoadMissingModules(sourceDocumentUri: string): Promise<string[]> {
         let loadedModulesPaths = (await haskeroService.executeInteroRequest(new ShowModulesRequest())).modules;
 
         //sometimes, the renameDocument where the user asks for a rename is not loaded
-        //we have to add it
-        let renameDocumentPath = UriUtils.toFilePath(sourceDocumentUri);
-        if (!loadedModulesPaths.some(m => m === renameDocumentPath)) {
-            loadedModulesPaths.push(renameDocumentPath);
+        //we have to load and to add it
+        let sourceDocumentPath = UriUtils.toFilePath(sourceDocumentUri);
+        if (!loadedModulesPaths.some(m => m === sourceDocumentPath)) {
+            await haskeroService.executeInteroRequest(new LoadRequest([sourceDocumentUri], false));
+            loadedModulesPaths.push(sourceDocumentPath);
         }
         return loadedModulesPaths;
     }
@@ -129,11 +132,15 @@ export default function (documents: vsrv.TextDocuments, haskeroService: HaskeroS
         let filePath = UriUtils.toFilePath(uri);
         let document = await DocumentUtils.loadUriFromDisk(uri);
         let newText = document.getText();
-        let uris = uriDefinitionModule ? [document.uri, uriDefinitionModule] : [document.uri];
+        let uris = uriDefinitionModule ? [uri, uriDefinitionModule] : [uri];
+        // console.log("uris :" + uris);
         let loadResponse = await haskeroService.executeInteroRequest(new LoadRequest(uris, true));
         let oldNameErrors = loadResponse.errors.filter(e => e.filePath === filePath && e.message.indexOf(oldName) > -1);
 
         let edits = new Array<vsrv.TextEdit>();
+
+        // console.log("errors in : " + uri);
+        // console.dir(loadResponse.errors);
 
         if (oldNameErrors.length > 0) {
             edits = oldNameErrors
@@ -145,10 +152,11 @@ export default function (documents: vsrv.TextDocuments, haskeroService: HaskeroS
                 });
 
             await saveNewTextForDocument(document, newText);
+
             edits.push(...await fixModuleFile(uri, uriDefinitionModule, oldName, newName));
         }
         else {
-            //console.log("------------");
+            // console.log("------------");
             //console.log(newText);
         }
         return edits;
@@ -186,7 +194,7 @@ export default function (documents: vsrv.TextDocuments, haskeroService: HaskeroS
     function createTmpFile(content: string): Promise<string> {
         return new Promise((resolve, reject) => {
             tmp.file({ prefix: 'haskero-', postfix: '.hs' }, (err, path, fd, cleanUpFct) => {
-                console.log(path);
+                DebugUtils.instance.log("Creating tmp file for the renaming process: " + path);
                 let tmpStream = fs.createWriteStream(path);
                 tmpStream.on('finish', () => {
                     resolve(path);
