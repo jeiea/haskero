@@ -13,11 +13,16 @@ Each IDE feature like code completion, goto definition, and so on, triggers requ
 
 ## Language server architecture
 
-`server.ts` recieves requests from VSCode and maps it to commands to the intero child process.
-
-`commands` folder stores all implemented commands.
-
-`interoProxy.ts` handles the communication protocol between the language server and intero. It provides an async interface to send command requests and recieve command responses.
+- `codeActions` folder stores all implemented langauge server code action, ie the little bulb next to a line in VSCode (like topLevelSignature**CA** which add a signature to a top level function)
+- `commands` folder stores all implemented language server commands (like topLevelSignature which add a signature to a top level function)
+- `debug` folder stores all debug utilities
+- `features` folder stores all implemented language server features, like renaming, goto deifinition, etc.
+- `intero` folder stores all intero related source code
+- `intero/commands` folder stores all implemented intero commands (like :type-at, :loc-at, etc.)
+- `intero/interoProxy.ts` handles the communication protocol between the language server and intero. It provides an async interface to send command requests and recieve command responses.
+- `utils` folder stores all utilities like conversions between uri and path, regexp, etc.
+- `haskeroService.ts` glues together all implemented features
+- `server.ts` recieves requests from VSCode and maps it to commands to the intero child process.
 
 ## Technical notes
 
