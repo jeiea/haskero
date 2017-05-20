@@ -5,11 +5,12 @@ Haskero is a full featured haskell IDE using [Intero backend](https://github.com
 
 * Code Highlight and snippets (automatic dependency on [Haskell Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=justusadam.language-haskell))
 * Compilation errors and warnings
-* Insert type signature
+* Insert type signature + yellow bulb help
 * Goto definition
 * Find all references
 * Identifiers types on hover
 * Code completion
+* Rename identifier
 * Switching cabal targets
 * Hoogle integration (automatic dependency on [Hoogle vscode](https://marketplace.visualstudio.com/items?itemName=jcanero.hoogle-vscode))
 
@@ -73,6 +74,8 @@ keybindings.json (File > Preferences > Keyboard Shortcuts)
 }
 ```
 
+An automatique code action is available for inserting types above. Set the cursor on the function definition, a small bulb appears. You can click to see all available actions.
+
 ### Switching cabal targers
 
 Support for chosing the cabal targets used in the IDE. Thereby, intellisense is working on test projects.
@@ -84,6 +87,14 @@ To change the current target, use the status bar button "Default targets" at the
 Automatic completion of imports, variables, types, etc. with type and module information.
 
 ![Auto completion](https://gitlab.com/vannnns/haskero/raw/master/client/media/autocompletion.gif "Auto completion")
+
+### Rename
+
+Rename function identifier in the module and definition site.
+
+**Rename doesn't work on Types, Class or data.**
+
+To rename, press `F2`, or right click / rename.
 
 ## Settings
 
