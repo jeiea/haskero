@@ -5,5 +5,10 @@
         "**/.gitignore": false,
         "**/.travis.yml": true,
         "**/.stack-work": true
+    },
+    "workbench.experimental.colorCustomizations": {
+        "statusBarBackground": "#005f5f",
+        "statusBarNoFolderBackground": "#005f5f",
+        "statusBarDebuggingBackground": "#005f5f"
     }
 }
