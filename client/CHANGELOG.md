@@ -1,6 +1,7 @@
 ## Release 1.3.0
 
- - **new feature**: Add codeAction support. A little bulbe is displayed to add top-level type signature automaticaly. (issue #28)
+ - **new feature**: Rename *identifiers* (only identifiers, not Types/Class/data) in the current module and in the definition module. (issue #45)
+ - **new feature**: Add codeAction support. A little bulb is displayed to add top-level type signature automaticaly. (issue #28)
 
 ## Release 1.2.0
 
