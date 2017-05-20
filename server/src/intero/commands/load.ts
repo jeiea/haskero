@@ -43,7 +43,7 @@ export class LoadResponse implements InteroResponse {
         this._rawerr = rawerr;
         if (parseDiagnostics) {
             //find errors first
-            const regErrors = /([^\r\n]+):(\d+):(\d+):(?: error:)?\r?\n([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
+            const regErrors = /([^\r\n]+):(\d+):(\d+):(?: error:)?\r?\n?([\s\S]+?)(?:\r?\n\r?\n|\r?\n[\S]+|$)/gi;
             let matchErrors = this.removeDuplicates(allMatchs(rawerr, regErrors));
             this.errors = matchErrors.map(this.matchTo(InteroDiagnosticKind.error));
 
