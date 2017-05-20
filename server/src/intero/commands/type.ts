@@ -19,7 +19,7 @@ export class TypeResponse implements InteroResponse {
     public readonly identifierExists: boolean;
 
     public constructor(public readonly rawout: string, public readonly rawerr: string) {
-        if (rawerr.indexOf("Not in scope") > -1) {
+        if (rawerr.indexOf("ot in scope") > -1) {
             this.identifierExists = false;
             this.type = null;
         }
