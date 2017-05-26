@@ -47,13 +47,11 @@ export class CompleteAtRequest implements InteroRequest<CompleteAtResponse> {
     public constructor(private uri: string, private range: InteroRange, private text: string) {
     }
 
-    public send(interoProxy: InteroProxy): Promise<CompleteAtResponse> {
+    public async send(interoProxy: InteroProxy): Promise<CompleteAtResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         const req = `:complete-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.text}`;
-        return interoProxy.sendRawRequest(req)
-            .then((response) => {
-                return Promise.resolve(new CompleteAtResponse(response.rawout, response.rawerr));
-            });
+        let response = await interoProxy.sendRawRequest(req)
+        return new CompleteAtResponse(response.rawout, response.rawerr);
     }
 }

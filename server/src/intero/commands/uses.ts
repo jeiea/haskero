@@ -50,18 +50,14 @@ export class UsesRequest implements InteroRequest<UsesResponse> {
     public constructor(private uri: string, private range: InteroRange, private identifier: string) {
     }
 
-    public send(interoProxy: InteroProxy): Promise<UsesResponse> {
+    public async send(interoProxy: InteroProxy): Promise<UsesResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //load the file first, otherwise it won't match the last version on disk
         const load = `:l ${escapedFilePath}`;
-        const req = `:uses ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
-        return interoProxy.sendRawRequest(load)
-            .then((response) => {
-                return interoProxy.sendRawRequest(req);
-            })
-            .then((response) => {
-                return Promise.resolve(new UsesResponse(response.rawout, response.rawerr));
-            });
+        const uses = `:uses ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
+        let loadResp = await interoProxy.sendRawRequest(load);
+        let usesResp = await interoProxy.sendRawRequest(uses);
+        return new UsesResponse(usesResp.rawout, usesResp.rawerr);
     }
 }

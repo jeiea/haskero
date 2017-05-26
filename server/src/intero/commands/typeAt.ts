@@ -34,17 +34,15 @@ export class TypeAtRequest implements InteroRequest<TypeAtResponse> {
     public constructor(private uri: string, private range: InteroRange, private identifier: string, private infoKind: TypeInfoKind) {
     }
 
-    public send(interoProxy: InteroProxy): Promise<TypeAtResponse> {
+    public async send(interoProxy: InteroProxy): Promise<TypeAtResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //if we add the identifier to the resquest, intero reponds the more genereic type signature possible
         //if we dont add the identifier to the request, interao responds the more specific type signature, as used in the specific text span
         const id = this.infoKind === TypeInfoKind.Generic ? ' ' + this.identifier : '';
         const req = `:type-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol}${id}`;
-        return interoProxy.sendRawRequest(req)
-            .then((response) => {
-                return Promise.resolve(new TypeAtResponse(response.rawout, response.rawerr, this.infoKind, this.identifier));
-            });
+        let response = await interoProxy.sendRawRequest(req);
+        return new TypeAtResponse(response.rawout, response.rawerr, this.infoKind, this.identifier);
     }
 }
 

@@ -27,11 +27,9 @@ export class ShowModulesRequest implements InteroRequest<ShowModulesResponse> {
     public constructor() {
     }
 
-    public send(interoProxy: InteroProxy): Promise<ShowModulesResponse> {
+    public async send(interoProxy: InteroProxy): Promise<ShowModulesResponse> {
         const req = ':show modules';
-        return interoProxy.sendRawRequest(req)
-            .then((response) => {
-                return Promise.resolve(new ShowModulesResponse(response.rawout, response.rawerr));
-            });
+        let response = await interoProxy.sendRawRequest(req)
+        return new ShowModulesResponse(response.rawout, response.rawerr);
     }
 }

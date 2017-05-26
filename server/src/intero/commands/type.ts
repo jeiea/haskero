@@ -38,11 +38,9 @@ export class TypeRequest implements InteroRequest<TypeResponse> {
     public constructor(private identifier: string) {
     }
 
-    public send(interoProxy: InteroProxy): Promise<TypeResponse> {
+    public async send(interoProxy: InteroProxy): Promise<TypeResponse> {
         const req = `:type ${this.identifier}`;
-        return interoProxy.sendRawRequest(req)
-            .then((response) => {
-                return Promise.resolve(new TypeResponse(response.rawout, response.rawerr));
-            });
+        let response = await interoProxy.sendRawRequest(req);
+        return new TypeResponse(response.rawout, response.rawerr);
     }
 }

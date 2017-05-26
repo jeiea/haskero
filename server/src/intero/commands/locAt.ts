@@ -64,19 +64,15 @@ export class LocAtRequest implements InteroRequest<InteroResponse> {
     public constructor(private uri: string, private range: InteroRange, private identifier: string) {
     }
 
-    public send(interoProxy: InteroProxy): Promise<LocAtResponse> {
+    public async send(interoProxy: InteroProxy): Promise<LocAtResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //load the file first, otherwise it won't match the last version on disk
         //TODO replace :l with :module +Module
         const load = `:l ${escapedFilePath}`;
-        const req = `:loc-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
-        return interoProxy.sendRawRequest(load)
-            .then((response) => {
-                return interoProxy.sendRawRequest(req);
-            })
-            .then((response) => {
-                return Promise.resolve(new LocAtResponse(response.rawout, response.rawerr));
-            });
+        const locat = `:loc-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
+        let reponse = await interoProxy.sendRawRequest(load)
+        let locAtResp = await interoProxy.sendRawRequest(locat);
+        return new LocAtResponse(locAtResp.rawout, locAtResp.rawerr);
     }
 }

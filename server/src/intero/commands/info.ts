@@ -49,11 +49,9 @@ export class InfoRequest implements InteroRequest<InfoResponse> {
     public constructor(private identifier: string) {
     }
 
-    public send(interoProxy: InteroProxy): Promise<InfoResponse> {
+    public async send(interoProxy: InteroProxy): Promise<InfoResponse> {
         const req = `:info ${this.identifier}`;
-        return interoProxy.sendRawRequest(req)
-            .then((response) => {
-                return Promise.resolve(new InfoResponse(response.rawout, response.rawerr));
-            });
+        let response = await interoProxy.sendRawRequest(req)
+        return new InfoResponse(response.rawout, response.rawerr);
     }
 }

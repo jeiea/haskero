@@ -65,19 +65,15 @@ export class CompleteRequest implements InteroRequest<CompleteResponse> {
         this.text = text.replace(/[\r\n]/g, '');
     }
 
-    public send(interoProxy: InteroProxy): Promise<CompleteResponse> {
+    public async send(interoProxy: InteroProxy): Promise<CompleteResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //send a load request first otherwise :complete is not executed on the right module (it's executed
         //on the current module)
         const loadRequest = new LoadRequest([this.uri], false);
         const req = `:complete repl "${this.text}"`;
-        return loadRequest.send(interoProxy)
-            .then((loadResponse) => {
-                return interoProxy.sendRawRequest(req);
-            })
-            .then((response) => {
-                return Promise.resolve(new CompleteResponse(response.rawout, response.rawerr));
-            });
+        let loadResponse = await loadRequest.send(interoProxy);
+        let response = await interoProxy.sendRawRequest(req);
+        return new CompleteResponse(response.rawout, response.rawerr);
     }
 }

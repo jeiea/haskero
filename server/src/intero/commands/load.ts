@@ -81,14 +81,12 @@ export class LoadRequest implements InteroRequest<LoadResponse> {
 
     }
 
-    public send(interoProxy: InteroProxy): Promise<LoadResponse> {
+    public async send(interoProxy: InteroProxy): Promise<LoadResponse> {
 
         const filePaths = this.uris.map(UriUtils.toFilePath);
         const escapedFilePaths = filePaths.map(InteroUtils.escapeFilePath);
         const load = `:l ${escapedFilePaths.join(' ')}`;
-        return interoProxy.sendRawRequest(load)
-            .then((response: RawResponse) => {
-                return Promise.resolve(new LoadResponse(response.rawout, response.rawerr, this.parseDiagnostics));
-            });
+        let response = await interoProxy.sendRawRequest(load)
+        return new LoadResponse(response.rawout, response.rawerr, this.parseDiagnostics);
     }
 }
