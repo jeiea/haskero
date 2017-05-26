@@ -54,98 +54,80 @@ export class CompletionUtils {
         }
     }
 
-    public static getImportCompletionItems(interoProxy: InteroProxy, textDocument: vsrv.TextDocument, position: vsrv.Position, line: string): Promise<vsrv.CompletionItem[]> {
+    public static async getImportCompletionItems(interoProxy: InteroProxy, textDocument: vsrv.TextDocument, position: vsrv.Position, line: string): Promise<vsrv.CompletionItem[]> {
         //if the cursor is after a " as " text, it means that we are in the 'name' area of an import, so we disable module autocompletion
         if (!DocumentUtils.leftLineContains(textDocument, position, " as ")) {
             let { word, range } = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
             const lineToComplete = line.substring(0, position.character);
             const completeRequest = new CompleteRequest(textDocument.uri, lineToComplete);
 
-            return completeRequest
-                .send(interoProxy)
-                .then((response: CompleteResponse) => {
-                    return response.completions.map(completion => {
-                        return {
-                            label: CompletionUtils.truncResp(word, completion),
-                            kind: vsrv.CompletionItemKind.Module
-                        };
-                    });
-                });
+            let response = await completeRequest.send(interoProxy);
+            return response.completions.map(completion => {
+                return {
+                    label: CompletionUtils.truncResp(word, completion),
+                    kind: vsrv.CompletionItemKind.Module
+                };
+            });
         }
         else {
-            return Promise.resolve([]);
+            return [];
         }
-
     }
 
-    public static getDefaultCompletionItems(interoProxy: InteroProxy, textDocument: vsrv.TextDocument, position: vsrv.Position, maxInfoRequests: number): Promise<vsrv.CompletionItem[]> {
+    public static async getDefaultCompletionItems(interoProxy: InteroProxy, textDocument: vsrv.TextDocument, position: vsrv.Position, maxInfoRequests: number): Promise<vsrv.CompletionItem[]> {
         let { word, range } = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
         const completeAtRequest = new CompleteAtRequest(textDocument.uri, DocumentUtils.toInteroRange(range), word);
 
         //First, get all completion texts
-        return completeAtRequest
-            .send(interoProxy)
-            .then((response: CompleteAtResponse) => {
-                let completions = response.completions;
-                if (completions.length < 1) {
-                    const completeRequest = new CompleteRequest(textDocument.uri, word);
-                    return completeRequest
-                        .send(interoProxy)
-                        .then((response: CompleteResponse) => {
-                            return Promise.resolve(response.completions);
-                        });
+        let response = await completeAtRequest.send(interoProxy);
+        let completions = response.completions;
+
+        if (completions.length < 1) {
+            const completeRequest = new CompleteRequest(textDocument.uri, word);
+            let completeResp = await completeRequest.send(interoProxy);
+            completions = completeResp.completions;
+        }
+        //Then for each text, get its type informations
+
+        return Promise.all(
+            completions.map(async (completion, idx): Promise<vsrv.CompletionItem> => {
+                if (idx < maxInfoRequests) {
+                    let infoReq = new InfoRequest(completion);
+                    let infoResponse = await infoReq.send(interoProxy);
+
+                    var identifier = CompletionUtils.truncResp(word, completion);
+                    return {
+                        label: identifier,
+                        kind: CompletionUtils.toCompletionType(infoResponse.kind),
+                        detail: infoResponse.detail,
+                        documentation: infoResponse.documentation,
+                        data: completion
+                    };
                 }
                 else {
-                    return Promise.resolve(completions);
+                    return {
+                        label: completion,
+                        kind: vsrv.CompletionItemKind.Function,
+                        data: null
+                    };
                 }
             })
-            //Then for each text, get its type informations
-            .then(completions => {
-                return Promise.all(
-                    completions.map((completion, idx): Promise<vsrv.CompletionItem> => {
-                        if (idx < maxInfoRequests) {
-                            let infoReq = new InfoRequest(completion);
-                            return infoReq
-                                .send(interoProxy)
-                                .then((infoResponse): Promise<vsrv.CompletionItem> => {
-                                    var identifier = CompletionUtils.truncResp(word, completion);
-                                    return Promise.resolve({
-                                        label: identifier,
-                                        kind: CompletionUtils.toCompletionType(infoResponse.kind),
-                                        detail: infoResponse.detail,
-                                        documentation: infoResponse.documentation,
-                                        data: completion
-                                    });
-                                });
-                        }
-                        else {
-                            return Promise.resolve({
-                                label: completion,
-                                kind: vsrv.CompletionItemKind.Function,
-                                data: null
-                            });
-                        }
-                    })
-                );
-            });
+        );
     }
 
-    public static getResolveInfos(interoProxy: InteroProxy, item: vsrv.CompletionItem): Promise<vsrv.CompletionItem> {
+    public static async getResolveInfos(interoProxy: InteroProxy, item: vsrv.CompletionItem): Promise<vsrv.CompletionItem> {
         //When the global getCompletionItems didn't get details (because it reachs the maxAutoCompletionDetails limit)
         //it returns data = null and label = completion text
         //in this particular case only, we still try to get the details for the completion item
         if (!item.data && item.label) {
             const infoRequest = new InfoRequest(item.label);
-            return infoRequest
-                .send(interoProxy)
-                .then((infoResponse: InfoResponse) => {
-                    return {
-                        label: item.label,
-                        kind: CompletionUtils.toCompletionType(infoResponse.kind),
-                        detail: infoResponse.detail,
-                        documentation: infoResponse.documentation
-                    };
-                });
+            let infoResponse = await infoRequest.send(interoProxy);
+            return {
+                label: item.label,
+                kind: CompletionUtils.toCompletionType(infoResponse.kind),
+                detail: infoResponse.detail,
+                documentation: infoResponse.documentation
+            };
         }
         else {
             return null;

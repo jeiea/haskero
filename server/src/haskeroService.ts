@@ -1,3 +1,5 @@
+'use strict';
+
 import * as vsrv from 'vscode-languageserver';
 import * as uuid from 'node-uuid'
 import * as tmp from 'tmp'
@@ -57,24 +59,25 @@ export class HaskeroService {
         return request.send(this.interoProxy);
     }
 
-    public initialize(connection: vsrv.IConnection, settings: HaskeroSettings, targets: string[]): Promise<vsrv.InitializeResult> {
+    public async initialize(connection: vsrv.IConnection, settings: HaskeroSettings, targets: string[]): Promise<vsrv.InitializeResult> {
         connection.console.log("Initializing Haskero...");
         this.settings = settings;
         this.connection = connection;
         this.features = new Features(connection);
         this.currentTargets = targets;
 
-        return this.startInteroAndHandleErrors(targets)
-            .then(() => {
-                //server capabilities are sent later with a client/registerCapability request (just send the document sync capability here)
-                //see onInitialized method
-                this.initializationOk = true;
-                return Promise.resolve(serverCapabilities);
-            })
-            .catch(reason => {
-                this.initializationOk = false;
-                return Promise.reject(reason);
-            })
+        try {
+            await this.startInteroAndHandleErrors(targets);
+
+            //server capabilities are sent later with a client/registerCapability request (just send the document sync capability here)
+            //see onInitialized method
+            this.initializationOk = true;
+            return serverCapabilities;
+        }
+        catch (e) {
+            this.initializationOk = false;
+            throw e;
+        }
     }
 
     public onInitialized() {
@@ -87,22 +90,24 @@ export class HaskeroService {
         }
     }
 
-    private startInteroAndHandleErrors(targets: string[]): Promise<void> {
+    private async startInteroAndHandleErrors(targets: string[]): Promise<void> {
         // Launch the intero process
-        return this.spawnIntero(targets)
-            .then((resp): Promise<void> => {
-                return Promise.resolve();
-            })
-            .catch(reason => {
-                return Promise.reject<vsrv.InitializeError>({
-                    code: 1,
-                    message: reason,
-                    data: { retry: false }
-                });
+        try {
+            await this.spawnIntero(targets);
+            return;
+        }
+        catch (reason) {
+            throw <vsrv.InitializeError>({
+                code: 1,
+                message: reason,
+                retry: false,
+                data: { retry: false }
             });
+        }
     }
 
-    public changeTargets(targets: string[]): Promise<string> {
+
+    public async changeTargets(targets: string[]): Promise<string> {
         // It seems that we have to restart ghci to set new targets,
         // would be nice if there were a ghci command for it.
 
@@ -116,20 +121,20 @@ export class HaskeroService {
         }
 
         this.connection.console.log('Restarting intero with targets: ' + prettyString(targets));
-        return this.startInteroAndHandleErrors(targets)
-            .then((): Promise<string> => {
-                this.connection.console.log("Restart done.");
-                this.features.registerAllFeatures();
-                this.currentTargets = targets;
-                return Promise.resolve('Intero restarted with targets: ' + prettyString(targets));
-            })
-            .catch(reason => {
-                this.features.unregisterAllFeatures();
-                return Promise.reject(reason.message);
-            });
+        try {
+            await this.startInteroAndHandleErrors(targets);
+            this.connection.console.log("Restart done.");
+            this.features.registerAllFeatures();
+            this.currentTargets = targets;
+            return 'Intero restarted with targets: ' + prettyString(targets);
+        }
+        catch (reason) {
+            this.features.unregisterAllFeatures();
+            throw reason.message;
+        }
     }
 
-    public changeSettings(newSettings: HaskeroSettings): Promise<string> {
+    public async changeSettings(newSettings: HaskeroSettings): Promise<string> {
         //if ghci options have changed we need to restart intero
         if (this.settings.intero.ignoreDotGhci != newSettings.intero.ignoreDotGhci ||
             this.settings.intero.stackPath != newSettings.intero.stackPath ||
@@ -143,50 +148,44 @@ export class HaskeroService {
 
             this.settings = newSettings;
             //chaging targets restarts intero
-            return this.changeTargets(this.currentTargets);
+            return await this.changeTargets(this.currentTargets);
         }
         else {
             this.settings = newSettings;
-            return Promise.resolve("Settings updated");
+            return "Settings updated";
         }
     }
 
-    public getDefinitionLocation(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location> {
+    public async getDefinitionLocation(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location> {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         const locAtRequest = new LocAtRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
-        return locAtRequest
-            .send(this.interoProxy)
-            .then((response): Promise<vsrv.Location> => {
-                if (response.isOk) {
-                    let fileUri = UriUtils.toUri(response.filePath);
-                    let loc = vsrv.Location.create(fileUri, DocumentUtils.toVSCodeRange(response.range));
-                    return Promise.resolve(loc);
-                }
-                else {
-                    return Promise.resolve(null);
-                }
-            });
+        let response = await locAtRequest.send(this.interoProxy);
+        if (response.isOk) {
+            let fileUri = UriUtils.toUri(response.filePath);
+            let loc = vsrv.Location.create(fileUri, DocumentUtils.toVSCodeRange(response.range));
+            return loc;
+        }
+        else {
+            return null;
+        }
     }
 
-    public getHoverInformation(textDocument: vsrv.TextDocument, position: vsrv.Position, infoKind: TypeInfoKind): Promise<vsrv.Hover> {
+    public async getHoverInformation(textDocument: vsrv.TextDocument, position: vsrv.Position, infoKind: TypeInfoKind): Promise<vsrv.Hover> {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         if (!wordRange.isEmpty) {
             const typeAtRequest = new TypeAtRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word, infoKind);
-            return typeAtRequest
-                .send(this.interoProxy)
-                .then((response): Promise<vsrv.Hover> => {
-                    let typeInfo: vsrv.MarkedString = { language: 'haskell', value: response.type };
-                    let hover: vsrv.Hover = { contents: typeInfo };
-                    if (typeInfo.value !== null && typeInfo.value !== "") {
-                        return Promise.resolve(hover);
-                    }
-                    else {
-                        return Promise.resolve(null);
-                    }
-                });
+            let response = await typeAtRequest.send(this.interoProxy);
+            let typeInfo: vsrv.MarkedString = { language: 'haskell', value: response.type };
+            let hover: vsrv.Hover = { contents: typeInfo };
+            if (typeInfo.value !== null && typeInfo.value !== "") {
+                return hover;
+            }
+            else {
+                return null;
+            }
         }
         else {
-            return Promise.resolve(null);
+            return null;
         }
     }
 
@@ -204,27 +203,22 @@ export class HaskeroService {
         return CompletionUtils.getResolveInfos(this.interoProxy, item);
     }
 
-    public getReferencesLocations(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location[]> {
+    public async getReferencesLocations(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location[]> {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         const usesRequest = new UsesRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
-        return usesRequest
-            .send(this.interoProxy)
-            .then((response): Promise<vsrv.Location[]> => {
-                if (response.isOk) {
-                    return Promise.resolve(
-                        response.locations.map((interoLoc) => {
-                            let fileUri = UriUtils.toUri(interoLoc.file);
-                            return vsrv.Location.create(fileUri, DocumentUtils.toVSCodeRange(interoLoc.range));
-                        })
-                    );
-                }
-                else {
-                    return Promise.resolve(null);
-                }
+        let response = await usesRequest.send(this.interoProxy);
+        if (response.isOk) {
+            return response.locations.map((interoLoc) => {
+                let fileUri = UriUtils.toUri(interoLoc.file);
+                return vsrv.Location.create(fileUri, DocumentUtils.toVSCodeRange(interoLoc.range));
             });
+        }
+        else {
+            return null;
+        }
     }
 
-    public validateTextDocument(connection: vsrv.IConnection, textDocument: vsrv.TextDocumentIdentifier): Promise<void> {
+    public async validateTextDocument(connection: vsrv.IConnection, textDocument: vsrv.TextDocumentIdentifier): Promise<void> {
         let problems = 0;
         DebugUtils.instance.connectionLog("validate : " + textDocument.uri);
 
@@ -233,17 +227,14 @@ export class HaskeroService {
             const reloadRequest = new ReloadRequest(textDocument.uri);
             DebugUtils.instance.connectionLog(textDocument.uri);
 
-            return reloadRequest
-                .send(this.interoProxy)
-                .then((response: ReloadResponse) => {
-                    this.sendDocumentDiagnostics(connection, response.diagnostics.filter(d => {
-                        return d.filePath.toLowerCase() === UriUtils.toFilePath(textDocument.uri).toLowerCase();
-                    }), textDocument.uri);
-                    return Promise.resolve();
-                });
+            let response = await reloadRequest.send(this.interoProxy);
+            this.sendDocumentDiagnostics(connection, response.diagnostics.filter(d => {
+                return d.filePath.toLowerCase() === UriUtils.toFilePath(textDocument.uri).toLowerCase();
+            }), textDocument.uri);
+            return;
         }
         else {
-            return Promise.resolve();
+            return;
         }
     }
 
