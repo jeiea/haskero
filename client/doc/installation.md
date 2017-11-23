@@ -52,5 +52,5 @@ Intero is the backend used by Haskero to retrieve haskell types informations, lo
 
 ## 6 - Launch vscode
 
-Here we go, all dependencies are up and we can launch vscdoe in the project folder
+Here we go, all dependencies are up and we can launch vscode in the project folder
 > `code .`
