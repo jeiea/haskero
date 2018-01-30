@@ -55,7 +55,7 @@ Haskero can insert any identifier type one live above.
 taxe m =
   foldl calculate (0,m) (bounds2 0 bounds)
 ```
-with `ctrl+shift+p > haskell: Instert Type` it becomes
+with `ctrl+shift+p > haskell: Insert Type` it becomes
 
 ```haskell
 taxe :: Double -> (Double, Double)
