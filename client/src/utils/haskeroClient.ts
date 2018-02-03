@@ -34,7 +34,7 @@ export class HaskeroClient implements vscode.Disposable {
     private disposable: vscode.Disposable;
 
     // The debug options for the server
-    private readonly debugOptions = { execArgv: ["--nolazy", "--debug=6004"] };
+    private readonly debugOptions = { execArgv: ["--nolazy", "--inspect=6004"] };
 
     // If the extension is launched in debug mode then the debug server options are used
     // Otherwise the run options are used
@@ -63,11 +63,11 @@ export class HaskeroClient implements vscode.Disposable {
 
     constructor(serverModule: string, private readonly debug: boolean) {
         // The debug options for the server
-        let debugOptions = { execArgv: ["--nolazy", "--debug=6004"] };
+        let debugOptions = { execArgv: ["--nolazy", "--inspect=6004"] };
 
         this.serverOptions = {
             run: { module: serverModule, transport: vscli.TransportKind.ipc },
-            debug: { module: serverModule, transport: vscli.TransportKind.ipc } //, options: debugOptions }
+            debug: { module: serverModule, transport: vscli.TransportKind.ipc , options: debugOptions }
             //remove options here otherwise we experience node socket error msg
         }
     }
