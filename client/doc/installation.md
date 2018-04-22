@@ -47,7 +47,8 @@ If you want to build a specific target you can specify its name in the build com
 
 ## 5 - Install intero
 
-Intero is the backend used by Haskero to retrieve haskell types informations, locations, etc.
+Intero is the backend used by Haskero to retrieve haskell types informations, locations, etc.  
+(Make sure you have the `libtinfo-dev` (Ubuntu/Debian) / `ncurses-devel` (Fedora) package installed beforehand.)
 > `stack build intero`
 
 ## 6 - Launch vscode
