@@ -47,6 +47,7 @@ export class InteroAgent implements Disposable {
     private readonly stdoutReader: DelimitReader;
     private readonly stderrReader: DelimitReader;
     private previous = Promise.resolve(<InteroResponse>{});
+    private errorMsg: string;
 
     public constructor(private interoProcess: child_process.ChildProcess) {
         const intero = this.interoProcess;
@@ -85,14 +86,14 @@ export class InteroAgent implements Disposable {
     }
 
     private async sendStatement(expr: string): Promise<InteroResponse> {
+        if (this.errorMsg) {
+            throw this.errorMsg;
+        }
         await this.previous;
         this.interoProcess.stdin.write(expr);
-        console.log(`sendStatement: ${expr}`);
         try {
             const rawout = await this.stdoutReader.take();
-            console.log(`rawout: ${rawout}`);
             const rawerr = await this.stderrReader.take();
-            console.log(`rawerr: ${rawerr}`);
             return { rawout, rawerr, isOk: true };
         }
         catch (e) {
@@ -101,16 +102,16 @@ export class InteroAgent implements Disposable {
     }
 
     private onExit(code: number) {
-        let errorMsg = `Process exited with code ${code}\r\n\r\n`
+        this.errorMsg = `Process exited with code ${code}\r\n\r\n`
             + `stdout:\r\n${this.stdoutReader.buffer}\r\n\r\n`
             + `stderr:\r\n${this.stderrReader.buffer}\r\n`;
-        console.log(errorMsg);
+        console.log(this.errorMsg);
     }
 
-    private onError(code: any) {
-        let errorMsg = `Failed to start intero instance: ${code}\r\n\r\n`
+    private onError(code: Error) {
+        this.errorMsg = `Failed to start intero instance: ${code.message}\r\n\r\n`
             + `stdout:\r\n${this.stdoutReader.buffer}\r\n\r\n`
             + `stderr:\r\n${this.stderrReader.buffer}\r\n`;
-        console.log(errorMsg);
+        console.log(this.errorMsg);
     }
 }

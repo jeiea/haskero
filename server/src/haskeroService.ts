@@ -61,7 +61,6 @@ export class HaskeroService {
     }
 
     public async initialize(connection: vsrv.IConnection, settings: HaskeroSettings, targets: string[]): Promise<vsrv.InitializeResult> {
-        connection.console.log("Initializing Haskero...");
         this.settings = settings;
         this.connection = connection;
         this.features = new Features(connection);
