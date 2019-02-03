@@ -9,9 +9,7 @@
 		"server": true
 	},
 	"typescript.tsdk": "./node_modules/typescript/lib",
-	"workbench.experimental.colorCustomizations": {
-		"statusBarBackground": "#005f5f",
-		"statusBarNoFolderBackground": "#005f5f",
-		"statusBarDebuggingBackground": "#005f5f"
-	} // we want to use the TS server from our node_modules folder to control its version
+	"editor.codeActionsOnSave": {
+		"source.organizeImports": true
+	}
 }
