@@ -23,6 +23,7 @@ import { CompletionUtils } from './completionUtils'
 import { HaskeroSettings, InteroSettings } from './haskeroSettings'
 import { InteroRequest } from "./intero/commands/interoRequest";
 import { InteroResponse } from "./intero/commands/interoResponse";
+import { platform } from 'os';
 
 const serverCapabilities: vsrv.InitializeResult = {
     capabilities: {
@@ -275,7 +276,13 @@ export class HaskeroService {
             this.interoProxy.kill();
         }
 
-        const intero = child_process.spawn(stackPath, allOptions);
+        let intero;
+        if (process.platform === 'win32') {
+            let options = allOptions.map(x => x.includes(' ') ? `"${x}"` : x);
+            intero = child_process.exec(`chcp 65001 & "${stackPath}" ${options.join(' ')} `);
+        } else {
+            intero = child_process.spawn(stackPath, allOptions);
+        }
         this.interoProxy = new InteroProxy(intero);
         return new Promise((resolve, reject) => {
             setTimeout(() => {

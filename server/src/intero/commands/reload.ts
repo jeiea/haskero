@@ -78,9 +78,9 @@ export class ReloadRequest implements InteroRequest<ReloadResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         const load = `:l ${escapedFilePath}`;
-        const reloadRequest = ':r';
         let loadResp = await interoProxy.sendRawRequest(load);
-        let reloadResp = await interoProxy.sendRawRequest(reloadRequest);
-        return new ReloadResponse(reloadResp.rawout, reloadResp.rawerr);
+        // const reloadRequest = ':r';
+        // let reloadResp = await interoProxy.sendRawRequest(reloadRequest);
+        return new ReloadResponse(loadResp.rawout, loadResp.rawerr);
     }
 }

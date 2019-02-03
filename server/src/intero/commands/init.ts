@@ -76,7 +76,8 @@ export class InitRequest implements InteroRequest<InitResponse> {
     }
 
     public async send(interoProxy: InteroProxy): Promise<InitResponse> {
-        const changePromptRequest = ':set prompt ' + InteroProxy.EOTInteroCmd;
+        // const changePromptRequest = ':set prompt ' + InteroProxy.EOTInteroCmd;
+        const changePromptRequest = '\n';
         let response = await interoProxy.sendRawRequest(changePromptRequest)
         return new InitResponse(response.rawout, response.rawerr);
     }
