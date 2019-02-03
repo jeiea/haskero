@@ -1,6 +1,6 @@
 'use strict';
 
-import { InteroProxy } from '../interoProxy'
+import { InteroAgent } from '../interoAgent'
 import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
 import { LoadRequest, LoadResponse } from './load'
@@ -36,8 +36,7 @@ export class CompleteResponse implements InteroResponse {
     public constructor(rawout: string, rawerr: string) {
         this._rawout = rawout;
         this._rawerr = rawerr;
-        this._completions = InteroUtils
-            .normalizeRawResponse(rawout)
+        this._completions = rawout
             .split(/\r?\n/)
             .slice(1)
             .reduce(this.reducer, [])
@@ -65,15 +64,15 @@ export class CompleteRequest implements InteroRequest<CompleteResponse> {
         this.text = text.replace(/[\r\n]/g, '');
     }
 
-    public async send(interoProxy: InteroProxy): Promise<CompleteResponse> {
+    public async send(interoAgent: InteroAgent): Promise<CompleteResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //send a load request first otherwise :complete is not executed on the right module (it's executed
         //on the current module)
         const loadRequest = new LoadRequest([this.uri], false);
         const req = `:complete repl "${this.text}"`;
-        let loadResponse = await loadRequest.send(interoProxy);
-        let response = await interoProxy.sendRawRequest(req);
+        let loadResponse = await loadRequest.send(interoAgent);
+        let response = await interoAgent.evaluate(req);
         return new CompleteResponse(response.rawout, response.rawerr);
     }
 }

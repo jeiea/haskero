@@ -1,6 +1,6 @@
 'use strict';
 
-import { InteroProxy } from '../interoProxy'
+import { InteroAgent } from '../interoAgent'
 import { InteroResponse } from './interoResponse'
 
 /**
@@ -11,5 +11,5 @@ export interface InteroRequest<T extends InteroResponse> {
     /**
      * Sends a request to the given proxy
      */
-    send(interoProxy: InteroProxy): Promise<T>;
+    send(interoAgent: InteroAgent): Promise<T>;
 }

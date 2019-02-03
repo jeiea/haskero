@@ -1,6 +1,6 @@
 'use strict';
 
-import { InteroProxy } from '../interoProxy'
+import { InteroAgent } from '../interoAgent'
 import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
 import { InteroRange } from '../interoRange'
@@ -64,15 +64,15 @@ export class LocAtRequest implements InteroRequest<InteroResponse> {
     public constructor(private uri: string, private range: InteroRange, private identifier: string) {
     }
 
-    public async send(interoProxy: InteroProxy): Promise<LocAtResponse> {
+    public async send(interoAgent: InteroAgent): Promise<LocAtResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //load the file first, otherwise it won't match the last version on disk
         //TODO replace :l with :module +Module
         const load = `:l ${escapedFilePath}`;
         const locat = `:loc-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
-        let reponse = await interoProxy.sendRawRequest(load)
-        let locAtResp = await interoProxy.sendRawRequest(locat);
+        let reponse = await interoAgent.evaluate(load)
+        let locAtResp = await interoAgent.evaluate(locat);
         return new LocAtResponse(locAtResp.rawout, locAtResp.rawerr);
     }
 }

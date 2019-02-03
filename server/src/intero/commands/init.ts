@@ -1,6 +1,6 @@
 'use strict';
 
-import { InteroProxy, RawResponse } from '../interoProxy'
+import { InteroAgent } from '../interoAgent'
 import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
 import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
@@ -75,10 +75,10 @@ export class InitRequest implements InteroRequest<InitResponse> {
     public constructor() {
     }
 
-    public async send(interoProxy: InteroProxy): Promise<InitResponse> {
-        // const changePromptRequest = ':set prompt ' + InteroProxy.EOTInteroCmd;
+    public async send(interoAgent: InteroAgent): Promise<InitResponse> {
+        // const changePromptRequest = ':set prompt ' + InteroAgent.EOTInteroCmd;
         const changePromptRequest = '\n';
-        let response = await interoProxy.sendRawRequest(changePromptRequest)
+        let response = await interoAgent.evaluate(changePromptRequest)
         return new InitResponse(response.rawout, response.rawerr);
     }
 }

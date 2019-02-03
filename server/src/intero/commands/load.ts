@@ -1,6 +1,6 @@
 'use strict';
 
-import { RawResponse, InteroProxy } from '../interoProxy'
+import { InteroAgent } from '../interoAgent'
 import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
 import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
@@ -81,12 +81,12 @@ export class LoadRequest implements InteroRequest<LoadResponse> {
 
     }
 
-    public async send(interoProxy: InteroProxy): Promise<LoadResponse> {
+    public async send(interoAgent: InteroAgent): Promise<LoadResponse> {
 
         const filePaths = this.uris.map(UriUtils.toFilePath);
         const escapedFilePaths = filePaths.map(InteroUtils.escapeFilePath);
         const load = `:l ${escapedFilePaths.join(' ')}`;
-        let response = await interoProxy.sendRawRequest(load)
+        let response = await interoAgent.evaluate(load)
         return new LoadResponse(response.rawout, response.rawerr, this.parseDiagnostics);
     }
 }

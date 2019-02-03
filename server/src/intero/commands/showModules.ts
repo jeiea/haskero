@@ -1,6 +1,6 @@
 'use strict';
 
-import { RawResponse, InteroProxy } from '../interoProxy'
+import { InteroAgent } from '../interoAgent'
 import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
 import { allMatchs } from "../../utils/regexpUtils";
@@ -27,9 +27,9 @@ export class ShowModulesRequest implements InteroRequest<ShowModulesResponse> {
     public constructor() {
     }
 
-    public async send(interoProxy: InteroProxy): Promise<ShowModulesResponse> {
+    public async send(interoAgent: InteroAgent): Promise<ShowModulesResponse> {
         const req = ':show modules';
-        let response = await interoProxy.sendRawRequest(req)
+        let response = await interoAgent.evaluate(req)
         return new ShowModulesResponse(response.rawout, response.rawerr);
     }
 }

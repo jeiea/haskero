@@ -1,6 +1,6 @@
 'use strict';
 
-import { RawResponse, InteroProxy } from '../interoProxy'
+import { InteroAgent } from '../interoAgent'
 import { InteroUtils } from '../interoUtils'
 import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
@@ -25,7 +25,7 @@ export class TypeResponse implements InteroResponse {
         }
         else {
             this.identifierExists = true;
-            this.type = InteroUtils.normalizeRawResponse(rawout);
+            this.type = rawout;
         }
     }
 }
@@ -38,9 +38,9 @@ export class TypeRequest implements InteroRequest<TypeResponse> {
     public constructor(private identifier: string) {
     }
 
-    public async send(interoProxy: InteroProxy): Promise<TypeResponse> {
+    public async send(interoAgent: InteroAgent): Promise<TypeResponse> {
         const req = `:type ${this.identifier}`;
-        let response = await interoProxy.sendRawRequest(req);
+        let response = await interoAgent.evaluate(req);
         return new TypeResponse(response.rawout, response.rawerr);
     }
 }

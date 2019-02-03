@@ -1,6 +1,6 @@
 # Current work notes
 
-Hovering a word when intero is rebooting (eg: while changing intera targets) and more generaly sending a LSP request when intero is rebooting, cause haskero do fall out os sync with interoProxy and next request
+Hovering a word when intero is rebooting (eg: while changing intera targets) and more generaly sending a LSP request when intero is rebooting, cause haskero do fall out os sync with interoAgent and next request
 doesn't recieve a response
 
 # Ideas

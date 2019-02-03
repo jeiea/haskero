@@ -6,7 +6,7 @@ import * as tmp from 'tmp'
 import * as fs from 'fs'
 
 import child_process = require('child_process');
-import { InteroProxy } from './intero/interoProxy';
+import { InteroAgent } from './intero/interoAgent';
 import { InitRequest, InitResponse } from './intero/commands/init';
 import { ReloadRequest, ReloadResponse } from './intero/commands/reload';
 import { InteroDiagnostic, InteroDiagnosticKind } from './intero/commands/interoDiagnostic'
@@ -47,7 +47,7 @@ const serverCapabilities: vsrv.InitializeResult = {
  * Exposes all haskero capabilities to the server
  */
 export class HaskeroService {
-    private interoProxy: InteroProxy;
+    private interoAgent: InteroAgent;
     private connection: vsrv.IConnection;
     private features: Features;
     private initializationOk: boolean;
@@ -57,7 +57,7 @@ export class HaskeroService {
 
 
     public executeInteroRequest<V extends InteroResponse>(request: InteroRequest<V>): Promise<V> {
-        return request.send(this.interoProxy);
+        return request.send(this.interoAgent);
     }
 
     public async initialize(connection: vsrv.IConnection, settings: HaskeroSettings, targets: string[]): Promise<vsrv.InitializeResult> {
@@ -160,7 +160,7 @@ export class HaskeroService {
     public async getDefinitionLocation(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location> {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         const locAtRequest = new LocAtRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
-        let response = await locAtRequest.send(this.interoProxy);
+        let response = await locAtRequest.send(this.interoAgent);
         if (response.isOk) {
             let fileUri = UriUtils.toUri(response.filePath);
             let loc = vsrv.Location.create(fileUri, DocumentUtils.toVSCodeRange(response.range));
@@ -175,7 +175,7 @@ export class HaskeroService {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         if (!wordRange.isEmpty) {
             const typeAtRequest = new TypeAtRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word, infoKind);
-            let response = await typeAtRequest.send(this.interoProxy);
+            let response = await typeAtRequest.send(this.interoAgent);
             let typeInfo: vsrv.MarkedString = { language: 'haskell', value: response.type };
             let hover: vsrv.Hover = { contents: typeInfo };
             if (typeInfo.value !== null && typeInfo.value !== "") {
@@ -193,21 +193,21 @@ export class HaskeroService {
     public getCompletionItems(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.CompletionItem[]> {
         const currentLine = DocumentUtils.getPositionLine(textDocument, position);
         if (currentLine.startsWith("import ")) {
-            return CompletionUtils.getImportCompletionItems(this.interoProxy, textDocument, position, currentLine);
+            return CompletionUtils.getImportCompletionItems(this.interoAgent, textDocument, position, currentLine);
         }
         else {
-            return CompletionUtils.getDefaultCompletionItems(this.interoProxy, textDocument, position, this.settings.maxAutoCompletionDetails);
+            return CompletionUtils.getDefaultCompletionItems(this.interoAgent, textDocument, position, this.settings.maxAutoCompletionDetails);
         }
     }
 
     public getResolveInfos(item: vsrv.CompletionItem): Promise<vsrv.CompletionItem> {
-        return CompletionUtils.getResolveInfos(this.interoProxy, item);
+        return CompletionUtils.getResolveInfos(this.interoAgent, item);
     }
 
     public async getReferencesLocations(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location[]> {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         const usesRequest = new UsesRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
-        let response = await usesRequest.send(this.interoProxy);
+        let response = await usesRequest.send(this.interoAgent);
         if (response.isOk) {
             return response.locations.map((interoLoc) => {
                 let fileUri = UriUtils.toUri(interoLoc.file);
@@ -228,7 +228,7 @@ export class HaskeroService {
             const reloadRequest = new ReloadRequest(textDocument.uri);
             DebugUtils.instance.connectionLog(textDocument.uri);
 
-            let response = await reloadRequest.send(this.interoProxy);
+            let response = await reloadRequest.send(this.interoAgent);
             this.sendDocumentDiagnostics(connection, response.diagnostics.filter(d => {
                 return d.filePath.toLowerCase() === UriUtils.toFilePath(textDocument.uri).toLowerCase();
             }), textDocument.uri);
@@ -263,7 +263,7 @@ export class HaskeroService {
 
     /**
      * Spawn an intero process (stack ghci --with-ghc intero ... targets)
-     * and set `interoProxy`.
+     * and set `interoAgent`.
      */
     private spawnIntero(targets: string[]): Promise<InitResponse> {
         const rootOptions = ['ghci', '--with-ghc', 'intero'];
@@ -272,8 +272,8 @@ export class HaskeroService {
 
         this.connection.console.log(`Spawning process 'stack' with command '${stackPath} ${this.prettifyStartupParamsCmd(allOptions)}'`);
 
-        if (this.interoProxy) {
-            this.interoProxy.kill();
+        if (this.interoAgent) {
+            this.interoAgent.dispose();
         }
 
         let intero;
@@ -283,11 +283,11 @@ export class HaskeroService {
         } else {
             intero = child_process.spawn(stackPath, allOptions);
         }
-        this.interoProxy = new InteroProxy(intero);
+        this.interoAgent = new InteroAgent(intero);
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 return new InitRequest()
-                    .send(this.interoProxy)
+                    .send(this.interoAgent)
                     .then((resp: InitResponse) => resolve(resp))
                     .catch(reason => {
                         if (reason.indexOf(this.interoNotFOunt, 0) > -1) {

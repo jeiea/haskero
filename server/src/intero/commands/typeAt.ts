@@ -1,6 +1,6 @@
 'use strict';
 
-import { RawResponse, InteroProxy } from '../interoProxy'
+import { InteroAgent } from '../interoAgent'
 import { InteroUtils } from '../interoUtils'
 import { InteroRequest } from './interoRequest'
 import { InteroResponse } from './interoResponse'
@@ -17,7 +17,7 @@ export class TypeAtResponse implements InteroResponse {
     public readonly type: string;
 
     public constructor(public readonly rawout: string, public readonly rawerr: string, private infoKind: TypeInfoKind, private id?: string) {
-        this.type = InteroUtils.normalizeRawResponse(rawout);
+        this.type = rawout;
         if (this.type && this.type.length > 0) {
             //if the instanciated info kind is used, intero doesn't responds the identifier name, so we add it
             if (infoKind === TypeInfoKind.Instanciated) {
@@ -34,14 +34,14 @@ export class TypeAtRequest implements InteroRequest<TypeAtResponse> {
     public constructor(private uri: string, private range: InteroRange, private identifier: string, private infoKind: TypeInfoKind) {
     }
 
-    public async send(interoProxy: InteroProxy): Promise<TypeAtResponse> {
+    public async send(interoAgent: InteroAgent): Promise<TypeAtResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //if we add the identifier to the resquest, intero reponds the more genereic type signature possible
         //if we dont add the identifier to the request, interao responds the more specific type signature, as used in the specific text span
         const id = this.infoKind === TypeInfoKind.Generic ? ' ' + this.identifier : '';
         const req = `:type-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol}${id}`;
-        let response = await interoProxy.sendRawRequest(req);
+        let response = await interoAgent.evaluate(req);
         return new TypeAtResponse(response.rawout, response.rawerr, this.infoKind, this.identifier);
     }
 }
