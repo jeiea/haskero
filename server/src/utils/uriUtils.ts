@@ -1,8 +1,6 @@
 'use strict';
 
-import {
-    Files
-} from 'vscode-languageserver';
+import { Files } from 'vscode-languageserver';
 
 
 /**

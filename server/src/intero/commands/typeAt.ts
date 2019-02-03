@@ -1,12 +1,11 @@
 'use strict';
 
-import { InteroAgent } from '../interoAgent'
-import { InteroUtils } from '../interoUtils'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { InteroRange } from '../interoRange'
-import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
-import { UriUtils } from '../../utils/uriUtils'
+import { UriUtils } from '../../utils/uriUtils';
+import { InteroAgent } from '../interoAgent';
+import { InteroRange } from '../interoRange';
+import { InteroUtils } from '../interoUtils';
+import { InteroRequest } from './interoRequest';
+import { InteroResponse } from './interoResponse';
 
 /**
  * type-at intero response

@@ -1,11 +1,10 @@
 import * as vsrv from 'vscode-languageserver';
+import { CompleteRequest } from './intero/commands/complete';
+import { CompleteAtRequest } from './intero/commands/completeAt';
+import { InfoRequest } from './intero/commands/info';
+import { IdentifierKind } from './intero/identifierKind';
 import { InteroAgent } from './intero/interoAgent';
-import { DocumentUtils, WordSpot, NoMatchAtCursorBehaviour } from './utils/documentUtils'
-import { CompleteAtRequest, CompleteAtResponse } from './intero/commands/completeAt'
-import { InfoRequest, InfoResponse } from './intero/commands/info'
-import { CompleteRequest, CompleteResponse } from './intero/commands/complete'
-import { IdentifierKind } from './intero/identifierKind'
-import { zipWith } from './utils/functionalUtils'
+import { DocumentUtils, NoMatchAtCursorBehaviour } from './utils/documentUtils';
 
 /**
  * Handle completion special cases (import, dot notation, etc.)

@@ -1,8 +1,8 @@
 'use strict';
 
-import { TextDocument, Position, Range } from 'vscode-languageserver'
-import { InteroRange } from '../intero/interoRange'
-import * as fs from 'fs'
+import * as fs from 'fs';
+import { Position, Range, TextDocument } from 'vscode-languageserver';
+import { InteroRange } from '../intero/interoRange';
 import { UriUtils } from "./uriUtils";
 
 /**

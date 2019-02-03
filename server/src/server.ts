@@ -1,14 +1,14 @@
 'use strict';
 
 import * as vsrv from 'vscode-languageserver';
-import { DebugUtils } from './debug/debugUtils'
-import { HaskeroService } from './haskeroService'
-import { TypeInfoKind } from './intero/commands/typeAt'
-import { UriUtils } from './utils/uriUtils'
-import { HaskeroSettings, InteroSettings } from './haskeroSettings'
 import { CodeActionService } from "./codeActions/codeActionService";
 import { CommandsService } from "./commands/commandsService";
-import * as features from "./features"
+import { DebugUtils } from './debug/debugUtils';
+import * as features from "./features";
+import { HaskeroService } from './haskeroService';
+import { HaskeroSettings } from './haskeroSettings';
+import { TypeInfoKind } from './intero/commands/typeAt';
+import { UriUtils } from './utils/uriUtils';
 
 
 // Create a connection for the server. The connection uses Node's IPC as a transport

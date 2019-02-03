@@ -1,29 +1,23 @@
 'use strict';
 
 import * as vsrv from 'vscode-languageserver';
-import * as uuid from 'node-uuid'
-import * as tmp from 'tmp'
-import * as fs from 'fs'
-
-import child_process = require('child_process');
-import { InteroAgent } from './intero/interoAgent';
+import { CompletionUtils } from './completionUtils';
+import { DebugUtils } from './debug/debugUtils';
+import { Features } from './features/features';
+import { HaskeroSettings } from './haskeroSettings';
 import { InitRequest, InitResponse } from './intero/commands/init';
-import { ReloadRequest, ReloadResponse } from './intero/commands/reload';
-import { InteroDiagnostic, InteroDiagnosticKind } from './intero/commands/interoDiagnostic'
-import { LocAtRequest, LocAtResponse } from './intero/commands/locAt'
-import { UsesRequest, UsesResponse } from './intero/commands/uses'
-import { TypeAtRequest, TypeAtResponse, TypeInfoKind } from './intero/commands/typeAt'
-import { CompleteAtRequest, CompleteAtResponse } from './intero/commands/completeAt'
-import { CompleteRequest, CompleteResponse } from './intero/commands/complete'
-import { DocumentUtils, WordSpot, NoMatchAtCursorBehaviour } from './utils/documentUtils'
-import { UriUtils } from './utils/uriUtils';
-import { DebugUtils } from './debug/debugUtils'
-import { Features } from './features/features'
-import { CompletionUtils } from './completionUtils'
-import { HaskeroSettings, InteroSettings } from './haskeroSettings'
+import { InteroDiagnostic, InteroDiagnosticKind } from './intero/commands/interoDiagnostic';
 import { InteroRequest } from "./intero/commands/interoRequest";
 import { InteroResponse } from "./intero/commands/interoResponse";
-import { platform } from 'os';
+import { LocAtRequest } from './intero/commands/locAt';
+import { ReloadRequest } from './intero/commands/reload';
+import { TypeAtRequest, TypeInfoKind } from './intero/commands/typeAt';
+import { UsesRequest } from './intero/commands/uses';
+import { InteroAgent } from './intero/interoAgent';
+import { DocumentUtils, NoMatchAtCursorBehaviour } from './utils/documentUtils';
+import { UriUtils } from './utils/uriUtils';
+
+import child_process = require('child_process');
 
 const serverCapabilities: vsrv.InitializeResult = {
     capabilities: {
