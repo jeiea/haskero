@@ -4,16 +4,27 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "run",
+      "label": "compile",
       "type": "shell",
       "command": "npm",
       "presentation": {
         "reveal": "silent",
         "clear": true
       },
-      "args": ["run", "watch"],
-      "isBackground": true,
+      "args": ["run-script", "compile"],
       "problemMatcher": "$tsc-watch"
+    },
+    {
+      "label": "watch",
+      "type": "shell",
+      "command": "npm",
+      "presentation": {
+        "reveal": "silent",
+        "clear": true
+      },
+      "args": ["run-script", "watch"],
+      "problemMatcher": "$tsc-watch",
+      "isBackground": true
     }
   ]
 }
