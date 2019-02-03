@@ -21,12 +21,8 @@ class DelimitReader {
         stdout.on('data', x => this.onData(x));
     }
 
-    public delimitAndTake(): Promise<string> {
-        this.stdin.write(this.inputDelimiter);
-        return this.take();
-    }
-
     public take(): Promise<string> {
+        this.stdin.write(this.inputDelimiter);
         return this.blocks.receive();
     }
 
@@ -65,7 +61,7 @@ export class InteroAgent implements Disposable {
 
         intero.stdin.write(`:set prompt ${prompt}\n`);
         this.stdoutReader.take();
-        this.stderrReader.delimitAndTake();
+        this.stderrReader.take();
     }
 
     public evaluate(expr: string): Promise<InteroResponse> {
@@ -93,9 +89,9 @@ export class InteroAgent implements Disposable {
         this.interoProcess.stdin.write(expr);
         console.log(`sendStatement: ${expr}`);
         try {
-            const rawout = await this.stdoutReader.delimitAndTake();
+            const rawout = await this.stdoutReader.take();
             console.log(`rawout: ${rawout}`);
-            const rawerr = await this.stderrReader.delimitAndTake();
+            const rawerr = await this.stderrReader.take();
             console.log(`rawerr: ${rawerr}`);
             return { rawout, rawerr, isOk: true };
         }
