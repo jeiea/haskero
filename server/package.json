@@ -10,7 +10,7 @@
   "dependencies": {
     "node-uuid": "^1.4.7",
     "tmp": "0.0.33",
-    "vscode-languageserver": "^3.0.4"
+    "vscode-languageserver": "^5.2.1"
   },
   "devDependencies": {
     "@types/node": "^10.12.21",
