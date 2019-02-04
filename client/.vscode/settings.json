@@ -10,6 +10,7 @@
 	},
 	"typescript.tsdk": "./node_modules/typescript/lib",
 	"editor.codeActionsOnSave": {
+		"editor.formatOnSave": true,
 		"source.organizeImports": true
 	}
 }
