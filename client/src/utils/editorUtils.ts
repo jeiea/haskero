@@ -1,4 +1,4 @@
-import { Position, TextEditor, TextLine } from 'vscode'
+import { TextEditor, TextLine } from 'vscode';
 
 /**
  * Utilities to handle a TextEditor

@@ -1,8 +1,7 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 import * as vscli from 'vscode-languageclient';
 import * as stack from '../utils/stack';
-import { HaskeroTargets } from './targets'
+import { HaskeroTargets } from './targets';
 
 export interface HaskeroSettings {
     intero: InteroSettings,

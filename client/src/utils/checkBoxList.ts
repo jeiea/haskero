@@ -1,5 +1,5 @@
-import CheckBox from './checkBox'
 import * as vscode from 'vscode';
+import CheckBox from './checkBox';
 
 /**
  * Checkboxlist prompt
