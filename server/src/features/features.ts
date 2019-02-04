@@ -57,7 +57,7 @@ export class Features {
     /**
      * Enable all features on the client
      */
-    public registerAllFeatures() {
+    public async registerAllFeatures() {
         if (this.areFeaturesRegistered) {
             return;
         }
@@ -65,13 +65,15 @@ export class Features {
             registrations: Features.features
         }
 
-        this.connection.sendRequest(vsrv.RegistrationRequest.type, registrationParams)
-            .then(() => {
-                this.areFeaturesRegistered = true;
-            }, error => {
-                this.areFeaturesRegistered = false;
-                console.log("error for registration request: " + error);
-            })
+        // vscode uses wrong identifier
+        // https://github.com/Microsoft/vscode-languageserver-node/issues/199
+        try {
+            await this.connection.sendRequest('client/registerFeature', registrationParams);
+        }
+        catch {
+            await this.connection.sendRequest(vsrv.RegistrationRequest.type, registrationParams);
+        }
+        this.areFeaturesRegistered = true;
     }
 
     /**
