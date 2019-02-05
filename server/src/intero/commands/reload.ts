@@ -2,9 +2,9 @@
 
 import { allMatchs } from "../../utils/regexpUtils";
 import { UriUtils } from '../../utils/uriUtils';
-import { InteroAgent } from '../interoAgent';
+import { InteroTransaction } from "../interoAgent";
 import { InteroUtils } from '../interoUtils';
-import { IInteroDiagnostic, IInteroRequest, IInteroResponse, InteroDiagnosticKind } from "./abstract";
+import { IInteroDiagnostic, IInteroRepl, IInteroRequest, IInteroResponse, InteroDiagnosticKind } from "./abstract";
 
 /**
  * Reload response, returns diagnostics (errors and warnings)
@@ -71,7 +71,7 @@ export class ReloadRequest implements IInteroRequest<ReloadResponse> {
     public constructor(private readonly uri: string) {
     }
 
-    public async send(interoAgent: InteroAgent): Promise<ReloadResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<ReloadResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         const load = `:l ${escapedFilePath}`;
@@ -79,10 +79,12 @@ export class ReloadRequest implements IInteroRequest<ReloadResponse> {
         return new ReloadResponse(loadResp.rawout, loadResp.rawerr);
     }
 
-    public async forceReload(intero: InteroAgent): Promise<ReloadResponse> {
-        await intero.evaluate(':set -fdefer-type-errors');
-        const response = this.send(intero);
-        await intero.evaluate(':unset -fdefer-type-errors');
-        return response;
+    public async forceReload(transactor: InteroTransaction): Promise<ReloadResponse> {
+        return transactor.withLock(async intero => {
+            await intero.evaluate(':set -fdefer-type-errors');
+            const response = this.send(intero);
+            await intero.evaluate(':unset -fdefer-type-errors');
+            return response;
+        });
     }
 }

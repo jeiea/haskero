@@ -1,9 +1,9 @@
 import * as vsrv from 'vscode-languageserver';
+import { IInteroRepl } from './intero/commands/abstract';
 import { CompleteRequest } from './intero/commands/complete';
 import { CompleteAtRequest } from './intero/commands/completeAt';
 import { InfoRequest } from './intero/commands/info';
 import { IdentifierKind } from './intero/identifierKind';
-import { InteroAgent } from './intero/interoAgent';
 import { DocumentUtils, NoMatchAtCursorBehaviour } from './utils/documentUtils';
 
 /**
@@ -53,7 +53,7 @@ export class CompletionUtils {
         }
     }
 
-    public static async getImportCompletionItems(interoAgent: InteroAgent, textDocument: vsrv.TextDocument, position: vsrv.Position, line: string): Promise<vsrv.CompletionItem[]> {
+    public static async getImportCompletionItems(interoAgent: IInteroRepl, textDocument: vsrv.TextDocument, position: vsrv.Position, line: string): Promise<vsrv.CompletionItem[]> {
         //if the cursor is after a " as " text, it means that we are in the 'name' area of an import, so we disable module autocompletion
         if (!DocumentUtils.leftLineContains(textDocument, position, " as ")) {
             let { word, range } = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
@@ -73,7 +73,7 @@ export class CompletionUtils {
         }
     }
 
-    public static async getDefaultCompletionItems(interoAgent: InteroAgent, textDocument: vsrv.TextDocument, position: vsrv.Position, maxInfoRequests: number): Promise<vsrv.CompletionItem[]> {
+    public static async getDefaultCompletionItems(interoAgent: IInteroRepl, textDocument: vsrv.TextDocument, position: vsrv.Position, maxInfoRequests: number): Promise<vsrv.CompletionItem[]> {
         let { word, range } = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
         const completeAtRequest = new CompleteAtRequest(textDocument.uri, DocumentUtils.toInteroRange(range), word);
 
@@ -114,7 +114,7 @@ export class CompletionUtils {
         );
     }
 
-    public static async getResolveInfos(interoAgent: InteroAgent, item: vsrv.CompletionItem): Promise<vsrv.CompletionItem> {
+    public static async getResolveInfos(interoAgent: IInteroRepl, item: vsrv.CompletionItem): Promise<vsrv.CompletionItem> {
         //When the global getCompletionItems didn't get details (because it reachs the maxAutoCompletionDetails limit)
         //it returns data = null and label = completion text
         //in this particular case only, we still try to get the details for the completion item

@@ -1,7 +1,6 @@
 'use strict';
 
-import { InteroAgent } from '../interoAgent';
-import { IInteroRequest, IInteroResponse } from "./abstract";
+import { IInteroRepl, IInteroRequest, IInteroResponse } from "./abstract";
 
 /**
  * type intero response
@@ -32,7 +31,7 @@ export class TypeRequest implements IInteroRequest<TypeResponse> {
     public constructor(private identifier: string) {
     }
 
-    public async send(interoAgent: InteroAgent): Promise<TypeResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<TypeResponse> {
         const req = `:type ${this.identifier}`;
         let response = await interoAgent.evaluate(req);
         return new TypeResponse(response.rawout, response.rawerr);

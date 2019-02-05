@@ -1,9 +1,8 @@
 'use strict';
 
 import { UriUtils } from '../../utils/uriUtils';
-import { InteroAgent } from '../interoAgent';
 import { InteroUtils } from '../interoUtils';
-import { IInteroRequest, IInteroResponse } from "./abstract";
+import { IInteroRepl, IInteroRequest, IInteroResponse } from "./abstract";
 import { LoadRequest } from './load';
 
 /**
@@ -62,7 +61,7 @@ export class CompleteRequest implements IInteroRequest<CompleteResponse> {
         this.text = text.replace(/[\r\n]/g, '');
     }
 
-    public async send(interoAgent: InteroAgent): Promise<CompleteResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<CompleteResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //send a load request first otherwise :complete is not executed on the right module (it's executed

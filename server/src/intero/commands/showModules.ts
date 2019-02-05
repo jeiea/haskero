@@ -1,8 +1,7 @@
 'use strict';
 
 import { allMatchs } from "../../utils/regexpUtils";
-import { InteroAgent } from '../interoAgent';
-import { IInteroRequest, IInteroResponse } from "./abstract";
+import { IInteroRepl, IInteroRequest, IInteroResponse } from "./abstract";
 
 /**
  * show modules intero response
@@ -26,7 +25,7 @@ export class ShowModulesRequest implements IInteroRequest<ShowModulesResponse> {
     public constructor() {
     }
 
-    public async send(interoAgent: InteroAgent): Promise<ShowModulesResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<ShowModulesResponse> {
         const req = ':show modules';
         let response = await interoAgent.evaluate(req)
         return new ShowModulesResponse(response.rawout, response.rawerr);

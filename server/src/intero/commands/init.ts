@@ -1,8 +1,7 @@
 'use strict';
 
 import { allMatchs } from "../../utils/regexpUtils";
-import { InteroAgent } from '../interoAgent';
-import { IInteroDiagnostic, IInteroRequest, IInteroResponse, InteroDiagnosticKind } from "./abstract";
+import { IInteroDiagnostic, IInteroRepl, IInteroRequest, IInteroResponse, InteroDiagnosticKind } from "./abstract";
 
 /**
  * Response from interoInit request
@@ -72,7 +71,7 @@ export class InitRequest implements IInteroRequest<InitResponse> {
     public constructor() {
     }
 
-    public async send(interoAgent: InteroAgent): Promise<InitResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<InitResponse> {
         let response = await interoAgent.evaluate('')
         return new InitResponse(response.rawout, response.rawerr);
     }

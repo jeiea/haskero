@@ -1,10 +1,9 @@
 'use strict';
 
 import { UriUtils } from '../../utils/uriUtils';
-import { InteroAgent } from '../interoAgent';
 import { InteroRange } from '../interoRange';
 import { InteroUtils } from '../interoUtils';
-import { IInteroRequest, IInteroResponse } from "./abstract";
+import { IInteroRepl, IInteroRequest, IInteroResponse } from "./abstract";
 
 /**
  * loc-at intero response
@@ -63,7 +62,7 @@ export class LocAtRequest implements IInteroRequest<IInteroResponse> {
     public constructor(private uri: string, private range: InteroRange, private identifier: string) {
     }
 
-    public async send(interoAgent: InteroAgent): Promise<LocAtResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<LocAtResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         const locat = `:loc-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;

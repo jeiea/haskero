@@ -122,13 +122,13 @@ export class InteroAgent implements IInteroRepl, Disposable {
     }
 }
 
-class InteroTransaction implements IInteroRepl {
+export class InteroTransaction implements IInteroRepl {
     private intero: IInteroRepl;
-    private previousTransaction: Promise<IInteroResponse>;
+    private previousTransaction: Promise<any>;
 
     public constructor(intero: IInteroRepl, previousTransaction?: Promise<IInteroResponse>) {
         this.intero = intero;
-        this.previousTransaction = previousTransaction || Promise.resolve(<IInteroResponse>{});
+        this.previousTransaction = previousTransaction || Promise.resolve();
     }
 
     public async evaluate(expr: string): Promise<IInteroResponse> {
@@ -136,9 +136,10 @@ class InteroTransaction implements IInteroRepl {
         return this.intero.evaluate(expr);
     }
 
-    public async withLock(transaction: (self: InteroTransaction) => Promise<IInteroResponse>) {
+    public async withLock<T>(transaction: (self: InteroTransaction) => Promise<T>): Promise<T> {
         const repl = new InteroTransaction(this.intero, this.previousTransaction);
-        this.previousTransaction = transaction(repl);
-        await this.previousTransaction;
+        const work = transaction(repl);
+        this.previousTransaction = work;
+        return await work;
     }
 }

@@ -1,10 +1,9 @@
 'use strict';
 
 import { UriUtils } from '../../utils/uriUtils';
-import { InteroAgent } from '../interoAgent';
 import { InteroRange } from '../interoRange';
 import { InteroUtils } from '../interoUtils';
-import { IInteroRequest, IInteroResponse } from './abstract';
+import { IInteroRepl, IInteroRequest, IInteroResponse } from './abstract';
 
 /**
  * 'complete-at' intero response
@@ -46,7 +45,7 @@ export class CompleteAtRequest implements IInteroRequest<CompleteAtResponse> {
     public constructor(private uri: string, private range: InteroRange, private text: string) {
     }
 
-    public async send(interoAgent: InteroAgent): Promise<CompleteAtResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<CompleteAtResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         const req = `:complete-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.text}`;

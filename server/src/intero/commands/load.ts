@@ -2,9 +2,8 @@
 
 import { allMatchs } from "../../utils/regexpUtils";
 import { UriUtils } from '../../utils/uriUtils';
-import { InteroAgent } from '../interoAgent';
 import { InteroUtils } from '../interoUtils';
-import { IInteroDiagnostic, IInteroRequest, IInteroResponse, InteroDiagnosticKind } from "./abstract";
+import { IInteroDiagnostic, IInteroRepl, IInteroRequest, IInteroResponse, InteroDiagnosticKind } from "./abstract";
 
 /**
  * Load response, returns diagnostics (errors and warnings)
@@ -80,7 +79,7 @@ export class LoadRequest implements IInteroRequest<LoadResponse> {
         private readonly parseDiagnostics: boolean
     ) { }
 
-    public async send(interoAgent: InteroAgent): Promise<LoadResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<LoadResponse> {
         const filePaths = this.uris.map(UriUtils.toFilePath);
         const escapedFilePaths = filePaths.map(InteroUtils.escapeFilePath);
         const load = `:l ${escapedFilePaths.join(' ')}`;

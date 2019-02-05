@@ -1,10 +1,9 @@
 'use strict';
 
 import { UriUtils } from '../../utils/uriUtils';
-import { InteroAgent } from '../interoAgent';
 import { InteroRange } from '../interoRange';
 import { InteroUtils } from '../interoUtils';
-import { IInteroRequest, IInteroResponse } from "./abstract";
+import { IInteroRepl, IInteroRequest, IInteroResponse } from "./abstract";
 
 /**
  * type-at intero response
@@ -32,7 +31,7 @@ export class TypeAtRequest implements IInteroRequest<TypeAtResponse> {
     public constructor(private uri: string, private range: InteroRange, private identifier: string, private infoKind: TypeInfoKind) {
     }
 
-    public async send(interoAgent: InteroAgent): Promise<TypeAtResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<TypeAtResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //if we add the identifier to the resquest, intero reponds the more genereic type signature possible

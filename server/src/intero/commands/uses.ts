@@ -2,11 +2,10 @@
 
 import { allMatchs } from "../../utils/regexpUtils";
 import { UriUtils } from '../../utils/uriUtils';
-import { InteroAgent } from '../interoAgent';
 import { InteroLocation } from '../interoLocation';
 import { InteroRange } from '../interoRange';
 import { InteroUtils } from '../interoUtils';
-import { IInteroRequest, IInteroResponse } from "./abstract";
+import { IInteroRepl, IInteroRequest, IInteroResponse } from "./abstract";
 
 /**
  * uses intero response
@@ -49,7 +48,7 @@ export class UsesRequest implements IInteroRequest<UsesResponse> {
     public constructor(private uri: string, private range: InteroRange, private identifier: string) {
     }
 
-    public async send(interoAgent: InteroAgent): Promise<UsesResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<UsesResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         const uses = `:uses ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
