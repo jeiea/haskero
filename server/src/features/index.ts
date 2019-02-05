@@ -1,5 +1,3 @@
-import rename from './rename'
+import rename from './rename';
 
-export {
-    rename
-}
+export { rename };

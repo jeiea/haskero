@@ -2,13 +2,9 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as vscli from 'vscode-languageclient';
-import { InsertTypeAbove } from './commands/insertTypeAbove'
-import { SelectTarget } from './commands/selectTargets'
-import { EditorUtils } from './utils/editorUtils'
-import { getTargets } from './utils/stack';
-import { noTargets, allTargets } from './utils/targets';
-import { HaskeroClient, HaskeroClientInitOptions, InteroSettings, HaskeroSettings } from './utils/haskeroClient';
+import { InsertTypeAbove } from './commands/insertTypeAbove';
+import { SelectTarget } from './commands/selectTargets';
+import { HaskeroClient, HaskeroClientInitOptions, HaskeroSettings, InteroSettings } from './utils/haskeroClient';
 
 export function activate(context: vscode.ExtensionContext) {
 

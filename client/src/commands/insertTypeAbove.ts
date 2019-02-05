@@ -1,6 +1,6 @@
-import * as vscode from 'vscode'
-import * as vscli from 'vscode-languageclient'
-import { EditorUtils } from '../utils/editorUtils'
+import * as vscode from 'vscode';
+import * as vscli from 'vscode-languageclient';
+import { EditorUtils } from '../utils/editorUtils';
 import { HaskeroClient } from '../utils/haskeroClient';
 
 /**

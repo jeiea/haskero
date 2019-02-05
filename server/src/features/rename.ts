@@ -1,18 +1,14 @@
-import * as tmp from 'tmp'
-import * as fs from 'fs'
+import * as fs from 'fs';
+import * as tmp from 'tmp';
 import * as vsrv from 'vscode-languageserver';
-import { HaskeroService } from "../haskeroService";
-import { DocumentUtils, NoMatchAtCursorBehaviour } from "../utils/documentUtils";
-import { LoadRequest, LoadResponse } from "../intero/commands/load";
-import { UriUtils } from "../utils/uriUtils";
-import { LocAtRequest } from "../intero/commands/locAt";
-import { InteroRange } from "../intero/interoRange";
-import { InteroDiagnostic } from "../intero/commands/interoDiagnostic";
-import { ShowModulesRequest } from "../intero/commands/showModules";
-import { TypeInfoKind } from "../intero/commands/typeAt";
-import { InfoRequest } from "../intero/commands/info";
-import { TypeRequest } from "../intero/commands/type";
 import { DebugUtils } from "../debug/debugUtils";
+import { HaskeroService } from "../haskeroService";
+import { IInteroDiagnostic } from "../intero/commands/abstract";
+import { LoadRequest } from "../intero/commands/load";
+import { ShowModulesRequest } from "../intero/commands/showModules";
+import { TypeRequest } from "../intero/commands/type";
+import { DocumentUtils, NoMatchAtCursorBehaviour } from "../utils/documentUtils";
+import { UriUtils } from "../utils/uriUtils";
 
 export default function (documents: vsrv.TextDocuments, haskeroService: HaskeroService) {
     return async (params: vsrv.RenameParams): Promise<vsrv.WorkspaceEdit> => {
@@ -177,7 +173,7 @@ export default function (documents: vsrv.TextDocuments, haskeroService: HaskeroS
         });
     }
 
-    function errorToRange(document: vsrv.TextDocument, error: InteroDiagnostic): vsrv.Range {
+    function errorToRange(document: vsrv.TextDocument, error: IInteroDiagnostic): vsrv.Range {
         //position in error message are 1 based. Position are 0 based, but there is a issue somewhere because it works without (-1) :-(
         let identifier = DocumentUtils.getIdentifierAtPosition(document, vsrv.Position.create(error.line, error.col), NoMatchAtCursorBehaviour.LookBoth);
         return identifier.range;

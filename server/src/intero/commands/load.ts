@@ -1,17 +1,14 @@
 'use strict';
 
-import { RawResponse, InteroProxy } from '../interoProxy'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
-import { InteroUtils } from '../interoUtils'
-import { UriUtils } from '../../utils/uriUtils'
 import { allMatchs } from "../../utils/regexpUtils";
+import { UriUtils } from '../../utils/uriUtils';
+import { InteroUtils } from '../interoUtils';
+import { IInteroDiagnostic, IInteroRepl, IInteroRequest, IInteroResponse, InteroDiagnosticKind } from "./abstract";
 
 /**
  * Load response, returns diagnostics (errors and warnings)
  */
-export class LoadResponse implements InteroResponse {
+export class LoadResponse implements IInteroResponse {
 
     private _filePath: string;
     private _isOk: boolean;
@@ -30,13 +27,13 @@ export class LoadResponse implements InteroResponse {
         return this._rawerr;
     }
 
-    private _diagnostics: InteroDiagnostic[];
-    public get diagnostics(): InteroDiagnostic[] {
+    private _diagnostics: IInteroDiagnostic[];
+    public get diagnostics(): IInteroDiagnostic[] {
         return this._diagnostics;
     }
 
-    public readonly errors: InteroDiagnostic[];
-    public readonly warnings: InteroDiagnostic[];
+    public readonly errors: IInteroDiagnostic[];
+    public readonly warnings: IInteroDiagnostic[];
 
     public constructor(rawout: string, rawerr: string, parseDiagnostics: boolean) {
         this._rawout = rawout;
@@ -67,26 +64,26 @@ export class LoadResponse implements InteroResponse {
     }
 
     //curried definition for partial application
-    private matchTo = (kind: InteroDiagnosticKind) => (match: RegExpExecArray): InteroDiagnostic => {
-        return new InteroDiagnostic(match[1], +match[2], +match[3], match[4], kind);
+    private matchTo = (kind: InteroDiagnosticKind) => (match: RegExpExecArray): IInteroDiagnostic => {
+        return new IInteroDiagnostic(match[1], +match[2], +match[3], match[4], kind);
     }
 }
 
 /**
  * Reload request
  */
-export class LoadRequest implements InteroRequest<LoadResponse> {
+export class LoadRequest implements IInteroRequest<LoadResponse> {
 
-    public constructor(private readonly uris: string[], private readonly parseDiagnostics: boolean) {
+    public constructor(
+        private readonly uris: string[],
+        private readonly parseDiagnostics: boolean
+    ) { }
 
-    }
-
-    public async send(interoProxy: InteroProxy): Promise<LoadResponse> {
-
+    public async send(interoAgent: IInteroRepl): Promise<LoadResponse> {
         const filePaths = this.uris.map(UriUtils.toFilePath);
         const escapedFilePaths = filePaths.map(InteroUtils.escapeFilePath);
         const load = `:l ${escapedFilePaths.join(' ')}`;
-        let response = await interoProxy.sendRawRequest(load)
+        let response = await interoAgent.evaluate(load)
         return new LoadResponse(response.rawout, response.rawerr, this.parseDiagnostics);
     }
 }

@@ -1,7 +1,7 @@
-import { HaskeroCommand, HaskeroCommandInstance } from "./haskeroCommand";
 import * as vsrv from 'vscode-languageserver';
 import { HaskeroService } from "../haskeroService";
 import { TypeInfoKind } from "../intero/commands/typeAt";
+import { HaskeroCommand, HaskeroCommandInstance } from "./haskeroCommand";
 
 export class TopLevelTypeSignature implements HaskeroCommand {
     public readonly title = "Add top level signature";

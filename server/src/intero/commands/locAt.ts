@@ -1,16 +1,14 @@
 'use strict';
 
-import { InteroProxy } from '../interoProxy'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { InteroRange } from '../interoRange'
-import { InteroUtils } from '../interoUtils'
-import { UriUtils } from '../../utils/uriUtils'
+import { UriUtils } from '../../utils/uriUtils';
+import { InteroRange } from '../interoRange';
+import { InteroUtils } from '../interoUtils';
+import { IInteroRepl, IInteroRequest, IInteroResponse } from "./abstract";
 
 /**
  * loc-at intero response
  */
-export class LocAtResponse implements InteroResponse {
+export class LocAtResponse implements IInteroResponse {
 
     private static get pattern(): RegExp { return new RegExp('(.*):\\((\\d+),(\\d+)\\)-\\((\\d+),(\\d+)\\)'); }
 
@@ -59,20 +57,16 @@ export class LocAtResponse implements InteroResponse {
 /**
  * loc-at intero request
  */
-export class LocAtRequest implements InteroRequest<InteroResponse> {
+export class LocAtRequest implements IInteroRequest<IInteroResponse> {
 
     public constructor(private uri: string, private range: InteroRange, private identifier: string) {
     }
 
-    public async send(interoProxy: InteroProxy): Promise<LocAtResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<LocAtResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
-        //load the file first, otherwise it won't match the last version on disk
-        //TODO replace :l with :module +Module
-        const load = `:l ${escapedFilePath}`;
         const locat = `:loc-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
-        let reponse = await interoProxy.sendRawRequest(load)
-        let locAtResp = await interoProxy.sendRawRequest(locat);
+        let locAtResp = await interoAgent.evaluate(locat);
         return new LocAtResponse(locAtResp.rawout, locAtResp.rawerr);
     }
 }

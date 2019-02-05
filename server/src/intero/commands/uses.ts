@@ -1,18 +1,16 @@
 'use strict';
 
-import { InteroProxy } from '../interoProxy'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { InteroRange } from '../interoRange'
-import { InteroUtils } from '../interoUtils'
-import { InteroLocation } from '../interoLocation'
-import { UriUtils } from '../../utils/uriUtils'
 import { allMatchs } from "../../utils/regexpUtils";
+import { UriUtils } from '../../utils/uriUtils';
+import { InteroLocation } from '../interoLocation';
+import { InteroRange } from '../interoRange';
+import { InteroUtils } from '../interoUtils';
+import { IInteroRepl, IInteroRequest, IInteroResponse } from "./abstract";
 
 /**
  * uses intero response
  */
-export class UsesResponse implements InteroResponse {
+export class UsesResponse implements IInteroResponse {
 
     private _isOk: boolean;
     public get isOk(): boolean {
@@ -45,19 +43,16 @@ export class UsesResponse implements InteroResponse {
 /**
  * uses intero request
  */
-export class UsesRequest implements InteroRequest<UsesResponse> {
+export class UsesRequest implements IInteroRequest<UsesResponse> {
 
     public constructor(private uri: string, private range: InteroRange, private identifier: string) {
     }
 
-    public async send(interoProxy: InteroProxy): Promise<UsesResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<UsesResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
-        //load the file first, otherwise it won't match the last version on disk
-        const load = `:l ${escapedFilePath}`;
         const uses = `:uses ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
-        let loadResp = await interoProxy.sendRawRequest(load);
-        let usesResp = await interoProxy.sendRawRequest(uses);
+        const usesResp = await interoAgent.evaluate(uses);
         return new UsesResponse(usesResp.rawout, usesResp.rawerr);
     }
 }

@@ -1,16 +1,14 @@
 'use strict';
 
-import { InteroProxy } from '../interoProxy'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { InteroUtils } from '../interoUtils'
-import { InteroRange } from '../interoRange'
-import { UriUtils } from '../../utils/uriUtils'
+import { UriUtils } from '../../utils/uriUtils';
+import { InteroRange } from '../interoRange';
+import { InteroUtils } from '../interoUtils';
+import { IInteroRepl, IInteroRequest, IInteroResponse } from './abstract';
 
 /**
  * 'complete-at' intero response
  */
-export class CompleteAtResponse implements InteroResponse {
+export class CompleteAtResponse implements IInteroResponse {
     private _isOk: boolean;
     private _rawout: string;
     private _rawerr: string;
@@ -35,23 +33,23 @@ export class CompleteAtResponse implements InteroResponse {
     public constructor(rawout: string, rawerr: string) {
         this._rawout = rawout;
         this._rawerr = rawerr;
-        this._completions = InteroUtils.normalizeRawResponse(rawout).split(/\r?\n/).filter(s => s !== '');
+        this._completions = rawout.split(/\r?\n/).filter(s => s !== '');
     }
 }
 
 /**
  * 'complete-at' intero request
  */
-export class CompleteAtRequest implements InteroRequest<CompleteAtResponse> {
+export class CompleteAtRequest implements IInteroRequest<CompleteAtResponse> {
 
     public constructor(private uri: string, private range: InteroRange, private text: string) {
     }
 
-    public async send(interoProxy: InteroProxy): Promise<CompleteAtResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<CompleteAtResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         const req = `:complete-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.text}`;
-        let response = await interoProxy.sendRawRequest(req)
+        let response = await interoAgent.evaluate(req)
         return new CompleteAtResponse(response.rawout, response.rawerr);
     }
 }

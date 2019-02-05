@@ -1,18 +1,12 @@
 'use strict';
 
-import { RawResponse, InteroProxy } from '../interoProxy'
-import { InteroUtils } from '../interoUtils'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { InteroRange } from '../interoRange'
-import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
-import { IdentifierKind } from '../identifierKind'
-import { UriUtils } from '../../utils/uriUtils'
+import { IdentifierKind } from '../identifierKind';
+import { IInteroRepl, IInteroRequest, IInteroResponse } from './abstract';
 
 /**
  * type-at intero response
  */
-export class InfoResponse implements InteroResponse {
+export class InfoResponse implements IInteroResponse {
 
     public readonly isOk: boolean = true;
     public readonly documentation: string;
@@ -20,7 +14,7 @@ export class InfoResponse implements InteroResponse {
     public readonly detail: string;
 
     public constructor(public readonly rawout: string, public readonly rawerr: string) {
-        this.documentation = InteroUtils.normalizeRawResponse(rawout);
+        this.documentation = rawout;
         this.detail = this.getFirstLine(this.documentation);
         if (this.documentation.startsWith("data ")) {
             this.kind = IdentifierKind.Data;
@@ -44,14 +38,14 @@ export class InfoResponse implements InteroResponse {
 /**
  * type-at intero request
  */
-export class InfoRequest implements InteroRequest<InfoResponse> {
+export class InfoRequest implements IInteroRequest<InfoResponse> {
 
     public constructor(private identifier: string) {
     }
 
-    public async send(interoProxy: InteroProxy): Promise<InfoResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<InfoResponse> {
         const req = `:info ${this.identifier}`;
-        let response = await interoProxy.sendRawRequest(req)
+        let response = await interoAgent.evaluate(req)
         return new InfoResponse(response.rawout, response.rawerr);
     }
 }

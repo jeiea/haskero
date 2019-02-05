@@ -1,18 +1,11 @@
 'use strict';
 
-import { RawResponse, InteroProxy } from '../interoProxy'
-import { InteroUtils } from '../interoUtils'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { InteroRange } from '../interoRange'
-import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
-import { IdentifierKind } from '../identifierKind'
-import { UriUtils } from '../../utils/uriUtils'
+import { IInteroRepl, IInteroRequest, IInteroResponse } from "./abstract";
 
 /**
  * type intero response
  */
-export class TypeResponse implements InteroResponse {
+export class TypeResponse implements IInteroResponse {
 
     public readonly isOk: boolean = true;
     public readonly type: string;
@@ -25,7 +18,7 @@ export class TypeResponse implements InteroResponse {
         }
         else {
             this.identifierExists = true;
-            this.type = InteroUtils.normalizeRawResponse(rawout);
+            this.type = rawout;
         }
     }
 }
@@ -33,14 +26,14 @@ export class TypeResponse implements InteroResponse {
 /**
  * type intero request
  */
-export class TypeRequest implements InteroRequest<TypeResponse> {
+export class TypeRequest implements IInteroRequest<TypeResponse> {
 
     public constructor(private identifier: string) {
     }
 
-    public async send(interoProxy: InteroProxy): Promise<TypeResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<TypeResponse> {
         const req = `:type ${this.identifier}`;
-        let response = await interoProxy.sendRawRequest(req);
+        let response = await interoAgent.evaluate(req);
         return new TypeResponse(response.rawout, response.rawerr);
     }
 }

@@ -1,16 +1,12 @@
 'use strict';
 
-import { InteroProxy, RawResponse } from '../interoProxy'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
-import { InteroUtils } from '../interoUtils'
 import { allMatchs } from "../../utils/regexpUtils";
+import { IInteroDiagnostic, IInteroRepl, IInteroRequest, IInteroResponse, InteroDiagnosticKind } from "./abstract";
 
 /**
  * Response from interoInit request
  */
-export class InitResponse implements InteroResponse {
+export class InitResponse implements IInteroResponse {
 
     private _filePath: string;
     private _isOk: boolean;
@@ -29,8 +25,8 @@ export class InitResponse implements InteroResponse {
         return this._rawerr;
     }
 
-    private _diagnostics: InteroDiagnostic[];
-    public get diagnostics(): InteroDiagnostic[] {
+    private _diagnostics: IInteroDiagnostic[];
+    public get diagnostics(): IInteroDiagnostic[] {
         return this._diagnostics;
     }
 
@@ -61,8 +57,8 @@ export class InitResponse implements InteroResponse {
     }
 
     //curried definition for partial application
-    private matchTo = (kind: InteroDiagnosticKind) => (match: RegExpExecArray): InteroDiagnostic => {
-        return new InteroDiagnostic(match[1], +match[2], +match[3], match[4], kind);
+    private matchTo = (kind: InteroDiagnosticKind) => (match: RegExpExecArray): IInteroDiagnostic => {
+        return new IInteroDiagnostic(match[1], +match[2], +match[3], match[4], kind);
     }
 }
 
@@ -70,14 +66,13 @@ export class InitResponse implements InteroResponse {
  * Initialises intero.
  * Changes the EOC char used by intero proxy to slice stdin in several responses
  */
-export class InitRequest implements InteroRequest<InitResponse> {
+export class InitRequest implements IInteroRequest<InitResponse> {
 
     public constructor() {
     }
 
-    public async send(interoProxy: InteroProxy): Promise<InitResponse> {
-        const changePromptRequest = ':set prompt ' + InteroProxy.EOTInteroCmd;
-        let response = await interoProxy.sendRawRequest(changePromptRequest)
+    public async send(interoAgent: IInteroRepl): Promise<InitResponse> {
+        let response = await interoAgent.evaluate('')
         return new InitResponse(response.rawout, response.rawerr);
     }
 }

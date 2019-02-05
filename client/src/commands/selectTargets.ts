@@ -1,10 +1,8 @@
 import * as vscode from 'vscode';
-import * as vscli from 'vscode-languageclient';
-import { allTargets } from '../utils/targets';
-import CheckBoxList from '../utils/checkBoxList'
-import CheckBox from '../utils/checkBox'
-import { HaskeroTargets } from '../utils/targets'
-import { HaskeroClient, HaskeroClientInitOptions } from '../utils/haskeroClient';
+import CheckBox from '../utils/checkBox';
+import CheckBoxList from '../utils/checkBoxList';
+import { HaskeroClient } from '../utils/haskeroClient';
+import { HaskeroTargets } from '../utils/targets';
 
 /**
  * Command which opens a quickpick selection menu to select the active Cabal target

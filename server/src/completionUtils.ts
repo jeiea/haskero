@@ -1,11 +1,10 @@
 import * as vsrv from 'vscode-languageserver';
-import { InteroProxy } from './intero/interoProxy';
-import { DocumentUtils, WordSpot, NoMatchAtCursorBehaviour } from './utils/documentUtils'
-import { CompleteAtRequest, CompleteAtResponse } from './intero/commands/completeAt'
-import { InfoRequest, InfoResponse } from './intero/commands/info'
-import { CompleteRequest, CompleteResponse } from './intero/commands/complete'
-import { IdentifierKind } from './intero/identifierKind'
-import { zipWith } from './utils/functionalUtils'
+import { IInteroRepl } from './intero/commands/abstract';
+import { CompleteRequest } from './intero/commands/complete';
+import { CompleteAtRequest } from './intero/commands/completeAt';
+import { InfoRequest } from './intero/commands/info';
+import { IdentifierKind } from './intero/identifierKind';
+import { DocumentUtils, NoMatchAtCursorBehaviour } from './utils/documentUtils';
 
 /**
  * Handle completion special cases (import, dot notation, etc.)
@@ -54,14 +53,14 @@ export class CompletionUtils {
         }
     }
 
-    public static async getImportCompletionItems(interoProxy: InteroProxy, textDocument: vsrv.TextDocument, position: vsrv.Position, line: string): Promise<vsrv.CompletionItem[]> {
+    public static async getImportCompletionItems(interoAgent: IInteroRepl, textDocument: vsrv.TextDocument, position: vsrv.Position, line: string): Promise<vsrv.CompletionItem[]> {
         //if the cursor is after a " as " text, it means that we are in the 'name' area of an import, so we disable module autocompletion
         if (!DocumentUtils.leftLineContains(textDocument, position, " as ")) {
             let { word, range } = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
             const lineToComplete = line.substring(0, position.character);
             const completeRequest = new CompleteRequest(textDocument.uri, lineToComplete);
 
-            let response = await completeRequest.send(interoProxy);
+            let response = await completeRequest.send(interoAgent);
             return response.completions.map(completion => {
                 return {
                     label: CompletionUtils.truncResp(word, completion),
@@ -74,17 +73,17 @@ export class CompletionUtils {
         }
     }
 
-    public static async getDefaultCompletionItems(interoProxy: InteroProxy, textDocument: vsrv.TextDocument, position: vsrv.Position, maxInfoRequests: number): Promise<vsrv.CompletionItem[]> {
+    public static async getDefaultCompletionItems(interoAgent: IInteroRepl, textDocument: vsrv.TextDocument, position: vsrv.Position, maxInfoRequests: number): Promise<vsrv.CompletionItem[]> {
         let { word, range } = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.LookLeft);
         const completeAtRequest = new CompleteAtRequest(textDocument.uri, DocumentUtils.toInteroRange(range), word);
 
         //First, get all completion texts
-        let response = await completeAtRequest.send(interoProxy);
+        let response = await completeAtRequest.send(interoAgent);
         let completions = response.completions;
 
         if (completions.length < 1) {
             const completeRequest = new CompleteRequest(textDocument.uri, word);
-            let completeResp = await completeRequest.send(interoProxy);
+            let completeResp = await completeRequest.send(interoAgent);
             completions = completeResp.completions;
         }
         //Then for each text, get its type informations
@@ -93,7 +92,7 @@ export class CompletionUtils {
             completions.map(async (completion, idx): Promise<vsrv.CompletionItem> => {
                 if (idx < maxInfoRequests) {
                     let infoReq = new InfoRequest(completion);
-                    let infoResponse = await infoReq.send(interoProxy);
+                    let infoResponse = await infoReq.send(interoAgent);
 
                     var identifier = CompletionUtils.truncResp(word, completion);
                     return {
@@ -115,13 +114,13 @@ export class CompletionUtils {
         );
     }
 
-    public static async getResolveInfos(interoProxy: InteroProxy, item: vsrv.CompletionItem): Promise<vsrv.CompletionItem> {
+    public static async getResolveInfos(interoAgent: IInteroRepl, item: vsrv.CompletionItem): Promise<vsrv.CompletionItem> {
         //When the global getCompletionItems didn't get details (because it reachs the maxAutoCompletionDetails limit)
         //it returns data = null and label = completion text
         //in this particular case only, we still try to get the details for the completion item
         if (!item.data && item.label) {
             const infoRequest = new InfoRequest(item.label);
-            let infoResponse = await infoRequest.send(interoProxy);
+            let infoResponse = await infoRequest.send(interoAgent);
             return {
                 label: item.label,
                 kind: CompletionUtils.toCompletionType(infoResponse.kind),

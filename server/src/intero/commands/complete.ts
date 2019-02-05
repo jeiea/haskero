@@ -1,17 +1,14 @@
 'use strict';
 
-import { InteroProxy } from '../interoProxy'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { LoadRequest, LoadResponse } from './load'
-import { InteroUtils } from '../interoUtils'
-import { InteroRange } from '../interoRange'
-import { UriUtils } from '../../utils/uriUtils'
+import { UriUtils } from '../../utils/uriUtils';
+import { InteroUtils } from '../interoUtils';
+import { IInteroRepl, IInteroRequest, IInteroResponse } from "./abstract";
+import { LoadRequest } from './load';
 
 /**
  * 'complete' intero response
  */
-export class CompleteResponse implements InteroResponse {
+export class CompleteResponse implements IInteroResponse {
     private _isOk: boolean;
     private _rawout: string;
     private _rawerr: string;
@@ -36,8 +33,7 @@ export class CompleteResponse implements InteroResponse {
     public constructor(rawout: string, rawerr: string) {
         this._rawout = rawout;
         this._rawerr = rawerr;
-        this._completions = InteroUtils
-            .normalizeRawResponse(rawout)
+        this._completions = rawout
             .split(/\r?\n/)
             .slice(1)
             .reduce(this.reducer, [])
@@ -59,21 +55,21 @@ export class CompleteResponse implements InteroResponse {
 /**
  * 'complete' intero request
  */
-export class CompleteRequest implements InteroRequest<CompleteResponse> {
+export class CompleteRequest implements IInteroRequest<CompleteResponse> {
 
     public constructor(private readonly uri: string, private readonly text: string) {
         this.text = text.replace(/[\r\n]/g, '');
     }
 
-    public async send(interoProxy: InteroProxy): Promise<CompleteResponse> {
+    public async send(interoAgent: IInteroRepl): Promise<CompleteResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         //send a load request first otherwise :complete is not executed on the right module (it's executed
         //on the current module)
         const loadRequest = new LoadRequest([this.uri], false);
         const req = `:complete repl "${this.text}"`;
-        let loadResponse = await loadRequest.send(interoProxy);
-        let response = await interoProxy.sendRawRequest(req);
+        let loadResponse = await loadRequest.send(interoAgent);
+        let response = await interoAgent.evaluate(req);
         return new CompleteResponse(response.rawout, response.rawerr);
     }
 }
