@@ -15,8 +15,9 @@ class DelimitReader {
     private error;
 
     public constructor(
-        private inputDelimiter: string, private outputDelimiter: string,
-        private stdin: stream.Writable, stdout: stream.Readable
+        private delimiter: string,
+        stdin: stream.Writable,
+        stdout: stream.Readable
     ) {
         stdin.on('error', e => this.onError(e));
         stdout.on('data', x => this.onData(x));
@@ -24,23 +25,22 @@ class DelimitReader {
     }
 
     public take(): Promise<string> {
-        this.stdin.write(this.inputDelimiter);
         try {
             return this.blocks.receive();
         }
-        catch {
-            throw this.error;
+        catch (e) {
+            throw this.error || e;
         }
     }
 
     private onData(data: Buffer) {
         this.buffer += data.toString();
-        const blocks = this.buffer.split(this.outputDelimiter);
+        const blocks = this.buffer.split(this.delimiter);
         while (blocks.length > 1) {
             const b = blocks.shift();
             this.blocks.send(b);
 
-            const idxNextBlock = b.length + this.outputDelimiter.length;
+            const idxNextBlock = b.length + this.delimiter.length;
             this.buffer = this.buffer.substr(idxNextBlock);
         }
     }
@@ -52,9 +52,10 @@ class DelimitReader {
 }
 
 export class InteroAgent implements IInteroRepl, Disposable {
+    private static readonly inputDelimiter = '\n:set PIPI_DELIMIT_TRANSACTION\n';
     private readonly stdoutReader: DelimitReader;
     private readonly stderrReader: DelimitReader;
-    private previous = Promise.resolve(<IInteroResponse>{});
+    private previous: Promise<any>;
     private errorMsg: string;
 
     public constructor(private interoProcess: child_process.ChildProcess) {
@@ -63,20 +64,18 @@ export class InteroAgent implements IInteroRepl, Disposable {
         intero.on('error', x => this.onError(x));
 
         const prompt = '{-        TRANSACTION        -}';
-        this.stdoutReader = new DelimitReader('', prompt, intero.stdin, intero.stdout);
-        const iDelim = ':set PIPI_DELIMIT_TRANSACTION\n';
+        const stderrConsideredPrompt = prompt + prompt;
+        this.stdoutReader = new DelimitReader(stderrConsideredPrompt, intero.stdin, intero.stdout);
         const oDelim = "Some flags have not been recognized: PIPI_DELIMIT_TRANSACTION" + os.EOL;
-        this.stderrReader = new DelimitReader(iDelim, oDelim, intero.stdin, intero.stderr);
+        this.stderrReader = new DelimitReader(oDelim, intero.stdin, intero.stderr);
 
-        intero.stdin.write(`:set prompt ${prompt}\n`);
-        this.stdoutReader.take();
-        this.stderrReader.take();
+        // Drop intero bootstrap message and set delimiter prompt
+        this.previous = this.evaluate(`:set prompt ${prompt}`);
     }
 
     public evaluate(expr: string): Promise<IInteroResponse> {
         DebugUtils.instance.connectionLog(`evaluate: ${expr}`);
-        console.log(`evaluate: ${expr}`);
-        return this.sendStatement(expr + os.EOL);
+        return this.sendStatement(expr + InteroAgent.inputDelimiter);
     }
 
     public dispose() {
@@ -99,7 +98,6 @@ export class InteroAgent implements IInteroRepl, Disposable {
         try {
             const rawout = await this.stdoutReader.take();
             const rawerr = await this.stderrReader.take();
-            DebugUtils.instance.connectionLog(`evaluated: "${rawout}" "${rawerr}"`);
             return { rawout, rawerr, isOk: true };
         }
         catch (e) {

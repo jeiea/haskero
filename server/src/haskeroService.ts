@@ -282,7 +282,9 @@ export class HaskeroService {
         try {
             this.intero = new InteroAgent(intero);
             this.interoTransaction = new InteroTransaction(this.intero);
-            await new Promise(r => setTimeout(r, 2000));
+            if (!DebugUtils.instance.isDebugOn) {
+                await new Promise(r => setTimeout(r, 2000));
+            }
             return new InitRequest().send(this.interoTransaction);
         }
         catch (reason) {
