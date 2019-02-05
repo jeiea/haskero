@@ -12,7 +12,7 @@ import { UriUtils } from './utils/uriUtils';
 
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
-let connection: vsrv.IConnection = vsrv.createConnection(vsrv.ProposedFeatures.all);
+let connection: vsrv.IConnection = vsrv.createConnection();
 DebugUtils.init(false, connection);
 
 // Create a simple text document manager. The text document manager

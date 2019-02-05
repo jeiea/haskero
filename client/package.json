@@ -9,7 +9,7 @@
     "homepage": "https://gitlab.com/vannnns/haskero/blob/master/README.md",
     "repository": {
         "type": "git",
-        "url": "https://gitlab.com/vannnns/haskero"
+        "url": "https://github.com/jeiea/haskero"
     },
     "bugs": {
         "url": "https://gitlab.com/vannnns/haskero/issues"
@@ -20,7 +20,7 @@
         "theme": "dark"
     },
     "engines": {
-        "vscode": "^1.8.0"
+        "vscode": "^1.30.0"
     },
     "categories": [
         "Programming Languages",
@@ -101,9 +101,9 @@
         "@types/mocha": "^5.2.5",
         "@types/node": "^10.12.21",
         "typescript": "^3.3.1",
-        "vscode": "^1.0.3"
+        "vscode": "^1.1.28"
     },
     "dependencies": {
-        "vscode-languageclient": "5.2.1"
+        "vscode-languageclient": "^5.2.1"
     }
 }
