@@ -1,7 +1,5 @@
 'use strict';
 
-import { InteroAgent } from './interoAgent'
-
 /**
  * Utilities functions used by all intero commands
  */

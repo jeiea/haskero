@@ -1,14 +1,13 @@
 'use strict';
 
-import { InteroAgent } from '../interoAgent'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
 import { allMatchs } from "../../utils/regexpUtils";
+import { InteroAgent } from '../interoAgent';
+import { IInteroRequest, IInteroResponse } from "./abstract";
 
 /**
  * show modules intero response
  */
-export class ShowModulesResponse implements InteroResponse {
+export class ShowModulesResponse implements IInteroResponse {
     public readonly isOk: boolean = true;
     public readonly modules: string[];
 
@@ -22,7 +21,7 @@ export class ShowModulesResponse implements InteroResponse {
 /**
  * show modules intero request
  */
-export class ShowModulesRequest implements InteroRequest<ShowModulesResponse> {
+export class ShowModulesRequest implements IInteroRequest<ShowModulesResponse> {
 
     public constructor() {
     }

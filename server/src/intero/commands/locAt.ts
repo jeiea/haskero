@@ -1,16 +1,15 @@
 'use strict';
 
-import { InteroAgent } from '../interoAgent'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { InteroRange } from '../interoRange'
-import { InteroUtils } from '../interoUtils'
-import { UriUtils } from '../../utils/uriUtils'
+import { UriUtils } from '../../utils/uriUtils';
+import { InteroAgent } from '../interoAgent';
+import { InteroRange } from '../interoRange';
+import { InteroUtils } from '../interoUtils';
+import { IInteroRequest, IInteroResponse } from "./abstract";
 
 /**
  * loc-at intero response
  */
-export class LocAtResponse implements InteroResponse {
+export class LocAtResponse implements IInteroResponse {
 
     private static get pattern(): RegExp { return new RegExp('(.*):\\((\\d+),(\\d+)\\)-\\((\\d+),(\\d+)\\)'); }
 
@@ -59,7 +58,7 @@ export class LocAtResponse implements InteroResponse {
 /**
  * loc-at intero request
  */
-export class LocAtRequest implements InteroRequest<InteroResponse> {
+export class LocAtRequest implements IInteroRequest<IInteroResponse> {
 
     public constructor(private uri: string, private range: InteroRange, private identifier: string) {
     }
@@ -67,11 +66,7 @@ export class LocAtRequest implements InteroRequest<InteroResponse> {
     public async send(interoAgent: InteroAgent): Promise<LocAtResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
-        //load the file first, otherwise it won't match the last version on disk
-        //TODO replace :l with :module +Module
-        const load = `:l ${escapedFilePath}`;
         const locat = `:loc-at ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
-        let reponse = await interoAgent.evaluate(load)
         let locAtResp = await interoAgent.evaluate(locat);
         return new LocAtResponse(locAtResp.rawout, locAtResp.rawerr);
     }

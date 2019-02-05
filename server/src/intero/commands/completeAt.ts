@@ -1,16 +1,15 @@
 'use strict';
 
-import { InteroAgent } from '../interoAgent'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { InteroUtils } from '../interoUtils'
-import { InteroRange } from '../interoRange'
-import { UriUtils } from '../../utils/uriUtils'
+import { UriUtils } from '../../utils/uriUtils';
+import { InteroAgent } from '../interoAgent';
+import { InteroRange } from '../interoRange';
+import { InteroUtils } from '../interoUtils';
+import { IInteroRequest, IInteroResponse } from './abstract';
 
 /**
  * 'complete-at' intero response
  */
-export class CompleteAtResponse implements InteroResponse {
+export class CompleteAtResponse implements IInteroResponse {
     private _isOk: boolean;
     private _rawout: string;
     private _rawerr: string;
@@ -42,7 +41,7 @@ export class CompleteAtResponse implements InteroResponse {
 /**
  * 'complete-at' intero request
  */
-export class CompleteAtRequest implements InteroRequest<CompleteAtResponse> {
+export class CompleteAtRequest implements IInteroRequest<CompleteAtResponse> {
 
     public constructor(private uri: string, private range: InteroRange, private text: string) {
     }

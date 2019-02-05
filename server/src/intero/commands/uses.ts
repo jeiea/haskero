@@ -1,18 +1,17 @@
 'use strict';
 
-import { InteroAgent } from '../interoAgent'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { InteroRange } from '../interoRange'
-import { InteroUtils } from '../interoUtils'
-import { InteroLocation } from '../interoLocation'
-import { UriUtils } from '../../utils/uriUtils'
 import { allMatchs } from "../../utils/regexpUtils";
+import { UriUtils } from '../../utils/uriUtils';
+import { InteroAgent } from '../interoAgent';
+import { InteroLocation } from '../interoLocation';
+import { InteroRange } from '../interoRange';
+import { InteroUtils } from '../interoUtils';
+import { IInteroRequest, IInteroResponse } from "./abstract";
 
 /**
  * uses intero response
  */
-export class UsesResponse implements InteroResponse {
+export class UsesResponse implements IInteroResponse {
 
     private _isOk: boolean;
     public get isOk(): boolean {
@@ -45,7 +44,7 @@ export class UsesResponse implements InteroResponse {
 /**
  * uses intero request
  */
-export class UsesRequest implements InteroRequest<UsesResponse> {
+export class UsesRequest implements IInteroRequest<UsesResponse> {
 
     public constructor(private uri: string, private range: InteroRange, private identifier: string) {
     }
@@ -53,10 +52,7 @@ export class UsesRequest implements InteroRequest<UsesResponse> {
     public async send(interoAgent: InteroAgent): Promise<UsesResponse> {
         const filePath = UriUtils.toFilePath(this.uri);
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
-        //load the file first, otherwise it won't match the last version on disk
-        const load = `:l ${escapedFilePath}`;
         const uses = `:uses ${escapedFilePath} ${this.range.startLine} ${this.range.startCol} ${this.range.endLine} ${this.range.endCol} ${this.identifier}`;
-        const loadResp = await interoAgent.evaluate(load);
         const usesResp = await interoAgent.evaluate(uses);
         return new UsesResponse(usesResp.rawout, usesResp.rawerr);
     }

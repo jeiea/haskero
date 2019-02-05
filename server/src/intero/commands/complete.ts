@@ -1,17 +1,15 @@
 'use strict';
 
-import { InteroAgent } from '../interoAgent'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { LoadRequest, LoadResponse } from './load'
-import { InteroUtils } from '../interoUtils'
-import { InteroRange } from '../interoRange'
-import { UriUtils } from '../../utils/uriUtils'
+import { UriUtils } from '../../utils/uriUtils';
+import { InteroAgent } from '../interoAgent';
+import { InteroUtils } from '../interoUtils';
+import { IInteroRequest, IInteroResponse } from "./abstract";
+import { LoadRequest } from './load';
 
 /**
  * 'complete' intero response
  */
-export class CompleteResponse implements InteroResponse {
+export class CompleteResponse implements IInteroResponse {
     private _isOk: boolean;
     private _rawout: string;
     private _rawerr: string;
@@ -58,7 +56,7 @@ export class CompleteResponse implements InteroResponse {
 /**
  * 'complete' intero request
  */
-export class CompleteRequest implements InteroRequest<CompleteResponse> {
+export class CompleteRequest implements IInteroRequest<CompleteResponse> {
 
     public constructor(private readonly uri: string, private readonly text: string) {
         this.text = text.replace(/[\r\n]/g, '');

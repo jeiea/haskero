@@ -1,18 +1,13 @@
 'use strict';
 
-import { InteroAgent } from '../interoAgent'
-import { InteroUtils } from '../interoUtils'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { InteroRange } from '../interoRange'
-import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
-import { IdentifierKind } from '../identifierKind'
-import { UriUtils } from '../../utils/uriUtils'
+import { IdentifierKind } from '../identifierKind';
+import { InteroAgent } from '../interoAgent';
+import { IInteroRequest, IInteroResponse } from './abstract';
 
 /**
  * type-at intero response
  */
-export class InfoResponse implements InteroResponse {
+export class InfoResponse implements IInteroResponse {
 
     public readonly isOk: boolean = true;
     public readonly documentation: string;
@@ -44,7 +39,7 @@ export class InfoResponse implements InteroResponse {
 /**
  * type-at intero request
  */
-export class InfoRequest implements InteroRequest<InfoResponse> {
+export class InfoRequest implements IInteroRequest<InfoResponse> {
 
     public constructor(private identifier: string) {
     }

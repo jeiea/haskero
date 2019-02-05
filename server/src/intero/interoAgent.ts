@@ -1,8 +1,9 @@
 'use strict';
 
 import { Disposable } from 'vscode-jsonrpc';
-import { Channel, Deferred } from '../utils/promiseUtils';
-import { InteroResponse } from './commands/interoResponse';
+import { DebugUtils } from '../debug/debugUtils';
+import { Channel } from '../utils/promiseUtils';
+import { IInteroRepl, IInteroResponse } from "./commands/abstract";
 import child_process = require('child_process');
 import stream = require('stream');
 import os = require('os');
@@ -10,20 +11,26 @@ import os = require('os');
 class DelimitReader {
 
     public buffer = '';
-    private complete = new Deferred<string>();
     private blocks = new Channel<string>();
+    private error;
 
     public constructor(
         private inputDelimiter: string, private outputDelimiter: string,
         private stdin: stream.Writable, stdout: stream.Readable
     ) {
-        stdin.on('error', x => this.onError(x));
+        stdin.on('error', e => this.onError(e));
         stdout.on('data', x => this.onData(x));
+        stdout.on('error', e => this.onError(e));
     }
 
     public take(): Promise<string> {
         this.stdin.write(this.inputDelimiter);
-        return this.blocks.receive();
+        try {
+            return this.blocks.receive();
+        }
+        catch {
+            throw this.error;
+        }
     }
 
     private onData(data: Buffer) {
@@ -39,14 +46,15 @@ class DelimitReader {
     }
 
     private onError(err: Error) {
-        this.complete.reject(err);
+        this.blocks.dispose();
+        this.error = err;
     }
 }
 
-export class InteroAgent implements Disposable {
+export class InteroAgent implements IInteroRepl, Disposable {
     private readonly stdoutReader: DelimitReader;
     private readonly stderrReader: DelimitReader;
-    private previous = Promise.resolve(<InteroResponse>{});
+    private previous = Promise.resolve(<IInteroResponse>{});
     private errorMsg: string;
 
     public constructor(private interoProcess: child_process.ChildProcess) {
@@ -65,8 +73,10 @@ export class InteroAgent implements Disposable {
         this.stderrReader.take();
     }
 
-    public evaluate(expr: string): Promise<InteroResponse> {
-        return this.queueStatement(expr + os.EOL);
+    public evaluate(expr: string): Promise<IInteroResponse> {
+        DebugUtils.instance.connectionLog(`evaluate: ${expr}`);
+        console.log(`evaluate: ${expr}`);
+        return this.sendStatement(expr + os.EOL);
     }
 
     public dispose() {
@@ -80,12 +90,7 @@ export class InteroAgent implements Disposable {
         this.interoProcess.kill();
     }
 
-    private async queueStatement(expr: string): Promise<InteroResponse> {
-        this.previous = this.sendStatement(expr);
-        return this.previous;
-    }
-
-    private async sendStatement(expr: string): Promise<InteroResponse> {
+    private async sendStatement(expr: string): Promise<IInteroResponse> {
         if (this.errorMsg) {
             throw this.errorMsg;
         }
@@ -94,10 +99,11 @@ export class InteroAgent implements Disposable {
         try {
             const rawout = await this.stdoutReader.take();
             const rawerr = await this.stderrReader.take();
+            DebugUtils.instance.connectionLog(`evaluated: "${rawout}" "${rawerr}"`);
             return { rawout, rawerr, isOk: true };
         }
         catch (e) {
-            return <InteroResponse>{ isOk: false };
+            return <IInteroResponse>{ isOk: false };
         }
     }
 
@@ -105,13 +111,34 @@ export class InteroAgent implements Disposable {
         this.errorMsg = `Process exited with code ${code}\r\n\r\n`
             + `stdout:\r\n${this.stdoutReader.buffer}\r\n\r\n`
             + `stderr:\r\n${this.stderrReader.buffer}\r\n`;
-        console.log(this.errorMsg);
+        DebugUtils.instance.connectionLog(this.errorMsg);
     }
 
     private onError(code: Error) {
         this.errorMsg = `Failed to start intero instance: ${code.message}\r\n\r\n`
             + `stdout:\r\n${this.stdoutReader.buffer}\r\n\r\n`
             + `stderr:\r\n${this.stderrReader.buffer}\r\n`;
-        console.log(this.errorMsg);
+        DebugUtils.instance.connectionLog(this.errorMsg);
+    }
+}
+
+class InteroTransaction implements IInteroRepl {
+    private intero: IInteroRepl;
+    private previousTransaction: Promise<IInteroResponse>;
+
+    public constructor(intero: IInteroRepl, previousTransaction?: Promise<IInteroResponse>) {
+        this.intero = intero;
+        this.previousTransaction = previousTransaction || Promise.resolve(<IInteroResponse>{});
+    }
+
+    public async evaluate(expr: string): Promise<IInteroResponse> {
+        await this.previousTransaction;
+        return this.intero.evaluate(expr);
+    }
+
+    public async withLock(transaction: (self: InteroTransaction) => Promise<IInteroResponse>) {
+        const repl = new InteroTransaction(this.intero, this.previousTransaction);
+        this.previousTransaction = transaction(repl);
+        await this.previousTransaction;
     }
 }

@@ -1,17 +1,15 @@
 'use strict';
 
-import { InteroAgent } from '../interoAgent'
-import { InteroRequest } from './interoRequest'
-import { InteroResponse } from './interoResponse'
-import { InteroDiagnostic, InteroDiagnosticKind } from './interoDiagnostic'
-import { InteroUtils } from '../interoUtils'
-import { UriUtils } from '../../utils/uriUtils'
 import { allMatchs } from "../../utils/regexpUtils";
+import { UriUtils } from '../../utils/uriUtils';
+import { InteroAgent } from '../interoAgent';
+import { InteroUtils } from '../interoUtils';
+import { IInteroDiagnostic, IInteroRequest, IInteroResponse, InteroDiagnosticKind } from "./abstract";
 
 /**
  * Reload response, returns diagnostics (errors and warnings)
  */
-export class ReloadResponse implements InteroResponse {
+export class ReloadResponse implements IInteroResponse {
 
     private _filePath: string;
     private _isOk: boolean;
@@ -30,8 +28,8 @@ export class ReloadResponse implements InteroResponse {
         return this._rawerr;
     }
 
-    private _diagnostics: InteroDiagnostic[];
-    public get diagnostics(): InteroDiagnostic[] {
+    private _diagnostics: IInteroDiagnostic[];
+    public get diagnostics(): IInteroDiagnostic[] {
         return this._diagnostics;
     }
 
@@ -60,18 +58,17 @@ export class ReloadResponse implements InteroResponse {
     }
 
     //curried definition for partial application
-    private matchTo = (kind: InteroDiagnosticKind) => (match: RegExpExecArray): InteroDiagnostic => {
-        return new InteroDiagnostic(match[1], +match[2], +match[3], match[4], kind);
+    private matchTo = (kind: InteroDiagnosticKind) => (match: RegExpExecArray): IInteroDiagnostic => {
+        return new IInteroDiagnostic(match[1], +match[2], +match[3], match[4], kind);
     }
 }
 
 /**
  * Reload request
  */
-export class ReloadRequest implements InteroRequest<ReloadResponse> {
+export class ReloadRequest implements IInteroRequest<ReloadResponse> {
 
     public constructor(private readonly uri: string) {
-
     }
 
     public async send(interoAgent: InteroAgent): Promise<ReloadResponse> {
@@ -79,8 +76,13 @@ export class ReloadRequest implements InteroRequest<ReloadResponse> {
         const escapedFilePath = InteroUtils.escapeFilePath(filePath);
         const load = `:l ${escapedFilePath}`;
         let loadResp = await interoAgent.evaluate(load);
-        // const reloadRequest = ':r';
-        // let reloadResp = await interoAgent.evaluate(reloadRequest);
         return new ReloadResponse(loadResp.rawout, loadResp.rawerr);
+    }
+
+    public async forceReload(intero: InteroAgent): Promise<ReloadResponse> {
+        await intero.evaluate(':set -fdefer-type-errors');
+        const response = this.send(intero);
+        await intero.evaluate(':unset -fdefer-type-errors');
+        return response;
     }
 }

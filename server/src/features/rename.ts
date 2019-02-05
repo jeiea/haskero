@@ -3,7 +3,7 @@ import * as tmp from 'tmp';
 import * as vsrv from 'vscode-languageserver';
 import { DebugUtils } from "../debug/debugUtils";
 import { HaskeroService } from "../haskeroService";
-import { InteroDiagnostic } from "../intero/commands/interoDiagnostic";
+import { IInteroDiagnostic } from "../intero/commands/abstract";
 import { LoadRequest } from "../intero/commands/load";
 import { ShowModulesRequest } from "../intero/commands/showModules";
 import { TypeRequest } from "../intero/commands/type";
@@ -173,7 +173,7 @@ export default function (documents: vsrv.TextDocuments, haskeroService: HaskeroS
         });
     }
 
-    function errorToRange(document: vsrv.TextDocument, error: InteroDiagnostic): vsrv.Range {
+    function errorToRange(document: vsrv.TextDocument, error: IInteroDiagnostic): vsrv.Range {
         //position in error message are 1 based. Position are 0 based, but there is a issue somewhere because it works without (-1) :-(
         let identifier = DocumentUtils.getIdentifierAtPosition(document, vsrv.Position.create(error.line, error.col), NoMatchAtCursorBehaviour.LookBoth);
         return identifier.range;

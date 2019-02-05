@@ -4,13 +4,12 @@ import { UriUtils } from '../../utils/uriUtils';
 import { InteroAgent } from '../interoAgent';
 import { InteroRange } from '../interoRange';
 import { InteroUtils } from '../interoUtils';
-import { InteroRequest } from './interoRequest';
-import { InteroResponse } from './interoResponse';
+import { IInteroRequest, IInteroResponse } from "./abstract";
 
 /**
  * type-at intero response
  */
-export class TypeAtResponse implements InteroResponse {
+export class TypeAtResponse implements IInteroResponse {
 
     public readonly isOk: boolean = true;
     public readonly type: string;
@@ -29,7 +28,7 @@ export class TypeAtResponse implements InteroResponse {
 /**
  * type-at intero request
  */
-export class TypeAtRequest implements InteroRequest<TypeAtResponse> {
+export class TypeAtRequest implements IInteroRequest<TypeAtResponse> {
     public constructor(private uri: string, private range: InteroRange, private identifier: string, private infoKind: TypeInfoKind) {
     }
 

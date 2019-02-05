@@ -5,10 +5,8 @@ import { CompletionUtils } from './completionUtils';
 import { DebugUtils } from './debug/debugUtils';
 import { Features } from './features/features';
 import { HaskeroSettings } from './haskeroSettings';
+import { IInteroDiagnostic, IInteroRequest, IInteroResponse, InteroDiagnosticKind } from "./intero/commands/abstract";
 import { InitRequest, InitResponse } from './intero/commands/init';
-import { InteroDiagnostic, InteroDiagnosticKind } from './intero/commands/interoDiagnostic';
-import { InteroRequest } from "./intero/commands/interoRequest";
-import { InteroResponse } from "./intero/commands/interoResponse";
 import { LocAtRequest } from './intero/commands/locAt';
 import { ReloadRequest } from './intero/commands/reload';
 import { TypeAtRequest, TypeInfoKind } from './intero/commands/typeAt';
@@ -50,7 +48,7 @@ export class HaskeroService {
     private currentTargets: string[];
 
 
-    public executeInteroRequest<V extends InteroResponse>(request: InteroRequest<V>): Promise<V> {
+    public executeInteroRequest<V extends IInteroResponse>(request: IInteroRequest<V>): Promise<V> {
         return request.send(this.interoAgent);
     }
 
@@ -164,7 +162,9 @@ export class HaskeroService {
         }
     }
 
-    public async getHoverInformation(textDocument: vsrv.TextDocument, position: vsrv.Position, infoKind: TypeInfoKind): Promise<vsrv.Hover> {
+    public async getHoverInformation(
+        textDocument: vsrv.TextDocument, position: vsrv.Position, infoKind: TypeInfoKind
+    ): Promise<vsrv.Hover> {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         if (!wordRange.isEmpty) {
             const typeAtRequest = new TypeAtRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word, infoKind);
@@ -225,6 +225,7 @@ export class HaskeroService {
             this.sendDocumentDiagnostics(connection, response.diagnostics.filter(d => {
                 return d.filePath.toLowerCase() === UriUtils.toFilePath(textDocument.uri).toLowerCase();
             }), textDocument.uri);
+            await reloadRequest.forceReload(this.interoAgent);
             return;
         }
         else {
@@ -258,7 +259,7 @@ export class HaskeroService {
      * Spawn an intero process (stack ghci --with-ghc intero ... targets)
      * and set `interoAgent`.
      */
-    private spawnIntero(targets: string[]): Promise<InitResponse> {
+    private async spawnIntero(targets: string[]): Promise<InitResponse> {
         const rootOptions = ['ghci', '--with-ghc', 'intero'];
         const allOptions = rootOptions.concat(this.getStartupParameters()).concat(targets);
         const stackPath = this.settings.intero.stackPath;
@@ -276,25 +277,23 @@ export class HaskeroService {
         } else {
             intero = child_process.spawn(stackPath, allOptions);
         }
-        this.interoAgent = new InteroAgent(intero);
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                return new InitRequest()
-                    .send(this.interoAgent)
-                    .then((resp: InitResponse) => resolve(resp))
-                    .catch(reason => {
-                        if (reason.indexOf(this.interoNotFOunt, 0) > -1) {
-                            return reject("Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing (details in Haskero tab output)\r\n\r\nDetails\r\n\r\n" + reason);
-                        }
-                        reject(reason);
-                    })
-            }, 2000)
-        });
+
+        try {
+            this.interoAgent = new InteroAgent(intero);
+            await new Promise(r => setTimeout(r, 2000));
+            return new InitRequest().send(this.interoAgent);
+        }
+        catch (reason) {
+            if (reason.indexOf(this.interoNotFOunt, 0) > -1) {
+                throw "Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing (details in Haskero tab output)\r\n\r\nDetails\r\n\r\n" + reason;
+            }
+            throw reason;
+        }
     }
 
-    private sendAllDocumentsDiagnostics(connection: vsrv.IConnection, interoDiags: InteroDiagnostic[]) {
+    private sendAllDocumentsDiagnostics(connection: vsrv.IConnection, interoDiags: IInteroDiagnostic[]) {
         //map the interoDiag to a vsCodeDiag and add it to the map of grouped diagnostics
-        let addToMap = (accu: Map<string, vsrv.Diagnostic[]>, interoDiag: InteroDiagnostic): Map<string, vsrv.Diagnostic[]> => {
+        let addToMap = (accu: Map<string, vsrv.Diagnostic[]>, interoDiag: IInteroDiagnostic): Map<string, vsrv.Diagnostic[]> => {
             let uri = UriUtils.toUri(interoDiag.filePath);
             let vsCodeDiag = this.interoDiagToVScodeDiag(interoDiag);
             if (accu.has(uri)) {
@@ -316,7 +315,7 @@ export class HaskeroService {
         });
     }
 
-    private interoDiagToVScodeDiag(interoDiag: InteroDiagnostic): vsrv.Diagnostic {
+    private interoDiagToVScodeDiag(interoDiag: IInteroDiagnostic): vsrv.Diagnostic {
         return {
             severity: interoDiag.kind === InteroDiagnosticKind.error ? vsrv.DiagnosticSeverity.Error : vsrv.DiagnosticSeverity.Warning,
             range: {
@@ -328,7 +327,7 @@ export class HaskeroService {
         };
     }
 
-    private sendDocumentDiagnostics(connection: vsrv.IConnection, interoDiags: InteroDiagnostic[], documentUri: string) {
+    private sendDocumentDiagnostics(connection: vsrv.IConnection, interoDiags: IInteroDiagnostic[], documentUri: string) {
         let diagnostics: vsrv.Diagnostic[] = [];
         diagnostics = interoDiags.map(this.interoDiagToVScodeDiag);
         connection.sendDiagnostics({ uri: documentUri, diagnostics });
