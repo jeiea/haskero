@@ -13,7 +13,7 @@ Each IDE feature like code completion, goto definition, and so on, triggers requ
 
 ## Language server architecture
 
-- `codeActions` folder stores all implemented langauge server code action, ie the little bulb next to a line in VSCode (like topLevelSignature**CA** which add a signature to a top level function)
+- `codeActions` folder stores all implemented language server code action, ie the little bulb next to a line in VSCode (like topLevelSignature**CA** which add a signature to a top level function)
 - `commands` folder stores all implemented language server commands (like topLevelSignature which add a signature to a top level function)
 - `debug` folder stores all debug utilities
 - `features` folder stores all implemented language server features, like renaming, goto deifinition, etc.
