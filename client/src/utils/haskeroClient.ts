@@ -59,7 +59,7 @@ export class HaskeroClient implements vscode.Disposable {
 
     constructor(serverModule: string, private readonly debug: boolean) {
         // The debug options for the server
-        let debugOptions = { execArgv: ["--nolazy", "--inspect-brk=6004"] };
+        let debugOptions = { execArgv: ["--nolazy", "--inspect=6004"] };
 
         this.serverOptions = {
             run: { module: serverModule, transport: vscli.TransportKind.ipc },
