@@ -11,8 +11,15 @@
         "reveal": "silent",
         "clear": true
       },
-      "args": ["run-script", "compile"],
-      "problemMatcher": "$tsc-watch"
+      "args": [
+        "run-script",
+        "compile"
+      ],
+      "problemMatcher": "$tsc-watch",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
     },
     {
       "label": "watch",
@@ -22,7 +29,10 @@
         "reveal": "silent",
         "clear": true
       },
-      "args": ["run-script", "watch"],
+      "args": [
+        "run-script",
+        "watch"
+      ],
       "problemMatcher": "$tsc-watch",
       "isBackground": true
     }

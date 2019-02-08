@@ -1,7 +1,9 @@
 'use strict';
 
+import { Disposable } from "vscode-jsonrpc";
+
 /** Represents intero process */
-export interface IInteroRepl {
+export interface IInteroRepl extends Disposable {
     evaluate(expr: string): Promise<IInteroResponse>;
 }
 

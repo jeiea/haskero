@@ -82,7 +82,7 @@ export class ReloadRequest implements IInteroRequest<ReloadResponse> {
     public async forceReload(transactor: InteroTransaction): Promise<ReloadResponse> {
         return transactor.withLock(async intero => {
             await intero.evaluate(':set -fdefer-type-errors');
-            const response = this.send(intero);
+            const response = await this.send(intero);
             await intero.evaluate(':unset -fdefer-type-errors');
             return response;
         });

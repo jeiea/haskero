@@ -1,5 +1,2 @@
 /server/
-out/
-node_modules/
-*.log
 *.vsix

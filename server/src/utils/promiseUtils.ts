@@ -1,5 +1,7 @@
 'use strict';
 
+import stream = require("stream");
+
 export class Deferred<T> implements Promise<T> {
     public resolve: (value?: T | PromiseLike<T>) => void;
     public reject: (reason?: any) => void;
@@ -66,5 +68,25 @@ export class Channel<T> {
     public dispose() {
         this.disposed = true;
         this.clients.forEach(c => c.reject('disposed'));
+    }
+}
+
+export class AsyncWriter {
+    private err: Error;
+
+    public constructor(public writer: stream.Writable) {
+        writer.on('error', e => { this.err = e; });
+    }
+
+    public async write(chunk: string | Buffer): Promise<void> {
+        if (this.err) {
+            throw this.err;
+        }
+        if (this.writer.write(chunk)) {
+            return;
+        }
+        return new Promise(resolve => {
+            this.writer.once('drain', resolve);
+        });
     }
 }

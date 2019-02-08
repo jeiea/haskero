@@ -1,5 +1,5 @@
+import * as uuid from 'uuid';
 import * as vsrv from 'vscode-languageserver';
-import * as uuid from 'node-uuid'
 import { CommandsService } from "../commands/commandsService";
 
 /**

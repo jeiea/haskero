@@ -3,13 +3,29 @@
 	// List of configurations. Add new configurations or edit existing ones.
 	"configurations": [
 		{
-			"name": "Attach",
 			"type": "node",
 			"request": "attach",
+			"name": "Attach",
 			"port": 6004,
 			"sourceMaps": true,
 			"outFiles": ["${workspaceRoot}/../client/server"],
 			"preLaunchTask": "watch"
-		}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Mocha Test",
+			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+			"args": [
+					"--require", "ts-node/register",
+					"-u", "tdd",
+					"--timeout", "999999",
+					"--colors",
+					"--recursive",
+					"--exit",
+					"${workspaceFolder}/src/test/**/*.ts"
+			],
+			"internalConsoleOptions": "openOnSessionStart"
+	}
 	]
 }

@@ -6,12 +6,11 @@ import { DebugUtils } from './debug/debugUtils';
 import { Features } from './features/features';
 import { HaskeroSettings } from './haskeroSettings';
 import { IInteroDiagnostic, IInteroRequest, IInteroResponse, InteroDiagnosticKind } from "./intero/commands/abstract";
-import { InitRequest, InitResponse } from './intero/commands/init';
 import { LocAtRequest } from './intero/commands/locAt';
 import { ReloadRequest } from './intero/commands/reload';
 import { TypeAtRequest, TypeInfoKind } from './intero/commands/typeAt';
 import { UsesRequest } from './intero/commands/uses';
-import { InteroAgent, InteroTransaction } from './intero/interoAgent';
+import { InteroFactory, InteroTransaction } from './intero/interoAgent';
 import { DocumentUtils, NoMatchAtCursorBehaviour } from './utils/documentUtils';
 import { UriUtils } from './utils/uriUtils';
 
@@ -39,18 +38,16 @@ const serverCapabilities: vsrv.InitializeResult = {
  * Exposes all haskero capabilities to the server
  */
 export class HaskeroService {
-    private intero: InteroAgent;
-    private interoTransaction: InteroTransaction;
+    private intero: InteroTransaction;
     private connection: vsrv.IConnection;
     private features: Features;
     private initializationOk: boolean;
-    private interoNotFound = "Executable named intero not found";
     private settings: HaskeroSettings;
     private currentTargets: string[];
 
 
     public executeInteroRequest<V extends IInteroResponse>(request: IInteroRequest<V>): Promise<V> {
-        return request.send(this.interoTransaction);
+        return request.send(this.intero);
     }
 
     public async initialize(connection: vsrv.IConnection, settings: HaskeroSettings, targets: string[]): Promise<vsrv.InitializeResult> {
@@ -86,8 +83,13 @@ export class HaskeroService {
     private async startInteroAndHandleErrors(targets: string[]): Promise<void> {
         // Launch the intero process
         try {
-            await this.spawnIntero(targets);
-            return;
+            const factory = new InteroFactory(this.settings);
+            this.logSpawnCommandLine(factory.getSpawnArguments(targets));
+
+            if (this.intero) {
+                this.intero.dispose();
+            }
+            this.intero = await new InteroFactory(this.settings).create(targets);
         }
         catch (reason) {
             throw <vsrv.InitializeError>({
@@ -99,6 +101,10 @@ export class HaskeroService {
         }
     }
 
+    private logSpawnCommandLine(args: string[]) {
+        const prettified = args.map(p => p.includes(' ') ? `"${p}"` : p).join(' ');
+        this.connection.console.log(`Spawning process 'stack' with command '${prettified}'`);
+    }
 
     public async changeTargets(targets: string[]): Promise<string> {
         // It seems that we have to restart ghci to set new targets,
@@ -152,7 +158,7 @@ export class HaskeroService {
     public async getDefinitionLocation(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location> {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         const locAtRequest = new LocAtRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
-        let response = await locAtRequest.send(this.interoTransaction);
+        let response = await locAtRequest.send(this.intero);
         if (response.isOk) {
             let fileUri = UriUtils.toUri(response.filePath);
             let loc = vsrv.Location.create(fileUri, DocumentUtils.toVSCodeRange(response.range));
@@ -169,7 +175,7 @@ export class HaskeroService {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         if (!wordRange.isEmpty) {
             const typeAtRequest = new TypeAtRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word, infoKind);
-            let response = await typeAtRequest.send(this.interoTransaction);
+            let response = await typeAtRequest.send(this.intero);
             let typeInfo: vsrv.MarkedString = { language: 'haskell', value: response.type };
             let hover: vsrv.Hover = { contents: typeInfo };
             if (typeInfo.value !== null && typeInfo.value !== "") {
@@ -201,7 +207,7 @@ export class HaskeroService {
     public async getReferencesLocations(textDocument: vsrv.TextDocument, position: vsrv.Position): Promise<vsrv.Location[]> {
         let wordRange = DocumentUtils.getIdentifierAtPosition(textDocument, position, NoMatchAtCursorBehaviour.Stop);
         const usesRequest = new UsesRequest(textDocument.uri, DocumentUtils.toInteroRange(wordRange.range), wordRange.word);
-        let response = await usesRequest.send(this.interoTransaction);
+        let response = await usesRequest.send(this.intero);
         if (response.isOk) {
             return response.locations.map((interoLoc) => {
                 let fileUri = UriUtils.toUri(interoLoc.file);
@@ -222,76 +228,11 @@ export class HaskeroService {
             const reloadRequest = new ReloadRequest(textDocument.uri);
             DebugUtils.instance.connectionLog(textDocument.uri);
 
-            let response = await reloadRequest.send(this.interoTransaction);
+            let response = await reloadRequest.send(this.intero);
             this.sendDocumentDiagnostics(connection, response.diagnostics.filter(d => {
                 return d.filePath.toLowerCase() === UriUtils.toFilePath(textDocument.uri).toLowerCase();
             }), textDocument.uri);
-            await reloadRequest.forceReload(this.interoTransaction);
-            return;
-        }
-        else {
-            return;
-        }
-    }
-
-    private getStartupParameters(): string[] {
-        let ghciOptions: string[] = [];
-        if (this.settings.intero.ignoreDotGhci) {
-            ghciOptions.push('-ignore-dot-ghci');
-        }
-        ghciOptions = ghciOptions.concat(this.settings.intero.ghciOptions);
-        //concat startup params AFTER default ghci-options (otherwise, it's impossible to override default ghci-options like -fno-warn-name-shadowing)
-        return [`--ghci-options=${ghciOptions.join(' ')}`]
-            .concat(this.settings.intero.startupParams);
-    }
-
-    private prettifyStartupParamsCmd(parameters: string[]) {
-        return parameters.map(p => {
-            if (p.indexOf(' ') > -1) {
-                return "\"" + p + "\"";
-            }
-            else {
-                return p;
-            }
-        }).join(' ');
-    }
-
-    /**
-     * Spawn an intero process (stack ghci --with-ghc intero ... targets)
-     * and set `interoAgent`.
-     */
-    private async spawnIntero(targets: string[]): Promise<InitResponse> {
-        const rootOptions = ['ghci', '--with-ghc', 'intero'];
-        const allOptions = rootOptions.concat(this.getStartupParameters()).concat(targets);
-        const stackPath = this.settings.intero.stackPath;
-
-        this.connection.console.log(`Spawning process 'stack' with command '${stackPath} ${this.prettifyStartupParamsCmd(allOptions)}'`);
-
-        if (this.intero) {
-            this.intero.dispose();
-        }
-
-        let intero;
-        if (process.platform === 'win32') {
-            let options = allOptions.map(x => x.includes(' ') ? `"${x}"` : x);
-            intero = child_process.exec(`chcp 65001 & "${stackPath}" ${options.join(' ')} `);
-        } else {
-            intero = child_process.spawn(stackPath, allOptions);
-        }
-
-        try {
-            this.intero = new InteroAgent(intero);
-            this.interoTransaction = new InteroTransaction(this.intero);
-            if (!DebugUtils.instance.isDebugOn) {
-                await new Promise(r => setTimeout(r, 2000));
-            }
-            return new InitRequest().send(this.interoTransaction);
-        }
-        catch (reason) {
-            if (reason.indexOf(this.interoNotFound, 0) > -1) {
-                throw "Intero is not installed. See installation instructions here : https://github.com/commercialhaskell/intero/blob/master/TOOLING.md#installing (details in Haskero tab output)\r\n\r\nDetails\r\n\r\n" + reason;
-            }
-            throw reason;
+            await reloadRequest.forceReload(this.intero);
         }
     }
 
